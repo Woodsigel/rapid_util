@@ -24,7 +24,7 @@ constexpr auto make_typelist(Types&&...) noexcept {
 template<typename F,
     template<typename ...> typename List,
     typename ...Descriptors>
-void for_each(const List<Descriptors...>& types, F&& f) {
+void for_each(const List<Descriptors...>& , F&& f) {
     ((std::invoke(std::forward<F>(f), Descriptors{})), ...);
 }
 
@@ -33,9 +33,6 @@ struct Descriptor {
     static constexpr bool is_describable = false;
     static constexpr TypeList<> member_descriptors{};
 };
-
-template<typename T>
-constexpr bool is_string_like_v = std::is_convertible_v<T, std::string_view>;
 
 template<typename T>
 constexpr bool is_json_primitive_type_v = std::disjunction_v<std::is_same<T, int>,
