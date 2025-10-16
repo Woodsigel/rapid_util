@@ -1,3 +1,14 @@
+// Copyright (C) 2025 Liu Wu. All rights reserved.
+//
+// Licensed under the zlib License (the "License"); you may not use this file except
+// in compliance with the License. You may obtain a copy of the License at
+//
+// http://opensource.org/licenses/Zlib
+//
+// This software is provided ¡®as-is¡¯, without any express or implied
+// warranty. In no event will the authors be held liable for any damages
+// arising from the use of this software.
+
 #ifndef __RAPIDJSON_UTIL_PREPROCESSOR_H__
 #define __RAPIDJSON_UTIL_PREPROCESSOR_H__
 
@@ -7,6 +18,7 @@
 #include <vector>
 #include <array>
 #include <type_traits>
+#include <memory>
 
 namespace rapidjson_util {
 
@@ -35,7 +47,53 @@ struct Descriptor {
 };
 
 template<typename T>
-constexpr bool is_json_primitive_type_v = std::disjunction_v<std::is_same<T, int>,
+struct member_type;
+
+template<typename T, typename C>
+struct member_type<T C::*> {
+    using type = T;
+};
+
+template<typename T>
+using member_type_t = typename member_type<T>::type;
+
+template<typename T>
+struct is_std_shared_ptr : std::false_type {};
+
+template<typename T>
+struct is_std_shared_ptr<std::shared_ptr<T>> : std::true_type {};
+
+template<typename T>
+struct is_std_shared_ptr<const std::shared_ptr<T>> : std::true_type {};
+
+template<typename T>
+constexpr bool is_std_shared_ptr_v = typename is_std_shared_ptr<T>::value;
+
+template<typename T>
+struct remove_std_shared_ptr {
+    using type = T;
+};
+
+template<typename T>
+struct remove_std_shared_ptr<std::shared_ptr<T>> {
+    using type = T;
+};
+
+template<typename T>
+struct remove_std_shared_ptr<const std::shared_ptr<T>> {
+    using type = T;
+};
+
+template<typename T>
+using remove_std_shared_ptr_t = typename remove_std_shared_ptr<T>::type;
+
+// Empty specialization for debug type inspection
+template<typename Type>
+struct type_displayer {
+};
+
+template<typename T>
+constexpr bool is_json_primitive_core_type_v = std::disjunction_v<std::is_same<T, int>,
                                                              std::is_same<T, int8_t>,
                                                              std::is_same<T, int32_t>,
                                                              std::is_same<T, int64_t>,
@@ -47,40 +105,84 @@ constexpr bool is_json_primitive_type_v = std::disjunction_v<std::is_same<T, int
 
 
 template<typename T>
-constexpr bool is_json_serializable_type_v = is_json_primitive_type_v<T> 
-                                             && !std::is_pointer_v<T> 
-                                             && !std::is_reference_v<T> 
-                                             && !std::is_const_v<T>;
+constexpr bool is_json_primitive_type_v = is_json_primitive_core_type_v<remove_std_shared_ptr_t<T>>;
 
 template<typename T>
-constexpr bool is_describable_struct_v = Descriptor<std::decay_t<T>>::is_describable;
+constexpr bool is_json_serializable_primitive_type_v =  is_json_primitive_type_v<T>
+                                                        && !std::is_pointer_v<T> 
+                                                        && !std::is_reference_v<T> 
+                                                        && !std::is_const_v<T>;
+
+template<typename T>
+constexpr bool is_describable_struct_v = Descriptor<std::decay_t<T>>::is_describable || 
+                                         Descriptor<remove_std_shared_ptr_t<T>>::is_describable;;
+
 
 template<typename T, typename = void>
-struct is_json_serializable_array : std::false_type {};
+struct is_json_serializable_fixed_array : std::false_type {};
 
-template<typename T, std::size_t N>
-struct is_json_serializable_array<std::array<T, N>, 
-       std::enable_if_t< is_json_serializable_type_v<T> || is_describable_struct_v<T> >> : std::true_type {};
+template<typename Elem, std::size_t N>
+struct is_json_serializable_fixed_array<std::array<Elem, N>>
+    : std::bool_constant<is_json_serializable_primitive_type_v<Elem> || is_describable_struct_v<Elem>> {};
+
+template<typename Array>
+struct is_json_serializable_fixed_array<std::shared_ptr<Array>>
+    : is_json_serializable_fixed_array<Array> {};
+
+template<typename Array>
+constexpr bool is_json_serializable_fixed_array_v = is_json_serializable_fixed_array<Array>::value;
 
 template<typename T, typename = void>
 struct is_json_serializable_vector : std::false_type {};
 
-template<typename T, typename Alloc>
-struct is_json_serializable_vector<std::vector<T, Alloc>,
-       std::enable_if_t< is_json_serializable_type_v<T> || is_describable_struct_v<T> >> : std::true_type {};
+template<typename Elem, typename Alloc>
+struct is_json_serializable_vector<std::vector<Elem, Alloc>>
+    : std::bool_constant<is_json_serializable_primitive_type_v<Elem> || is_describable_struct_v<Elem>> {};
+
+template<typename Vector>
+struct is_json_serializable_vector<std::shared_ptr<Vector>>
+    : is_json_serializable_vector<Vector> {};
 
 template<typename T, typename = void>
 struct is_json_serializable_list : std::false_type {};
 
-template<typename T, typename Alloc>
-struct is_json_serializable_list<std::list<T, Alloc>, 
-       std::enable_if_t< is_json_serializable_type_v<T> || is_describable_struct_v<T> >> : std::true_type {};
+template<typename Elem, typename Alloc>
+struct is_json_serializable_list<std::list<Elem, Alloc>>
+      : std::bool_constant<is_json_serializable_primitive_type_v<Elem> || is_describable_struct_v<Elem>> {};
+
+template<typename List>
+struct is_json_serializable_list<std::shared_ptr<List>>
+    : is_json_serializable_list<List> {};
+
+template<typename Container>
+struct is_json_serializable_dynamic_array
+    : std::bool_constant<is_json_serializable_list<Container>::value || 
+                         is_json_serializable_vector<Container>::value > {};
+
+template<typename Container>
+constexpr bool is_json_serializable_dynamic_array_v = is_json_serializable_dynamic_array<Container>::value;
 
 template<typename T>
-constexpr bool is_json_serializable_dynamic_array_v = is_json_serializable_vector<T>::value || is_json_serializable_list<T>::value;
+constexpr bool is_json_serializable_sequential_container_v = is_json_serializable_fixed_array_v<T> || is_json_serializable_dynamic_array_v<T>;
 
-template<typename T>
-constexpr bool is_json_serializable_sequential_container_v = is_json_serializable_array<T>::value || is_json_serializable_dynamic_array_v<T>;
+template<typename T, typename = void>
+struct has_shared_ptr_elements : std::false_type {};
+
+template<template<typename, typename> typename Container, typename Alloc, typename U>
+struct has_shared_ptr_elements<Container<std::shared_ptr<U>, Alloc>,
+                               std::enable_if_t<is_json_serializable_dynamic_array_v<Container<std::shared_ptr<U>, Alloc>>>>
+    : std::true_type {};
+
+template<template<typename, size_t> typename Array, size_t N, typename U>
+struct has_shared_ptr_elements<Array<std::shared_ptr<U>, N>,
+                               std::enable_if_t<is_json_serializable_fixed_array_v<Array<std::shared_ptr<U>, N>>>>
+    : std::true_type {};
+
+template<typename Container>
+struct has_shared_ptr_elements<std::shared_ptr<Container>,
+                               std::enable_if_t<has_shared_ptr_elements<Container>::value>>
+                               : std::true_type {};
+
 
 template<typename T>
 struct is_std_tuple : std::false_type {};
@@ -89,21 +191,21 @@ template<typename... TupleArgs>
 struct is_std_tuple<std::tuple<TupleArgs...>> : std::true_type {};
 
 template<typename T>
-struct is_json_serializable_tuple {
+constexpr bool is_std_tuple_v = is_std_tuple<T>::value;
+
+template<typename T>
+struct is_json_serializable_tuple_imp {
     static constexpr bool value = false;
 };
 
-template<typename T>
-constexpr bool is_std_tuple_v = is_std_tuple<T>::value;
-
 template<typename First, typename... Remaining >
-struct is_json_serializable_tuple<std::tuple<First, Remaining...>> {
+struct is_json_serializable_tuple_imp<std::tuple<First, Remaining...>> {
 private:
     static constexpr bool check_first() {
         if constexpr (is_std_tuple_v<First>) 
-            return is_json_serializable_tuple<First>::value;
+            return is_json_serializable_tuple_imp<First>::value;
         else 
-            return is_json_serializable_type_v<First> ||
+            return is_json_serializable_primitive_type_v<First> ||
                    is_json_serializable_sequential_container_v<First> ||
                    is_describable_struct_v<First>;
     }
@@ -112,7 +214,7 @@ private:
         if constexpr (sizeof...(Remaining) == 0) 
             return true;
         else 
-            return is_json_serializable_tuple<std::tuple<Remaining...>>::value;
+            return is_json_serializable_tuple_imp<std::tuple<Remaining...>>::value;
     }
 
 public:
@@ -120,22 +222,17 @@ public:
 };
 
 template<typename T>
-constexpr bool is_json_serializable_tuple_v = is_json_serializable_tuple<T>::value;
-
-template<typename T>
-constexpr bool is_json_serializable_v = is_json_serializable_type_v<T> || is_json_serializable_sequential_container_v<T>
-                                        || is_json_serializable_tuple_v<T> || is_describable_struct_v<T>;
-
-template<typename T>
-struct member_type;
-
-template<typename T, typename C>
-struct member_type<T C::*> {
-    using type = T;
+struct is_json_serializable_tuple {
+    static constexpr bool value = is_json_serializable_tuple_imp<remove_std_shared_ptr_t<T>>::value;
 };
 
 template<typename T>
-using member_type_t = typename member_type<T>::type;
+constexpr bool is_json_serializable_tuple_v = is_json_serializable_tuple<T>::value;
+
+template<typename T>
+constexpr bool is_json_serializable_v = is_json_serializable_primitive_type_v<T> || is_json_serializable_sequential_container_v<T>
+                                        || is_json_serializable_tuple_v<T> || is_describable_struct_v<T>;
+
 
 }  // namespace detail
 }  // namespace rapidjson_util 

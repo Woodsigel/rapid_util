@@ -1,3 +1,14 @@
+// Copyright (C) 2025 Liu Wu. All rights reserved.
+//
+// Licensed under the zlib License (the "License"); you may not use this file except
+// in compliance with the License. You may obtain a copy of the License at
+//
+// http://opensource.org/licenses/Zlib
+//
+// This software is provided ¡®as-is¡¯, without any express or implied
+// warranty. In no event will the authors be held liable for any damages
+// arising from the use of this software.
+
 #ifndef __SIMPLE_RAPID_JSON_UTIL_H__
 #define __SIMPLE_RAPID_JSON_UTIL_H__
 
@@ -59,67 +70,192 @@ void unmarshal(std::string_view json, Struct& s) {
 namespace detail {
 
 template<typename T>
-std::shared_ptr<JsonBasicValue> createJsonBasicValueFrom(T& value) {
-    static_assert(is_json_serializable_type_v<std::decay_t<T>>);
+std::shared_ptr<JsonValue> createJsonBasicValueFrom(T& value) {
+    static_assert(is_json_serializable_primitive_type_v<std::decay_t<T>>);
 
     return std::make_shared<JsonBasicValue>(&value);
 }
 
 template<typename T>
-std::shared_ptr<JsonObject> createJsonObjectFrom(T& value) {
-    static_assert(is_describable_struct_v<T>);
+std::shared_ptr<JsonSharedPtrObject> createJsonObjectFromConstSharedPtr(T& value) {
+    static_assert(is_std_shared_ptr_v<T> && std::is_const_v<T>);
 
-    auto object = std::make_shared<JsonObject>();
-    buildJsonTree(value, *object);
+    if (value == nullptr)
+        return std::make_shared<JsonSharedPtrObject>();
+    else
+        return  std::make_shared<JsonSharedPtrObject>(buildJsonTreeFrom(std::as_const(*value)));
+}
+
+template<typename T>
+std::shared_ptr<JsonSharedPtrObject> createJsonObjectFromNonConstSharedPtr(T& value) {
+    static_assert(is_std_shared_ptr_v<T> && !std::is_const_v<T>);
+
+    auto object = (value == nullptr) ? std::make_shared<JsonSharedPtrObject>() :
+                                       std::make_shared<JsonSharedPtrObject>(buildJsonTreeFrom(*value));
+ 
+    auto sharedPtrResetter = [&value]() { value.reset(); };
+    auto sharedPtrReinitializer = [&value]()
+                                  {
+                                      using BaseType = remove_std_shared_ptr_t<T>;
+                                      value = std::make_shared<BaseType>();
+
+                                      auto object = CreateJsonObjectFromImp<true>::create(value);
+                                      return object->getMembers();
+                                  };
+
+    object->setReferencedSharedPtrHandlers(sharedPtrReinitializer, sharedPtrResetter);
 
     return object;
 }
 
+
+template<bool isSharedPtr>
+struct CreateJsonObjectFromImp;
+
+template<>
+struct CreateJsonObjectFromImp<true> {
+    template<typename T>
+    static std::shared_ptr<JsonSharedPtrObject> create(T & value) {
+        static_assert(is_std_shared_ptr_v<T>);
+
+        if constexpr (std::is_const_v<T>)
+            return createJsonObjectFromConstSharedPtr(value);
+        else
+            return createJsonObjectFromNonConstSharedPtr(value);
+    }
+};
+
+template<>
+struct CreateJsonObjectFromImp<false> {
+    template<typename T>
+    static std::shared_ptr<JsonObject> create(T& value) {
+        static_assert(!is_std_shared_ptr_v<T>);
+
+        return std::make_shared<JsonObject>(buildJsonTreeFrom(value));
+    }
+};
+
+template<typename T>
+std::shared_ptr<JsonValue> createJsonObjectFrom(T& value) {
+    static_assert(is_describable_struct_v<T>);
+
+    return CreateJsonObjectFromImp<is_std_shared_ptr_v<T>>::create(value);
+}
+
 template<typename Sequence>
-std::vector<std::shared_ptr<JsonValue>> convertToJsonValuesFrom(Sequence& sequence) {
-    std::vector<std::shared_ptr<JsonValue>> values;
+std::vector<std::shared_ptr<JsonValue>> convertToJsonValuesFromSeq(Sequence& sequence) {
+    std::vector<std::shared_ptr<JsonValue>> elements;
 
     for (auto&& it : sequence) {
         using elemType = std::decay_t<decltype(it)>;
 
-        if constexpr (is_json_serializable_type_v<elemType>)
-            values.push_back(createJsonBasicValueFrom(it));
+        if constexpr (is_json_serializable_primitive_type_v<elemType>)
+            elements.push_back(createJsonBasicValueFrom(it));
 
         else if constexpr (is_describable_struct_v<elemType>)
-            values.push_back(createJsonObjectFrom(it));
+            elements.push_back(createJsonObjectFrom(it));
     }
 
-    return values;
+    return elements;
 }
 
 template<typename T>
-std::shared_ptr<JsonArray> createJsonArrayFromSeq(T& sequence) {
+std::shared_ptr<JsonSharedPtrArray> createJsonArrayFromConstSharedPtrSeq(T& sequence) {
+    static_assert(std::is_const_v<T> && is_std_shared_ptr_v<T>);
+
+    bool hasSharedPtrElems = has_shared_ptr_elements<std::remove_const_t<T>>::value;
+    if (nullptr == sequence) 
+        return std::make_shared<JsonSharedPtrArray>(hasSharedPtrElems);
+
+    else {
+        auto elements = convertToJsonValuesFromSeq(std::as_const(*sequence));
+        return std::make_shared<JsonSharedPtrArray>(elements, hasSharedPtrElems);
+    }
+}
+
+template<typename T>
+std::shared_ptr<JsonSharedPtrArray> createJsonArrayFromNonConstSharedPtrSeq(T& sequence) {
+    static_assert(!std::is_const_v<T> && is_std_shared_ptr_v<T>);
+
+    bool hasSharedPtrElems = has_shared_ptr_elements<T>::value;
+    auto jsonArray = (sequence == nullptr) ? std::make_shared<JsonSharedPtrArray>(hasSharedPtrElems) :
+                                             std::make_shared<JsonSharedPtrArray>(convertToJsonValuesFromSeq(*sequence), hasSharedPtrElems);
+
+
+    auto sharedPtrReinitializer = [&sequence]()
+    {
+        using BaseType = remove_std_shared_ptr_t<T>;
+        sequence = std::make_shared<BaseType>();
+
+        return std::vector<std::shared_ptr<JsonValue>>{};
+    };
+
+    auto resizer = [&sequence, sharedPtrReinitializer](std::size_t newSize) {
+                            if (sequence == nullptr)
+                                sharedPtrReinitializer();
+
+                            sequence->resize(newSize);
+                            return  convertToJsonValuesFromSeq(*sequence); };
+
+    auto sharedPtrResetter = [&sequence]() { sequence.reset(); };
+
+    jsonArray->setArrayResizer(resizer);
+    jsonArray->setReferencedSharedPtrHandlers(sharedPtrReinitializer, sharedPtrResetter);
+
+    return jsonArray;
+}
+
+template<bool isSharedPtr>
+struct CreateJsonArrayFromSeqImp;
+
+template<>
+struct CreateJsonArrayFromSeqImp<true> {
+    template<typename T>
+    static std::shared_ptr<JsonSharedPtrArray> create(T& sequence) {
+        static_assert(is_std_shared_ptr_v<T>);
+
+        if constexpr (std::is_const_v<T>)
+            return createJsonArrayFromConstSharedPtrSeq(sequence);
+        else
+            return createJsonArrayFromNonConstSharedPtrSeq(sequence);
+    }
+};
+
+template<>
+struct CreateJsonArrayFromSeqImp<false> {
+    template<typename T>
+    static std::shared_ptr<JsonArray> create(T& sequence) {
+        static_assert(!is_std_shared_ptr_v<T>);
+
+        auto elements = convertToJsonValuesFromSeq(sequence);
+        auto jsonArray = std::make_shared<JsonArray>(elements, has_shared_ptr_elements<T>::value);
+
+        if constexpr (!std::is_const_v<std::remove_reference_t<T>> && is_json_serializable_dynamic_array_v<std::decay_t<T>>)
+            jsonArray->setArrayResizer([sequencePtr = &sequence](std::size_t newSize) {
+                                                                    sequencePtr->resize(newSize);
+                                                                    return  convertToJsonValuesFromSeq(*sequencePtr);
+                                                                    });
+
+        return jsonArray;
+    }
+};
+
+template<typename T>
+std::shared_ptr<JsonValue> createJsonArrayFromSeq(T& sequence) {
     static_assert(is_json_serializable_sequential_container_v<std::decay_t<T>>);
 
-    auto elements = convertToJsonValuesFrom(sequence);
-
-    if constexpr (!std::is_const_v<std::remove_reference_t<T>> && is_json_serializable_dynamic_array_v<std::decay_t<T>>) {
-        auto resizer = [sequencePtr = &sequence](std::size_t newSize) {
-                        sequencePtr->resize(newSize);
-                        return  convertToJsonValuesFrom(*sequencePtr); };
-
-        return std::make_shared<JsonArray>(elements, resizer);
-    }
-
-    return  std::make_shared<JsonArray>(elements);
+    return CreateJsonArrayFromSeqImp<is_std_shared_ptr_v<T>>::create(sequence);
 }
 
 template<typename Tuple>
-std::shared_ptr<JsonArray> createJsonArrayFromTup(Tuple& tuple) {
-    static_assert(is_json_serializable_tuple_v<std::decay_t<Tuple>>);
-
+std::vector <std::shared_ptr<JsonValue>> convertToJsonValuesFromTup(Tuple& tuple) {
     std::vector<std::shared_ptr<JsonValue>> elements;
 
     std::apply([&elements](auto&&... tupleArgs) {
         auto process = [&elements](auto&& arg) {
             using elemType = std::decay_t<decltype(arg)>;
 
-            if constexpr (is_json_serializable_type_v<elemType>)
+            if constexpr (is_json_serializable_primitive_type_v<elemType>)
                 elements.push_back(createJsonBasicValueFrom(arg));
 
             else if constexpr (is_describable_struct_v<elemType>)
@@ -133,58 +269,133 @@ std::shared_ptr<JsonArray> createJsonArrayFromTup(Tuple& tuple) {
         };
 
         (process(std::forward<decltype(tupleArgs)>(tupleArgs)), ...);
-   }, tuple);
+        }, tuple);
 
-    return  std::make_shared<JsonArray>(elements);
+    return elements;
+}
+
+template<typename T>
+std::shared_ptr<JsonSharedPtrArray> createJsonArrayFromConstSharedPtrTup(T& sequence) {
+    static_assert(std::is_const_v<T> && is_std_shared_ptr_v<T>);
+
+    if (nullptr == sequence)
+        return std::make_shared<JsonSharedPtrArray>();
+
+    else {
+        auto elements = convertToJsonValuesFromTup(std::as_const(*sequence));
+        return std::make_shared<JsonSharedPtrArray>(elements);
+    }
+}
+
+template<typename T>
+std::shared_ptr<JsonSharedPtrArray> createJsonArrayFromNonConstSharedPtrTup(T& tuple) {
+    static_assert(!std::is_const_v<T> && is_std_shared_ptr_v<T>);
+
+    auto jsonArray = (tuple == nullptr) ? std::make_shared<JsonSharedPtrArray>() :
+                                          std::make_shared<JsonSharedPtrArray>(convertToJsonValuesFromTup(*tuple));
+
+
+    auto sharedPtrReinitializer = [&tuple]()
+    {
+        using BaseType = remove_std_shared_ptr_t<T>;
+        tuple = std::make_shared<BaseType>();
+
+        return convertToJsonValuesFromTup(*tuple);
+    };
+
+    auto sharedPtrResetter = [&tuple]() { tuple.reset(); };
+
+    jsonArray->setReferencedSharedPtrHandlers(sharedPtrReinitializer, sharedPtrResetter);
+
+    return jsonArray;
+}
+
+template<bool isSharedPtr>
+struct CreateJsonArrayFromTupImp;
+
+template<>
+struct CreateJsonArrayFromTupImp<true> {
+    template<typename T>
+    static std::shared_ptr<JsonSharedPtrArray> create(T& tup) {
+        static_assert(is_std_shared_ptr_v<T>);
+
+        if constexpr (std::is_const_v<T>)
+            return createJsonArrayFromConstSharedPtrTup(tup);
+        else
+            return createJsonArrayFromNonConstSharedPtrTup(tup);
+    }
+};
+
+template<>
+struct CreateJsonArrayFromTupImp<false> {
+    template<typename T>
+    static std::shared_ptr<JsonArray> create(T& tuple) {
+        static_assert(!is_std_shared_ptr_v<T>);
+
+        auto elements = convertToJsonValuesFromTup(tuple);
+        return  std::make_shared<JsonArray>(elements);
+    }
+};
+
+template<typename Tuple>
+std::shared_ptr<JsonValue> createJsonArrayFromTup(Tuple& tuple) {
+    static_assert(is_json_serializable_tuple_v<std::decay_t<Tuple>>);
+
+    return CreateJsonArrayFromTupImp<is_std_shared_ptr_v<Tuple>>::create(tuple);
+}
+
+template<typename Desc>
+std::string getMemberName(Desc descriptor) {
+    return std::string(descriptor.name());
+}
+
+template<typename Struct, typename Desc>
+decltype(auto) getMemberValueRef(Struct& s, Desc descriptor) {
+    return s.*(descriptor.pointer());
 }
 
 
 template<typename Struct>
-void buildJsonTree(Struct& s, JsonObject& object) {
-    static_assert(is_describable_struct_v<Struct>, "Use RAPIDJSON_UTIL_DESCRIBE_MEMBERS macro to describe the struct members beforehand.");
+std::vector<JsonAttribute> buildJsonTreeFrom(Struct& s) {
+    static_assert(is_describable_struct_v<Struct>, "Use the RAPIDJSON_UTIL_DESCRIBE_MEMBERS macro to declare serializable struct members");
 
     std::vector<JsonAttribute> members;
 
-    for_each(Descriptor<std::decay_t<Struct>>::member_descriptors, [&s, &members](auto desc) {
-        auto name = std::string(desc.name());
-        decltype(auto) valuePtr = &(s.*(desc.pointer()));
+    auto descriptors = Descriptor<std::remove_const_t<Struct>>::member_descriptors;
+    for_each(descriptors, [&s, &members](auto desc) {
+        std::string name = getMemberName(desc);
+        using MemberType = std::decay_t<decltype(getMemberValueRef(s, desc))>;
 
-        using ValueType = std::decay_t<decltype(s.*(desc.pointer()))>;
+        if constexpr (is_json_serializable_primitive_type_v<MemberType>)
+            members.push_back(JsonAttribute{ name, createJsonBasicValueFrom(getMemberValueRef(s, desc)) });
 
-        if constexpr (is_json_serializable_type_v<ValueType>)
-            members.push_back(JsonAttribute{ name, createJsonBasicValueFrom(*valuePtr) });
+        else if constexpr (is_json_serializable_sequential_container_v<MemberType>)
+            members.push_back(JsonAttribute{ name, createJsonArrayFromSeq(getMemberValueRef(s, desc)) });
 
-        else if constexpr (is_json_serializable_sequential_container_v<ValueType>)
-            members.push_back(JsonAttribute{ name, createJsonArrayFromSeq(*valuePtr) });
+        else if constexpr (is_json_serializable_tuple_v<MemberType>)
+            members.push_back(JsonAttribute{ name, createJsonArrayFromTup(getMemberValueRef(s, desc)) });
 
-        else if constexpr (is_json_serializable_tuple_v<ValueType>)
-            members.push_back(JsonAttribute{ name, createJsonArrayFromTup(*valuePtr) });
+        else if constexpr (is_describable_struct_v<MemberType>)
+            members.push_back(JsonAttribute{ name, createJsonObjectFrom(getMemberValueRef(s, desc)) });
+        });
 
-        else if constexpr (is_describable_struct_v<ValueType>) 
-            members.push_back(JsonAttribute{ name, createJsonObjectFrom(*valuePtr) });
-    });
-
-    object.setMembers(members);
+    return members;
 }
-
 
 template<typename Struct>
 std::string marshalImp(const Struct& s) {
-    JsonObject root;
-    buildJsonTree(s, root);
+    auto root = std::make_shared<JsonObject>(buildJsonTreeFrom(s));
 
     JsonWriter writer;
-    return writer.witeToJson(&root);
+    return writer.witeToJson(root.get());
 }
 
 template<typename Struct>
 void unmarshalImp(std::string_view json, Struct& s)  {
     JsonReader reader(json);
 
-    JsonObject root;
-    buildJsonTree(s, root);
-
-    reader.readFromJson(&root);
+    auto root = std::make_shared<JsonObject>(buildJsonTreeFrom(s));
+    reader.readFromJson(root.get());
 }
 
 

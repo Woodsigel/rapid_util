@@ -5,9 +5,10 @@ struct Person {
     std::string name;
     int age;
     bool isStudent;
+    std::shared_ptr<std::string> email;
 };
 
-RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Person, (name, age, isStudent))
+RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Person, (name, age, isStudent, email))
 
 void unmarshal_basic_usage() {
     std::cout << "=== Unmarshal Basic Usage Example ===" << std::endl;
@@ -15,7 +16,8 @@ void unmarshal_basic_usage() {
     std::string json = R"({
         "name": "Bob",
         "age": 30,
-        "isStudent": false
+        "isStudent": false,
+        "email" : null
     })";
 
     Person person;
@@ -24,13 +26,14 @@ void unmarshal_basic_usage() {
     std::cout << "Unmarshaled Person:" << std::endl;
     std::cout << "  Name: " << person.name << std::endl;
     std::cout << "  Age: " << person.age << std::endl;
-    std::cout << "  Is Student: " << (person.isStudent ? "Yes" : "No") << "\n" << std::endl;
+    std::cout << "  Is Student: " << (person.isStudent ? "Yes" : "No")  << std::endl;
+    std::cout << "  Email: " << (person.email ? *person.email : "null") << "\n" << std::endl;
 }
 
 struct Address {
     std::string street;
     std::string city;
-    int zipCode;
+    std::shared_ptr<int> zipCode;
 };
 
 struct Employee {
@@ -50,7 +53,7 @@ void unmarshal_nested_structure() {
         "address": {
             "street": "456 Oak Ave",
             "city": "Shanghai",
-            "zipCode": 200000
+            "zipCode": null
         },
         "salary": 80000.0
     })";
@@ -61,7 +64,9 @@ void unmarshal_nested_structure() {
     std::cout << "Unmarshaled Employee:" << std::endl;
     std::cout << "  Name: " << employee.name << std::endl;
     std::cout << "  Address: " << employee.address.street << ", "
-        << employee.address.city << ", " << employee.address.zipCode << std::endl;
+        << employee.address.city << ", ";
+    auto zipCode = employee.address.zipCode == nullptr ? "null" : std::to_string(*employee.address.zipCode);
+    std::cout << zipCode << std::endl;
     std::cout << "  Salary: " << employee.salary << "\n" << std::endl;
 }
 
@@ -113,17 +118,19 @@ struct SensorReading {
 struct SystemStatus {
     std::string timestamp;
     std::tuple<bool, int, SensorReading, std::string> statusData;
+    std::shared_ptr<std::tuple<double, std::string, int>> diagnostics;
 };
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(SensorReading, (sensorType, value))
-RAPIDJSON_UTIL_DESCRIBE_MEMBERS(SystemStatus, (timestamp, statusData))
+RAPIDJSON_UTIL_DESCRIBE_MEMBERS(SystemStatus, (timestamp, statusData, diagnostics))
 
 void unmarshal_heterogeneous_array() {
     std::cout << "=== Unmarshal Heterogeneous Array Example ===" << std::endl;
 
     std::string json = R"({
         "timestamp": "2024-01-16T14:45:00Z",
-        "statusData": [false, 42, {"sensorType": "Humidity", "value": 65.2}, "Maintenance"]
+        "statusData": [false, 42, {"sensorType": "Humidity", "value": 65.2}, "Maintenance"],
+        "diagnostics": null
     })";
 
     SystemStatus systemStatus;
@@ -138,8 +145,18 @@ void unmarshal_heterogeneous_array() {
     std::cout << "    - Sensor Count: " << sensorCount << std::endl;
     std::cout << "    - Sensor Reading: " << reading.sensorType << " = " << reading.value << std::endl;
     std::cout << "    - Status: " << status << "\n" << std::endl;
-}
 
+    if (systemStatus.diagnostics) {
+        const auto& [uptime, health, operations] = *systemStatus.diagnostics;
+        std::cout << "  Diagnostics:" << std::endl;
+        std::cout << "    - Uptime: " << uptime << "%" << std::endl;
+        std::cout << "    - Health: " << health << std::endl;
+        std::cout << "    - Operations: " << operations << std::endl;
+    }
+    else {
+        std::cout << "  Diagnostics: None (null)" << std::endl;
+    }
+}
 
 
 int main() {
@@ -150,6 +167,4 @@ int main() {
     unmarshal_homogeneous_array();     // Array of same-type objects
 
     unmarshal_heterogeneous_array();   // Tuple with mixed types
-
-    return 0;
 }
