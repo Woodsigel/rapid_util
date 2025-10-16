@@ -61,31 +61,31 @@ template<typename T>
 using member_type_t = typename member_type<T>::type;
 
 template<typename T>
-struct is_std_shared_ptr : std::false_type {};
+struct is_std_shared_ptr_impl : std::false_type {};
 
 template<typename T>
-struct is_std_shared_ptr<std::shared_ptr<T>> : std::true_type {};
+struct is_std_shared_ptr_impl<std::shared_ptr<T>> : std::true_type {};
 
 template<typename T>
-struct is_std_shared_ptr<const std::shared_ptr<T>> : std::true_type {};
+struct is_std_shared_ptr :
+    is_std_shared_ptr_impl<remove_const_and_reference_t<T>> {};
 
 template<typename T>
 constexpr bool is_std_shared_ptr_v = typename is_std_shared_ptr<T>::value;
 
 template<typename T>
-struct remove_std_shared_ptr {
+struct remove_std_shared_ptr_impl {
     using type = T;
 };
 
 template<typename T>
-struct remove_std_shared_ptr<std::shared_ptr<T>> {
+struct remove_std_shared_ptr_impl<std::shared_ptr<T>> {
     using type = T;
 };
 
 template<typename T>
-struct remove_std_shared_ptr<const std::shared_ptr<T>> {
-    using type = T;
-};
+struct remove_std_shared_ptr :
+    remove_std_shared_ptr_impl<remove_const_and_reference_t<T>> {};
 
 template<typename T>
 using remove_std_shared_ptr_t = typename remove_std_shared_ptr<T>::type;

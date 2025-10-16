@@ -82,7 +82,7 @@ public:
 
 namespace detail {
 
-class JsonBasicValue;
+class JsonPrimitiveValue;
 class JsonObject;
 class JsonSharedPtrObject;
 class JsonArray;
@@ -103,7 +103,7 @@ void ThrowUnless(bool condition, Exception&& exception) {
  */
 class JsonVisitor {
 public:
-	virtual void visit(JsonBasicValue*, rapidjson::Value& rapidjsonValue) = 0;
+	virtual void visit(JsonPrimitiveValue*, rapidjson::Value& rapidjsonValue) = 0;
 	virtual void visit(JsonObject*, rapidjson::Value& rapidjsonValue) = 0;
 	virtual void visit(JsonSharedPtrObject* object, rapidjson::Value& rapidjsonValue) = 0;
 	virtual void visit(JsonArray*, rapidjson::Value& rapidjsonValue) = 0;
@@ -135,7 +135,7 @@ public:
       */
 	std::string witeToJson(JsonObject* root);
 
-	void visit(JsonBasicValue* basicValue, rapidjson::Value& jsonOutput) override;
+	void visit(JsonPrimitiveValue* primitiveValue, rapidjson::Value& jsonOutput) override;
 	void visit(JsonObject* object, rapidjson::Value& jsonOutput) override;
 	void visit(JsonSharedPtrObject* object, rapidjson::Value& jsonOutput) override;
 	void visit(JsonArray* array, rapidjson::Value& jsonOutput) override;
@@ -175,7 +175,7 @@ public:
 	  */
 	void readFromJson(JsonObject* root);
 	 
-	void visit(JsonBasicValue* basicValue, rapidjson::Value& jsonInput) override;
+	void visit(JsonPrimitiveValue* primitiveValue, rapidjson::Value& jsonInput) override;
 	void visit(JsonObject* object, rapidjson::Value& jsonInput) override;
 	void visit(JsonSharedPtrObject* object, rapidjson::Value& jsonInput) override;
 	void visit(JsonArray* array, rapidjson::Value& jsonInput) override;
@@ -202,7 +202,7 @@ public:
 };
 
 
-class JsonBasicValue : public JsonValue {
+class JsonPrimitiveValue : public JsonValue {
 public:
 	enum class StoredType {
 		IntPtr,
@@ -220,7 +220,7 @@ public:
 	};
 
 	/**
-      * Constructs a JsonBasicValue that maintains a pointer to a struct member.
+      * Constructs a JsonPrimitiveValue that maintains a pointer to a struct member.
       * The member can be a regular attribute or a shared_ptr wrapper.
       * Only shared_ptr members are allowed to be null.
       *
@@ -228,7 +228,7 @@ public:
       * @param _value Pointer to the struct member that will be updated
       */
 	template<typename T>
-	JsonBasicValue(T* _value) : value(_value) {
+	JsonPrimitiveValue(T* _value) : value(_value) {
 		using BaseType = std::remove_const_t<remove_std_shared_ptr_t<T>>;
 
 		if constexpr (std::is_same_v<BaseType, int>) type = StoredType::IntPtr;
@@ -346,7 +346,7 @@ public:
 		assert(isPointToConst());
 		assert(!isReferencedSharedPtrNull());
 
-		if (JsonBasicValue::OwnershipType::Raw == ownershipType())
+		if (JsonPrimitiveValue::OwnershipType::Raw == ownershipType())
 			return std::any_cast<const T*>(storedValue());
 
 		else {
@@ -356,7 +356,7 @@ public:
 	}
 
 	/**
-	 * Unwraps a raw pointer to the underlying data for read-write access.
+	 * Unwraps a pointer to the underlying data for read-write access.
 	 *
 	 * For raw pointer members, returns the direct raw pointer to the struct member.
 	 * For smart pointer members, return the pointer to the object managed by the struct's
@@ -368,7 +368,7 @@ public:
 	T* unwrapPointer() {
 		assert(!isPointToConst());
 
-		if (JsonBasicValue::OwnershipType::Raw == ownershipType())
+		if (JsonPrimitiveValue::OwnershipType::Raw == ownershipType())
 			return std::any_cast<T*>(storedValue());
 
 		else {
@@ -393,7 +393,7 @@ private:
 			return;
 
         #define REINITIALIZE(storedType, CXXType)                                      \
-		    case JsonBasicValue::StoredType::storedType: {                             \
+		    case JsonPrimitiveValue::StoredType::storedType: {                             \
 				auto value = std::any_cast<std::shared_ptr<CXXType>*>(storedValue());  \
 				*value = std::make_shared<CXXType>();                                  \
 				break;                                                                 \
@@ -608,53 +608,53 @@ inline std::string JsonWriter::witeToJson(JsonObject* root) {
 	return buffer.GetString();
 }
 
-inline void JsonWriter::visit(JsonBasicValue* basicValue, rapidjson::Value& jsonOutput) {
-	assert(basicValue->isPointToConst());
+inline void JsonWriter::visit(JsonPrimitiveValue* primitiveValue, rapidjson::Value& jsonOutput) {
+	assert(primitiveValue->isPointToConst());
 
-	if (JsonBasicValue::OwnershipType::SharedPtr == basicValue->ownershipType() && basicValue->isReferencedSharedPtrNull()) {
+	if (JsonPrimitiveValue::OwnershipType::SharedPtr == primitiveValue->ownershipType() && primitiveValue->isReferencedSharedPtrNull()) {
 		jsonOutput.SetNull();
 		return;
 	}
 		
-	switch (basicValue->storedType()) {
-		case JsonBasicValue::StoredType::IntPtr: {
-			auto value = basicValue->unwrapConstPointer<int>();
+	switch (primitiveValue->storedType()) {
+		case JsonPrimitiveValue::StoredType::IntPtr: {
+			auto value = primitiveValue->unwrapConstPointer<int>();
 			jsonOutput.SetInt(*value);
 			break;
 		}
 
-		case JsonBasicValue::StoredType::Int64Ptr: {
-			auto value = basicValue->unwrapConstPointer<int64_t>();
+		case JsonPrimitiveValue::StoredType::Int64Ptr: {
+			auto value = primitiveValue->unwrapConstPointer<int64_t>();
 			jsonOutput.SetInt64(*value);
 			break;
 		}
 
-		case JsonBasicValue::StoredType::Uint64Ptr: {
-			auto value = basicValue->unwrapConstPointer<uint64_t>();
+		case JsonPrimitiveValue::StoredType::Uint64Ptr: {
+			auto value = primitiveValue->unwrapConstPointer<uint64_t>();
 			jsonOutput.SetUint64(*value);
 			break;
 		}
 
-		case JsonBasicValue::StoredType::BoolPtr: {
-			auto value = basicValue->unwrapConstPointer<bool>();
+		case JsonPrimitiveValue::StoredType::BoolPtr: {
+			auto value = primitiveValue->unwrapConstPointer<bool>();
 			jsonOutput.SetBool(*value);
 			break;
 		}
 
-		case JsonBasicValue::StoredType::FloatPtr: {
-			auto value = basicValue->unwrapConstPointer<float>();
+		case JsonPrimitiveValue::StoredType::FloatPtr: {
+			auto value = primitiveValue->unwrapConstPointer<float>();
 			jsonOutput.SetFloat(*value);
 			break;
 		}
 
-		case JsonBasicValue::StoredType::DoublePtr: {
-			auto value = basicValue->unwrapConstPointer<double>();
+		case JsonPrimitiveValue::StoredType::DoublePtr: {
+			auto value = primitiveValue->unwrapConstPointer<double>();
 			jsonOutput.SetDouble(*value);
 			break;
 		}
 
-		case JsonBasicValue::StoredType::StringPtr: {
-			auto value = basicValue->unwrapConstPointer<std::string>();
+		case JsonPrimitiveValue::StoredType::StringPtr: {
+			auto value = primitiveValue->unwrapConstPointer<std::string>();
 			jsonOutput.SetString(value->c_str(), static_cast<rapidjson::SizeType>(value->length()),
 				                     rapidjsonDocument.GetAllocator());
 			break;
@@ -785,65 +785,65 @@ private:
 };
 
 
-inline void JsonReader::visit(JsonBasicValue* basicValue, rapidjson::Value& jsonInput) {
-	assert(!basicValue->isPointToConst());
+inline void JsonReader::visit(JsonPrimitiveValue* primitiveValue, rapidjson::Value& jsonInput) {
+	assert(!primitiveValue->isPointToConst());
 
-	if (jsonInput.IsNull() && basicValue->ownershipType() == JsonBasicValue::OwnershipType::SharedPtr)
-		return basicValue->resetReferencedValue();
+	if (jsonInput.IsNull() && primitiveValue->ownershipType() == JsonPrimitiveValue::OwnershipType::SharedPtr)
+		return primitiveValue->resetReferencedValue();
 
-	switch (basicValue->storedType()) {
-		case JsonBasicValue::StoredType::IntPtr: {
+	switch (primitiveValue->storedType()) {
+		case JsonPrimitiveValue::StoredType::IntPtr: {
 			RapidjsonValueTypeValidator::validate(jsonInput, QueryType::IsInt);
 
-			auto value = basicValue->unwrapPointer<int>();
+			auto value = primitiveValue->unwrapPointer<int>();
 			*value = jsonInput.GetInt();
 			break;
 		} 
 
-		case JsonBasicValue::StoredType::Int64Ptr: {
+		case JsonPrimitiveValue::StoredType::Int64Ptr: {
 			RapidjsonValueTypeValidator::validate(jsonInput, QueryType::IsInt64);
 
-			auto value = basicValue->unwrapPointer<int64_t>();
+			auto value = primitiveValue->unwrapPointer<int64_t>();
 			*value = jsonInput.GetInt64();
 			break;
 		}
 
-		case JsonBasicValue::StoredType::Uint64Ptr: {
+		case JsonPrimitiveValue::StoredType::Uint64Ptr: {
 			RapidjsonValueTypeValidator::validate(jsonInput, QueryType::IsUint64);
 
-			auto value = basicValue->unwrapPointer<uint64_t>();
+			auto value = primitiveValue->unwrapPointer<uint64_t>();
 			*value = jsonInput.GetUint64();
 			break;
 		}
 
-		case JsonBasicValue::StoredType::FloatPtr: {
+		case JsonPrimitiveValue::StoredType::FloatPtr: {
 			RapidjsonValueTypeValidator::validate(jsonInput, QueryType::IsFloat);
 
-			auto value = basicValue->unwrapPointer<float>();
+			auto value = primitiveValue->unwrapPointer<float>();
 			*value = jsonInput.GetFloat();
 			break;
 		}
 
-		case JsonBasicValue::StoredType::DoublePtr: {
+		case JsonPrimitiveValue::StoredType::DoublePtr: {
 			RapidjsonValueTypeValidator::validate(jsonInput, QueryType::IsDouble);
 
-			auto value = basicValue->unwrapPointer<double>();
+			auto value = primitiveValue->unwrapPointer<double>();
 			*value = jsonInput.GetDouble();
 			break;
 		}
 
-		case JsonBasicValue::StoredType::BoolPtr: {
+		case JsonPrimitiveValue::StoredType::BoolPtr: {
 			RapidjsonValueTypeValidator::validate(jsonInput, QueryType::IsBool);
 
-			auto value = basicValue->unwrapPointer<bool>();
+			auto value = primitiveValue->unwrapPointer<bool>();
 			*value = jsonInput.GetBool();
 			break;
 		}
 
-		case JsonBasicValue::StoredType::StringPtr: {
+		case JsonPrimitiveValue::StoredType::StringPtr: {
 			RapidjsonValueTypeValidator::validate(jsonInput, QueryType::IsString);
 
-			auto value = basicValue->unwrapPointer<std::string>();
+			auto value = primitiveValue->unwrapPointer<std::string>();
 			*value = jsonInput.GetString();
 			break;
 		}
