@@ -71,7 +71,7 @@ namespace detail {
 
 template<typename T>
 std::shared_ptr<JsonValue> createJsonBasicValueFrom(T& value) {
-    static_assert(is_json_serializable_primitive_type_v<std::decay_t<T>>);
+    static_assert(is_json_serializable_primitive_type_v<std::remove_const_t<T>>);
 
     return std::make_shared<JsonBasicValue>(&value);
 }
@@ -137,7 +137,7 @@ struct CreateJsonObjectFromImp<false> {
 
 template<typename T>
 std::shared_ptr<JsonValue> createJsonObjectFrom(T& value) {
-    static_assert(is_describable_struct_v<T>);
+    static_assert(is_describable_struct_v<std::remove_const_t<T>>);
 
     return CreateJsonObjectFromImp<is_std_shared_ptr_v<T>>::create(value);
 }
@@ -147,7 +147,7 @@ std::vector<std::shared_ptr<JsonValue>> convertToJsonValuesFromSeq(Sequence& seq
     std::vector<std::shared_ptr<JsonValue>> elements;
 
     for (auto&& it : sequence) {
-        using elemType = std::decay_t<decltype(it)>;
+        using elemType = remove_const_and_reference_t<decltype(it)>;
 
         if constexpr (is_json_serializable_primitive_type_v<elemType>)
             elements.push_back(createJsonBasicValueFrom(it));
@@ -163,7 +163,7 @@ template<typename T>
 std::shared_ptr<JsonSharedPtrArray> createJsonArrayFromConstSharedPtrSeq(T& sequence) {
     static_assert(std::is_const_v<T> && is_std_shared_ptr_v<T>);
 
-    bool hasSharedPtrElems = has_shared_ptr_elements<std::remove_const_t<T>>::value;
+    bool hasSharedPtrElems = has_shared_ptr_elements<T>::value;
     if (nullptr == sequence) 
         return std::make_shared<JsonSharedPtrArray>(hasSharedPtrElems);
 
@@ -230,7 +230,7 @@ struct CreateJsonArrayFromSeqImp<false> {
         auto elements = convertToJsonValuesFromSeq(sequence);
         auto jsonArray = std::make_shared<JsonArray>(elements, has_shared_ptr_elements<T>::value);
 
-        if constexpr (!std::is_const_v<std::remove_reference_t<T>> && is_json_serializable_dynamic_array_v<std::decay_t<T>>)
+        if constexpr (!std::is_const_v<T> && is_json_serializable_dynamic_array_v<T>)
             jsonArray->setArrayResizer([sequencePtr = &sequence](std::size_t newSize) {
                                                                     sequencePtr->resize(newSize);
                                                                     return  convertToJsonValuesFromSeq(*sequencePtr);
@@ -242,7 +242,7 @@ struct CreateJsonArrayFromSeqImp<false> {
 
 template<typename T>
 std::shared_ptr<JsonValue> createJsonArrayFromSeq(T& sequence) {
-    static_assert(is_json_serializable_sequential_container_v<std::decay_t<T>>);
+    static_assert(is_json_serializable_sequential_container_v<std::remove_const_t<T>>);
 
     return CreateJsonArrayFromSeqImp<is_std_shared_ptr_v<T>>::create(sequence);
 }
@@ -253,7 +253,7 @@ std::vector <std::shared_ptr<JsonValue>> convertToJsonValuesFromTup(Tuple& tuple
 
     std::apply([&elements](auto&&... tupleArgs) {
         auto process = [&elements](auto&& arg) {
-            using elemType = std::decay_t<decltype(arg)>;
+            using elemType = remove_const_and_reference_t<decltype(arg)>;
 
             if constexpr (is_json_serializable_primitive_type_v<elemType>)
                 elements.push_back(createJsonBasicValueFrom(arg));
@@ -339,7 +339,7 @@ struct CreateJsonArrayFromTupImp<false> {
 
 template<typename Tuple>
 std::shared_ptr<JsonValue> createJsonArrayFromTup(Tuple& tuple) {
-    static_assert(is_json_serializable_tuple_v<std::decay_t<Tuple>>);
+    static_assert(is_json_serializable_tuple_v<std::remove_const_t<Tuple>>);
 
     return CreateJsonArrayFromTupImp<is_std_shared_ptr_v<Tuple>>::create(tuple);
 }
@@ -357,14 +357,14 @@ decltype(auto) getMemberValueRef(Struct& s, Desc descriptor) {
 
 template<typename Struct>
 std::vector<JsonAttribute> buildJsonTreeFrom(Struct& s) {
-    static_assert(is_describable_struct_v<Struct>, "Use the RAPIDJSON_UTIL_DESCRIBE_MEMBERS macro to declare serializable struct members");
+    static_assert(is_describable_struct_v<std::remove_const_t<Struct>>, "Use the RAPIDJSON_UTIL_DESCRIBE_MEMBERS macro to declare serializable struct members");
 
     std::vector<JsonAttribute> members;
 
     auto descriptors = Descriptor<std::remove_const_t<Struct>>::member_descriptors;
     for_each(descriptors, [&s, &members](auto desc) {
         std::string name = getMemberName(desc);
-        using MemberType = std::decay_t<decltype(getMemberValueRef(s, desc))>;
+        using MemberType = remove_const_and_reference_t<decltype(getMemberValueRef(s, desc))>;
 
         if constexpr (is_json_serializable_primitive_type_v<MemberType>)
             members.push_back(JsonAttribute{ name, createJsonBasicValueFrom(getMemberValueRef(s, desc)) });
