@@ -84,9 +84,9 @@ namespace detail {
 
 class JsonPrimitiveValue;
 class JsonObject;
-class JsonSharedPtrObject;
+class JsonNullableObject;
 class JsonArray;
-class JsonSharedPtrArray;
+class JsonNullableArray;
 
 template<typename Exception>
 void ThrowUnless(bool condition, Exception&& exception) {
@@ -105,9 +105,9 @@ class JsonVisitor {
 public:
 	virtual void visit(JsonPrimitiveValue*, rapidjson::Value& rapidjsonValue) = 0;
 	virtual void visit(JsonObject*, rapidjson::Value& rapidjsonValue) = 0;
-	virtual void visit(JsonSharedPtrObject* object, rapidjson::Value& rapidjsonValue) = 0;
+	virtual void visit(JsonNullableObject* object, rapidjson::Value& rapidjsonValue) = 0;
 	virtual void visit(JsonArray*, rapidjson::Value& rapidjsonValue) = 0;
-	virtual void visit(JsonSharedPtrArray* array, rapidjson::Value& rapidjsonValue) = 0;
+	virtual void visit(JsonNullableArray* array, rapidjson::Value& rapidjsonValue) = 0;
 
 	virtual ~JsonVisitor() = default;
 };
@@ -137,9 +137,9 @@ public:
 
 	void visit(JsonPrimitiveValue* primitiveValue, rapidjson::Value& jsonOutput) override;
 	void visit(JsonObject* object, rapidjson::Value& jsonOutput) override;
-	void visit(JsonSharedPtrObject* object, rapidjson::Value& jsonOutput) override;
+	void visit(JsonNullableObject* object, rapidjson::Value& jsonOutput) override;
 	void visit(JsonArray* array, rapidjson::Value& jsonOutput) override;
-	void visit(JsonSharedPtrArray* array, rapidjson::Value& jsonOutput) override;
+	void visit(JsonNullableArray* array, rapidjson::Value& jsonOutput) override;
 
 private:
 	void writeObjectMembers(JsonObject* object, rapidjson::Value& jsonOutput);
@@ -177,9 +177,9 @@ public:
 	 
 	void visit(JsonPrimitiveValue* primitiveValue, rapidjson::Value& jsonInput) override;
 	void visit(JsonObject* object, rapidjson::Value& jsonInput) override;
-	void visit(JsonSharedPtrObject* object, rapidjson::Value& jsonInput) override;
+	void visit(JsonNullableObject* object, rapidjson::Value& jsonInput) override;
 	void visit(JsonArray* array, rapidjson::Value& jsonInput) override;
-	void visit(JsonSharedPtrArray* array, rapidjson::Value& jsonInput) override;
+	void visit(JsonNullableArray* array, rapidjson::Value& jsonInput) override;
 
 private:
 	void readObjectMembers(JsonObject* object, rapidjson::Value& jsonInput);
@@ -446,15 +446,15 @@ protected:
 	std::vector<JsonAttribute> members;
 };
 
-class JsonSharedPtrObject : public JsonObject {
+class JsonNullableObject : public JsonObject {
 public:
 	using SharedPtrReinitializer = std::function <std::vector<JsonAttribute>()>;
 	using SharedPtrResetter = std::function<void()>;
 
-	JsonSharedPtrObject() : isNull(true) {
+	JsonNullableObject() : isNull(true) {
 	}
 
-	JsonSharedPtrObject(const std::vector<JsonAttribute>& _members) : isNull(false) {
+	JsonNullableObject(const std::vector<JsonAttribute>& _members) : isNull(false) {
 		members = _members;
 	}
 
@@ -543,16 +543,16 @@ protected:
 	bool hasSharedPtrElems;
 };
 
-class JsonSharedPtrArray : public JsonArray {
+class JsonNullableArray : public JsonArray {
 public:
 	using SharedPtrResetter = std::function<void()>;
 	using SharedPtrReinitializer = std::function <std::vector<std::shared_ptr<JsonValue>>()>;
 
-	JsonSharedPtrArray(bool _hasSharedPtrElems = false) : isNull(true) {
+	JsonNullableArray(bool _hasSharedPtrElems = false) : isNull(true) {
 		hasSharedPtrElems = _hasSharedPtrElems;
 	}
 
-	JsonSharedPtrArray(const std::vector<std::shared_ptr<JsonValue>>& _elements, bool _hasSharedPtrElems = false) 
+	JsonNullableArray(const std::vector<std::shared_ptr<JsonValue>>& _elements, bool _hasSharedPtrElems = false) 
 		: isNull(false) {
 		elements = _elements;
 		hasSharedPtrElems = _hasSharedPtrElems;
@@ -680,7 +680,7 @@ inline void JsonWriter::visit(JsonObject* object, rapidjson::Value& jsonOutput) 
 	writeObjectMembers(object, jsonOutput);
 }
 
-inline void JsonWriter::visit(JsonSharedPtrObject* object, rapidjson::Value& jsonOutput) {
+inline void JsonWriter::visit(JsonNullableObject* object, rapidjson::Value& jsonOutput) {
 	if (object->isReferencedSharedPtrNull()) {
 		jsonOutput.SetNull();
 		return;
@@ -705,7 +705,7 @@ inline void JsonWriter::visit(JsonArray* array, rapidjson::Value& jsonOutput) {
 	writeArrayMembers(array, jsonOutput);
 }
 
-inline void JsonWriter::visit(JsonSharedPtrArray* array, rapidjson::Value& jsonOutput)
+inline void JsonWriter::visit(JsonNullableArray* array, rapidjson::Value& jsonOutput)
 {
 	if (array->isReferencedSharedPtrNull()) {
 		jsonOutput.SetNull();
@@ -871,7 +871,7 @@ inline void JsonReader::visit(JsonObject* object, rapidjson::Value& jsonInput) {
 	readObjectMembers(object, jsonInput);
 }
 
-inline void JsonReader::visit(JsonSharedPtrObject* object, rapidjson::Value& jsonInput) {
+inline void JsonReader::visit(JsonNullableObject* object, rapidjson::Value& jsonInput) {
 	if (jsonInput.IsNull())
 		return object->resetReferencedSharedPtr();
 
@@ -917,7 +917,7 @@ inline void JsonReader::visit(JsonArray* array, rapidjson::Value& jsonInput) {
 	readArrayElements(array, jsonInput);
 }
 
-inline void JsonReader::visit(JsonSharedPtrArray* array, rapidjson::Value& jsonInput) {
+inline void JsonReader::visit(JsonNullableArray* array, rapidjson::Value& jsonInput) {
 	if (jsonInput.IsNull())
 		return array->resetReferencedSharedPtr();
 

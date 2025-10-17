@@ -111,24 +111,24 @@ struct JsonValueCreator<JsonSourceType::Struct, WrapperType::None, isConstQualif
 template<>
 struct JsonValueCreator<JsonSourceType::Struct, WrapperType::StdSharedPtr, true> {
     template<typename T>
-    static std::shared_ptr<JsonSharedPtrObject> create(T& value) {
+    static std::shared_ptr<JsonNullableObject> create(T& value) {
         static_assert(is_std_shared_ptr_v<T> && std::is_const_v<T>);
 
         if (value == nullptr)
-            return std::make_shared<JsonSharedPtrObject>();
+            return std::make_shared<JsonNullableObject>();
         else
-            return  std::make_shared<JsonSharedPtrObject>(buildJsonTreeFrom(std::as_const(*value)));
+            return  std::make_shared<JsonNullableObject>(buildJsonTreeFrom(std::as_const(*value)));
     }
 };
 
 template<>
 struct JsonValueCreator<JsonSourceType::Struct, WrapperType::StdSharedPtr, false> {
     template<typename T>
-    static std::shared_ptr<JsonSharedPtrObject> create(T& value) {
+    static std::shared_ptr<JsonNullableObject> create(T& value) {
         static_assert(is_std_shared_ptr_v<T> && !std::is_const_v<T>);
 
-        auto object = (value == nullptr) ? std::make_shared<JsonSharedPtrObject>() :
-            std::make_shared<JsonSharedPtrObject>(buildJsonTreeFrom(*value));
+        auto object = (value == nullptr) ? std::make_shared<JsonNullableObject>() :
+            std::make_shared<JsonNullableObject>(buildJsonTreeFrom(*value));
 
         auto sharedPtrResetter = [&value]() { value.reset(); };
         auto sharedPtrReinitializer = [&value]()
@@ -185,16 +185,16 @@ struct JsonValueCreator<JsonSourceType::Sequential, WrapperType::None, isConstQu
 template<>
 struct JsonValueCreator<JsonSourceType::Sequential, WrapperType::StdSharedPtr, true> {
     template<typename T>
-    static std::shared_ptr<JsonSharedPtrArray> create(T& sequence) {
+    static std::shared_ptr<JsonNullableArray> create(T& sequence) {
         static_assert(std::is_const_v<T> && is_std_shared_ptr_v<T>);
 
         bool hasSharedPtrElems = has_shared_ptr_elements<T>::value;
         if (nullptr == sequence)
-            return std::make_shared<JsonSharedPtrArray>(hasSharedPtrElems);
+            return std::make_shared<JsonNullableArray>(hasSharedPtrElems);
 
         else {
             auto elements = convertToJsonValuesFromSeq(std::as_const(*sequence));
-            return std::make_shared<JsonSharedPtrArray>(elements, hasSharedPtrElems);
+            return std::make_shared<JsonNullableArray>(elements, hasSharedPtrElems);
         }
     }
 };
@@ -202,12 +202,12 @@ struct JsonValueCreator<JsonSourceType::Sequential, WrapperType::StdSharedPtr, t
 template<>
 struct JsonValueCreator<JsonSourceType::Sequential, WrapperType::StdSharedPtr, false> {
     template<typename T>
-    static std::shared_ptr<JsonSharedPtrArray> create(T& sequence) {
+    static std::shared_ptr<JsonNullableArray> create(T& sequence) {
         static_assert(!std::is_const_v<T> && is_std_shared_ptr_v<T>);
 
         bool hasSharedPtrElems = has_shared_ptr_elements<T>::value;
-        auto jsonArray = (sequence == nullptr) ? std::make_shared<JsonSharedPtrArray>(hasSharedPtrElems) :
-            std::make_shared<JsonSharedPtrArray>(convertToJsonValuesFromSeq(*sequence), hasSharedPtrElems);
+        auto jsonArray = (sequence == nullptr) ? std::make_shared<JsonNullableArray>(hasSharedPtrElems) :
+            std::make_shared<JsonNullableArray>(convertToJsonValuesFromSeq(*sequence), hasSharedPtrElems);
 
 
         auto sharedPtrReinitializer = [&sequence]()
@@ -275,15 +275,15 @@ struct JsonValueCreator<JsonSourceType::Tuple, WrapperType::None, isConstQualifi
 template<>
 struct JsonValueCreator<JsonSourceType::Tuple, WrapperType::StdSharedPtr, true> {
     template<typename T>
-    static std::shared_ptr<JsonSharedPtrArray> create(T& tuple) {
+    static std::shared_ptr<JsonNullableArray> create(T& tuple) {
         static_assert(std::is_const_v<T> && is_std_shared_ptr_v<T>);
 
         if (nullptr == tuple)
-            return std::make_shared<JsonSharedPtrArray>();
+            return std::make_shared<JsonNullableArray>();
 
         else {
             auto elements = convertToJsonValuesFromTup(std::as_const(*tuple));
-            return std::make_shared<JsonSharedPtrArray>(elements);
+            return std::make_shared<JsonNullableArray>(elements);
         }
     }
 };
@@ -291,11 +291,11 @@ struct JsonValueCreator<JsonSourceType::Tuple, WrapperType::StdSharedPtr, true> 
 template<>
 struct JsonValueCreator<JsonSourceType::Tuple, WrapperType::StdSharedPtr, false> {
     template<typename T>
-    static std::shared_ptr<JsonSharedPtrArray> create(T& tuple) {
+    static std::shared_ptr<JsonNullableArray> create(T& tuple) {
         static_assert(!std::is_const_v<T> && is_std_shared_ptr_v<T>);
 
-        auto jsonArray = (tuple == nullptr) ? std::make_shared<JsonSharedPtrArray>() :
-            std::make_shared<JsonSharedPtrArray>(convertToJsonValuesFromTup(*tuple));
+        auto jsonArray = (tuple == nullptr) ? std::make_shared<JsonNullableArray>() :
+            std::make_shared<JsonNullableArray>(convertToJsonValuesFromTup(*tuple));
 
 
         auto sharedPtrReinitializer = [&tuple]()
