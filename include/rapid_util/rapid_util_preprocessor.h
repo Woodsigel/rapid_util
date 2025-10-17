@@ -127,13 +127,9 @@ template<typename Elem, std::size_t N>
 struct is_json_serializable_fixed_array_impl<std::array<Elem, N>>
     : std::bool_constant<is_json_serializable_primitive_type_v<Elem> || is_describable_struct_v<Elem>> {};
 
-template<typename Array>
-struct is_json_serializable_fixed_array_impl<std::shared_ptr<Array>>
-    : is_json_serializable_fixed_array_impl<Array> {};
-
 template<typename T>
 struct is_json_serializable_fixed_array
-    : is_json_serializable_fixed_array_impl<std::remove_reference_t<T>> {};
+    : is_json_serializable_fixed_array_impl<std::remove_reference_t<remove_std_shared_ptr_t<T>>> {};
 
 template<typename Array>
 constexpr bool is_json_serializable_fixed_array_v = is_json_serializable_fixed_array<Array>::value;
@@ -145,13 +141,9 @@ template<typename Elem, typename Alloc>
 struct is_json_serializable_vector_impl<std::vector<Elem, Alloc>>
     : std::bool_constant<is_json_serializable_primitive_type_v<Elem> || is_describable_struct_v<Elem>> {};
 
-template<typename Vector>
-struct is_json_serializable_vector_impl<std::shared_ptr<Vector>>
-    : is_json_serializable_vector_impl<Vector> {};
-
 template<typename T>
 struct is_json_serializable_vector
-    : is_json_serializable_vector_impl<std::remove_reference_t<T>> {};
+    : is_json_serializable_vector_impl< std::remove_reference_t<remove_std_shared_ptr_t<T>>> {};
 
 template<typename T, typename = void>
 struct is_json_serializable_list_impl : std::false_type {};
@@ -160,13 +152,9 @@ template<typename Elem, typename Alloc>
 struct is_json_serializable_list_impl<std::list<Elem, Alloc>>
       : std::bool_constant<is_json_serializable_primitive_type_v<Elem> || is_describable_struct_v<Elem>> {};
 
-template<typename List>
-struct is_json_serializable_list_impl<std::shared_ptr<List>>
-    : is_json_serializable_list_impl<List> {};
-
 template<typename T>
 struct is_json_serializable_list
-    : is_json_serializable_list_impl<std::remove_reference_t<T>> {};
+    : is_json_serializable_list_impl<std::remove_reference_t<remove_std_shared_ptr_t<T>>> {};
 
 template<typename Container>
 struct is_json_serializable_dynamic_array
