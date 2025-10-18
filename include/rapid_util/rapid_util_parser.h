@@ -769,7 +769,6 @@ public:
         #undef RAPIDJSON_VALUE_VALIDATE
 	}
 
-
 private:
 	static std::string getTypeFrom(const rapidjson::Value& value) {
 		if (value.IsNumber()) {

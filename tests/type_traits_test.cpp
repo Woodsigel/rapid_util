@@ -5,7 +5,7 @@
 
 using namespace rapidjson_util::detail;
 
-TEST(JsonValueTypeTraitTest, SupportsValidJsonTypes) {
+TEST(JsonValueTypeTraitTest, SupportValidJsonTypes) {
 	static_assert(is_json_serializable_primitive_type_v<int>);
 	static_assert(is_json_serializable_primitive_type_v<int8_t>);
 	static_assert(is_json_serializable_primitive_type_v<int32_t>);
@@ -18,7 +18,7 @@ TEST(JsonValueTypeTraitTest, SupportsValidJsonTypes) {
 	static_assert(is_json_serializable_primitive_type_v<std::optional<int>>);
 }
 
-TEST(JsonValueTypeTraitTest, RejectsUnserializableTypes) {
+TEST(JsonValueTypeTraitTest, RejectUnserializableTypes) {
 	using aUnSerialableType = std::stringstream;
 
 	static_assert(!is_json_serializable_primitive_type_v<int*>, "Raw pointers are not allowed, use std::optional instead");
@@ -28,7 +28,7 @@ TEST(JsonValueTypeTraitTest, RejectsUnserializableTypes) {
 	static_assert(!is_json_serializable_primitive_type_v<aUnSerialableType>, "Not a valid JSON ValueType");
 }
 
-TEST(JsonValueTypeTraitTest, ValidatesTupleSerializableElementTypes) {
+TEST(JsonValueTypeTraitTest, ValidateTupleSerializableElementTypes) {
 	
 	static_assert(is_json_serializable_tuple_v<std::tuple<int, double, float>>, 
 		         "Tuples with primitive types are serializable");
@@ -47,7 +47,7 @@ struct TypeHolder {
 
 };
 
-TEST(JsonValueTypeTraitTest, IdentifiesContainersWithSharedPtrElements) {
+TEST(JsonValueTypeTraitTest, IdentifyContainersWithNullableElementsUsingStdOptional) {
 	using aUnSerialableType = std::stringstream;
 
 	static_assert(has_std_optional_elements<std::vector<std::optional<int>>>::value);
