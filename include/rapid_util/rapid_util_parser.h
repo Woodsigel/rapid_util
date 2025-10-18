@@ -18,7 +18,6 @@
 #include <rapidjson/stringbuffer.h>
 #include <string_view>
 #include <string>
-#include <memory>
 #include <functional>
 #include <cstdint>
 #include <any>
@@ -450,6 +449,7 @@ protected:
 	std::vector<JsonAttribute> members;
 };
 
+
 class JsonNullableObject : public JsonObject {
 public:
 	using ReferencedValueReinitializer = std::function <std::vector<JsonAttribute>()>;
@@ -547,6 +547,7 @@ protected:
 	bool hasOptionalElems;
 };
 
+
 class JsonNullableArray : public JsonArray {
 public:
 	using ReferencedValueResetter = std::function<void()>;
@@ -579,8 +580,8 @@ public:
 
 		resetter();
 
-		isNull = true;
 		elements.clear();
+		isNull = true;
 	}
 
 	void reinitializeReferencedValue() {
@@ -719,6 +720,7 @@ inline void JsonWriter::visit(JsonNullableArray* array, rapidjson::Value& jsonOu
 	writeArrayMembers(array, jsonOutput);
 }
 
+
 inline JsonReader::JsonReader(std::string_view json) {
 	if (json.empty())
 		throw EmptyJsonStringException{};
@@ -730,6 +732,7 @@ inline JsonReader::JsonReader(std::string_view json) {
 inline void JsonReader::readFromJson(JsonObject* root) {
 	root->accept(*this, rapidjsonDocument);
 }
+
 
 enum class QueryType {
 	IsInt,
@@ -884,6 +887,7 @@ inline void JsonReader::visit(JsonNullableObject* object, rapidjson::Value& json
 
 	readObjectMembers(object, jsonInput);
 }
+
 
 inline bool hasNullElements(const rapidjson::Value& value) {
 	assert(value.IsArray());

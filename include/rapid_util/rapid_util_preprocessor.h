@@ -18,7 +18,6 @@
 #include <vector>
 #include <array>
 #include <type_traits>
-#include <memory>
 #include <optional>
 
 namespace rapidjson_util {
@@ -47,8 +46,10 @@ struct Descriptor {
     static constexpr TypeList<> member_descriptors{};
 };
 
+
 template<typename T>
 using remove_const_and_reference_t = std::remove_const_t<std::remove_reference_t<T>>;
+
 
 template<typename T>
 struct member_type;
@@ -68,6 +69,7 @@ struct is_wrapper : std::false_type {};
 template<template<typename> typename Wrapper, typename T>
 struct is_wrapper<Wrapper, Wrapper<T>> : std::true_type {};
 
+
 template<template<typename> typename Wrapper, typename T>
 struct remove_wrapper {
     using type = T;
@@ -78,6 +80,7 @@ struct remove_wrapper<Wrapper, Wrapper<T>> {
     using type = T;
 };
 
+
 template<typename T>
 struct is_std_optional_impl : is_wrapper<std::optional, T> {};
 
@@ -86,6 +89,7 @@ struct is_std_optional : is_std_optional_impl<remove_const_and_reference_t<T>> {
 
 template<typename T>
 constexpr bool is_std_optional_v = typename is_std_optional<T>::value;
+
 
 template<typename T>
 struct remove_std_optional_impl : remove_wrapper<std::optional, T> {};
@@ -96,10 +100,12 @@ struct remove_std_optional : remove_std_optional_impl<remove_const_and_reference
 template<typename T>
 using remove_std_optional_t = typename remove_std_optional<T>::type;
 
+
 // Empty specialization for debug type inspection
 template<typename Type>
 struct type_displayer {
 };
+
 
 template<typename T>
 constexpr bool is_json_primitive_core_type_v = std::disjunction_v<std::is_same<T, int>,
@@ -111,8 +117,6 @@ constexpr bool is_json_primitive_core_type_v = std::disjunction_v<std::is_same<T
                                                              std::is_same<T, std::string>,
                                                              std::is_same<T, float>,
                                                              std::is_same<T, double>>;
-
-
 template<typename T>
 constexpr bool is_json_primitive_type_v = is_json_primitive_core_type_v<std::remove_reference_t<
                                                                              remove_std_optional_t<T>>>;
@@ -122,6 +126,7 @@ constexpr bool is_json_serializable_primitive_type_v =  is_json_primitive_type_v
                                                         && !std::is_pointer_v<T> 
                                                         && !std::is_reference_v<T> 
                                                         && !std::is_const_v<T>;
+
 
 template<typename T>
 constexpr bool is_describable_struct_v = Descriptor<std::remove_reference_t<remove_std_optional_t<T>>>::is_describable;
@@ -141,6 +146,7 @@ struct is_json_serializable_fixed_array
 template<typename Array>
 constexpr bool is_json_serializable_fixed_array_v = is_json_serializable_fixed_array<Array>::value;
 
+
 template<typename T, typename = void>
 struct is_json_serializable_vector_impl : std::false_type {};
 
@@ -151,6 +157,7 @@ struct is_json_serializable_vector_impl<std::vector<Elem, Alloc>>
 template<typename T>
 struct is_json_serializable_vector
     : is_json_serializable_vector_impl< std::remove_reference_t<remove_std_optional_t<T>>> {};
+
 
 template<typename T, typename = void>
 struct is_json_serializable_list_impl : std::false_type {};
@@ -163,6 +170,7 @@ template<typename T>
 struct is_json_serializable_list
     : is_json_serializable_list_impl<std::remove_reference_t<remove_std_optional_t<T>>> {};
 
+
 template<typename Container>
 struct is_json_serializable_dynamic_array
     : std::bool_constant<is_json_serializable_list<Container>::value || 
@@ -171,8 +179,10 @@ struct is_json_serializable_dynamic_array
 template<typename Container>
 constexpr bool is_json_serializable_dynamic_array_v = is_json_serializable_dynamic_array<Container>::value;
 
+
 template<typename T>
 constexpr bool is_json_serializable_sequential_container_v = is_json_serializable_fixed_array_v<T> || is_json_serializable_dynamic_array_v<T>;
+
 
 template<typename T, typename = void>
 struct has_optional_elements_impl : std::false_type {};
@@ -196,6 +206,7 @@ template<typename Container>
 struct has_std_optional_elements :
     has_optional_elements_impl<remove_const_and_reference_t<Container>> {};
 
+
 template<typename T>
 struct is_std_tuple : std::false_type {};
 
@@ -204,6 +215,7 @@ struct is_std_tuple<std::tuple<TupleArgs...>> : std::true_type {};
 
 template<typename T>
 constexpr bool is_std_tuple_v = is_std_tuple<T>::value;
+
 
 template<typename T>
 struct is_json_serializable_tuple_imp {
@@ -241,10 +253,10 @@ struct is_json_serializable_tuple {
 template<typename T>
 constexpr bool is_json_serializable_tuple_v = is_json_serializable_tuple<T>::value;
 
+
 template<typename T>
 constexpr bool is_json_serializable_v = is_json_serializable_primitive_type_v<T> || is_json_serializable_sequential_container_v<T>
                                         || is_json_serializable_tuple_v<T> || is_describable_struct_v<T>;
-
 
 }  // namespace detail
 }  // namespace rapidjson_util 
