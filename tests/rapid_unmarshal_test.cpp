@@ -1,7 +1,7 @@
 #include "gmock/gmock.h"
 #include "rapid_util/rapid_util.h"
 
-struct PrimitiveTypeBlob {
+struct PrimitiveFields {
 	int IntNumber;
 	int64_t Int64Number;
 	uint64_t Uint64Number;
@@ -11,7 +11,7 @@ struct PrimitiveTypeBlob {
 	std::string Str;
 };
 
-RAPIDJSON_UTIL_DESCRIBE_MEMBERS(PrimitiveTypeBlob, (IntNumber, Int64Number, Uint64Number, BoolValue, FloatNumber, DoubleNumber, Str))
+RAPIDJSON_UTIL_DESCRIBE_MEMBERS(PrimitiveFields, (IntNumber, Int64Number, Uint64Number, BoolValue, FloatNumber, DoubleNumber, Str))
 
 TEST(RapidUnmarshalTest, UnserializePrimitiveTypes) {
 	std::string json(R"( {
@@ -23,7 +23,7 @@ TEST(RapidUnmarshalTest, UnserializePrimitiveTypes) {
 							"DoubleNumber" : 2.7182818,
 							"Str"          : "World"
 						   } )");
-	PrimitiveTypeBlob blob;
+	PrimitiveFields blob;
 
 	rapidjson_util::unmarshal(json, blob);
 
@@ -43,7 +43,7 @@ struct SomeIntStruct {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(SomeIntStruct, (IntNumber))
 
-TEST(RAPID_UNMARSHAL_TEST, ThrowsForPrimitiveTypesWithoutSharedPtrWhenNull) {
+TEST(RAPID_UNMARSHAL_TEST, ThrowsForPrimitiveTypesWithoutOptionalWhenNull) {
 	std::string json(R"( { "IntNumber" : null } )");
 	SomeIntStruct s;
 
@@ -56,73 +56,74 @@ TEST(RAPID_UNMARSHAL_TEST, ThrowsForPrimitiveTypesWithoutSharedPtrWhenNull) {
 	}
 }
 
-struct OptionalFields {
-	std::shared_ptr<int> IntPtr = nullptr;
-	std::shared_ptr<int64_t> Int64Ptr = nullptr;
-	std::shared_ptr<uint64_t> Uint64Ptr = nullptr;
-	std::shared_ptr<bool> BoolPtr = nullptr;
-	std::shared_ptr<float> FloatPtr = nullptr;
-	std::shared_ptr<double> DoublePtr = nullptr;
-	std::shared_ptr<std::string> StrPtr = nullptr;
+
+struct OptionalPrimitiveFields {
+	std::optional<int> IntNumber;
+	std::optional<int64_t> Int64Number;
+	std::optional<uint64_t> Uint64Number;
+	std::optional<bool> Bool;
+	std::optional<float> FloatNumber;
+	std::optional<double> DoubleNumber;
+	std::optional<std::string> Str;
 };
 
-RAPIDJSON_UTIL_DESCRIBE_MEMBERS(OptionalFields, (IntPtr, Int64Ptr, Uint64Ptr, BoolPtr, FloatPtr, DoublePtr, StrPtr))
+RAPIDJSON_UTIL_DESCRIBE_MEMBERS(OptionalPrimitiveFields, (IntNumber, Int64Number, Uint64Number, Bool, FloatNumber, DoubleNumber, Str))
 
-TEST(RapidUnmarshalTest, UnserializePrimitiveTypesWithSharedPtrWhenNull) {
-	OptionalFields f;
-	f.IntPtr = std::make_shared<int>(53);
-	f.Int64Ptr = std::make_shared<int64_t>(9132101254LL);
-	f.Uint64Ptr = std::make_shared<uint64_t>(1243744404370511615ULL);
-	f.BoolPtr = std::make_shared<bool>(true);
-	f.FloatPtr = std::make_shared<float>(22.485f);
-	f.DoublePtr = std::make_shared <double>(00.231);
-	f.StrPtr = std::make_shared<std::string>("Ptr");
+TEST(RapidUnmarshalTest, UnserializeNullablePrimitiveTypesWithOptionalWhenNull) {
+	OptionalPrimitiveFields f;
+	f.IntNumber = 53;
+	f.Int64Number = 9132101254LL;
+	f.Uint64Number = 1243744404370511615ULL;
+	f.Bool = true;
+	f.FloatNumber = 22.485f;
+	f.DoubleNumber = 00.231;
+	f.Str = "Str";
 
 	std::string json(R"( {
-							"IntPtr"    : null,
-							"Int64Ptr"  : null,
-							"Uint64Ptr" : null,
-							"BoolPtr"   : null,
-							"FloatPtr"  : null,
-							"DoublePtr" : null,
-							"StrPtr"    : null
+							"IntNumber"    : null,
+							"Int64Number"  : null,
+							"Uint64Number" : null,
+							"Bool"   : null,
+							"FloatNumber"  : null,
+							"DoubleNumber" : null,
+							"Str"    : null
 						   } )");
 
 	rapidjson_util::unmarshal(json, f);
 
-
-	ASSERT_EQ(f.IntPtr, nullptr);
-	ASSERT_EQ(f.Int64Ptr, nullptr);
-	ASSERT_EQ(f.Uint64Ptr, nullptr);
-	ASSERT_EQ(f.BoolPtr, nullptr);
-	ASSERT_EQ(f.FloatPtr, nullptr);
-	ASSERT_EQ(f.DoublePtr, nullptr);
-	ASSERT_EQ(f.StrPtr, nullptr);
+	ASSERT_EQ(f.IntNumber, std::nullopt);
+	ASSERT_EQ(f.Int64Number, std::nullopt);
+	ASSERT_EQ(f.Uint64Number, std::nullopt);
+	ASSERT_EQ(f.Bool, std::nullopt);
+	ASSERT_EQ(f.FloatNumber, std::nullopt);
+	ASSERT_EQ(f.DoubleNumber, std::nullopt);
+	ASSERT_EQ(f.Str, std::nullopt);
 }
 
-TEST(RapidUnmarshalTest, UnserializePrimitiveTypesWithSharedPtrWhenPopulated) {
+TEST(RapidUnmarshalTest, UnserializeNullablePrimitiveTypesWithOptionalWhenPopulated) {
 	std::string json(R"( {
-							"IntPtr"    : 315,
-							"Int64Ptr"  : 5132101254,
-							"Uint64Ptr" : 6143744404370511615,
-							"BoolPtr"   : true,
-							"FloatPtr"  : 78.4859,
-							"DoublePtr" : 31.231,
-							"StrPtr"    : "Ptr"
+							"IntNumber"    : 315,
+							"Int64Number"  : 5132101254,
+							"Uint64Number" : 6143744404370511615,
+							"Bool"   : true,
+							"FloatNumber"  : 78.4859,
+							"DoubleNumber" : 31.231,
+							"Str"    : "World"
 						   } )");
 
-	OptionalFields f;
+	OptionalPrimitiveFields f;
 	rapidjson_util::unmarshal(json, f);
 
 
-	ASSERT_EQ(*f.IntPtr, 315);
-	ASSERT_EQ(*f.Int64Ptr, 5132101254LL);
-	ASSERT_EQ(*f.Uint64Ptr, 6143744404370511615ULL);
-	ASSERT_EQ(*f.BoolPtr, true);
-	ASSERT_FLOAT_EQ(*f.FloatPtr, 78.4859);
-	ASSERT_DOUBLE_EQ(*f.DoublePtr, 31.231);
-	ASSERT_EQ(*f.StrPtr, "Ptr");
+	ASSERT_EQ(f.IntNumber.value(), 315);
+	ASSERT_EQ(f.Int64Number.value(), 5132101254LL);
+	ASSERT_EQ(f.Uint64Number.value(), 6143744404370511615ULL);
+	ASSERT_EQ(f.Bool.value(), true);
+	ASSERT_FLOAT_EQ(f.FloatNumber.value(), 78.4859);
+	ASSERT_DOUBLE_EQ(f.DoubleNumber.value(), 31.231);
+	ASSERT_EQ(f.Str.value(), "World");
 }
+
 
 struct Credential {
 	std::string username;
@@ -156,7 +157,7 @@ TEST(RapidUnmarshalTest, UnserializeNestedStruct) {
 	ASSERT_EQ(app.credential.passwd, "secret123");
 }
 
-TEST(RapidUnmarshalTest, ThrowForNestedStructWithoutSharedPtrWhenRequiredObjectMemberIsNull) {
+TEST(RapidUnmarshalTest, ThrowForNestedStructWithoutOptionalWhenRequiredObjectMemberIsNull) {
 	auto json = R"({
 				     "version": "1.1.2",
 				     "credential": null
@@ -176,12 +177,12 @@ TEST(RapidUnmarshalTest, ThrowForNestedStructWithoutSharedPtrWhenRequiredObjectM
 struct DatabaseConfig {
 	std::string host;
 	int port;
-	std::shared_ptr<Credential> credential;  // Optional nested object
+	std::optional<Credential> credential;  
 };
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(DatabaseConfig, (host, port, credential))
 
-TEST(RapidUnmarshalTest, UnerializeNestedStructWithSharedPtrWhenNull) {
+TEST(RapidUnmarshalTest, UnerializeNestedStructWithOptionalWhenNull) {
 	auto json = R"( {
 					"host": "localhost",
 					"port": 4212,
@@ -193,10 +194,10 @@ TEST(RapidUnmarshalTest, UnerializeNestedStructWithSharedPtrWhenNull) {
 
 	ASSERT_EQ(config.host, "localhost");
 	ASSERT_EQ(config.port, 4212);
-	ASSERT_EQ(config.credential, nullptr);
+	ASSERT_EQ(config.credential, std::nullopt);
 }
 
-TEST(RapidUnmarshalTest, UnerializeNestedStructWithSharedPtrWhenPopulated) {
+TEST(RapidUnmarshalTest, UnerializeNestedStructWithOptionalWhenPopulated) {
 	auto json = R"( {
 					"host": "127.0.0.1",
 					"port": 65432,
@@ -211,10 +212,11 @@ TEST(RapidUnmarshalTest, UnerializeNestedStructWithSharedPtrWhenPopulated) {
 
 	ASSERT_EQ(config.host, "127.0.0.1");
 	ASSERT_EQ(config.port, 65432);
-	ASSERT_NE(config.credential, nullptr);
+	ASSERT_NE(config.credential, std::nullopt);
 	ASSERT_EQ(config.credential->username, "admin");
 	ASSERT_EQ(config.credential->passwd, "secret123");
 }
+
 
 struct JobInfo {
 	std::string title;
@@ -275,24 +277,24 @@ TEST(RapidUnmarshalTest, UnserializeHomogeneousArrayWhenEmpty) {
 }
 
 struct JobPostingWithOptionalDetails {
-	std::shared_ptr<std::vector<JobInfo>> jobs;
+	std::optional<std::vector<JobInfo>> jobs;
 };
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(JobPostingWithOptionalDetails, (jobs))
 
-TEST(RapidUnmarshalTest, UnserializeHomogeneousArrayWithSharedPtrWhenNull) {
+TEST(RapidUnmarshalTest, UnserializeNullableHomogeneousArrayWithOptionalWhenNull) {
 	JobPostingWithOptionalDetails jobPosting;
-	jobPosting.jobs = std::make_shared<std::vector<JobInfo>>();
-	jobPosting.jobs->push_back(JobInfo{ "Business Manager", 20000 });
+	jobPosting.jobs = std::vector<JobInfo>{};
+	jobPosting.jobs->emplace_back(JobInfo{"Business Manager", 20000});
 
 	std::string json(R"({ "jobs" : null })");
 
 	rapidjson_util::unmarshal(json, jobPosting);
 
-	ASSERT_EQ(jobPosting.jobs, nullptr);
+	ASSERT_EQ(jobPosting.jobs, std::nullopt);
 }
 
-TEST(RapidUnmarshalTest, ThrowForHomogeneousArrayWithoutSharedPtrWhenRequiredArrayIsNull) {
+TEST(RapidUnmarshalTest, ThrowForHomogeneousArrayWithoutOptionalWhenRequiredArrayIsNull) {
 	std::string json(R"({ "jobs" : null })");
 
 	try {
@@ -305,19 +307,19 @@ TEST(RapidUnmarshalTest, ThrowForHomogeneousArrayWithoutSharedPtrWhenRequiredArr
 	}
 }
 
-TEST(RapidUnmarshalTest, UnserializeHomogeneousArrayWithSharedPtrWhenEmpty) {
+TEST(RapidUnmarshalTest, UnserializeNullableHomogeneousArrayWithOptionalWhenEmpty) {
 	JobPostingWithOptionalDetails jobPosting;
-	jobPosting.jobs = nullptr;
+	jobPosting.jobs = std::nullopt;
 
 	std::string json(R"({ "jobs" : [] })");
 
 	rapidjson_util::unmarshal(json, jobPosting);
 
-	ASSERT_NE(jobPosting.jobs, nullptr);
+	ASSERT_NE(jobPosting.jobs, std::nullopt);
 	ASSERT_TRUE(jobPosting.jobs->empty());
 }
 
-TEST(RapidUnmarshalTest, UnserializeHomogeneousArrayWithSharedPtrWhenPopulated) {
+TEST(RapidUnmarshalTest, UnserializeNullableHomogeneousArrayWithOptionalWhenPopulated) {
 	std::string json(R"({
         "jobs": [
             {
@@ -350,7 +352,8 @@ TEST(RapidUnmarshalTest, UnserializeHomogeneousArrayWithSharedPtrWhenPopulated) 
 	ASSERT_DOUBLE_EQ((*jobPosting.jobs)[2].salary, 95000.0);
 }
 
-TEST(RapidUnmarshalTest, ThrowForHomogeneousArrayWithoutSharedPtrElemsWhenRequiredArrayContainsNullElements) {
+
+TEST(RapidUnmarshalTest, ThrowForHomogeneousArrayWithoutOptionalElemsWhenRequiredArrayContainsNullElements) {
 	std::string json(R"({
 					    "jobs": [
 					        {
@@ -377,7 +380,7 @@ TEST(RapidUnmarshalTest, ThrowForHomogeneousArrayWithoutSharedPtrElemsWhenRequir
 }
 
 struct JobPostingWithOptionalJobInfo {
-	std::vector<std::shared_ptr<JobInfo>> jobs;
+	std::vector<std::optional<JobInfo>> jobs;
 };
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(JobPostingWithOptionalJobInfo, (jobs))
@@ -385,18 +388,18 @@ RAPIDJSON_UTIL_DESCRIBE_MEMBERS(JobPostingWithOptionalJobInfo, (jobs))
 TEST(RapidUnmarshalTest, UnserializeHomogeneousArrayHavinghSharedPtrElemsWhenContainNulls) {
 	std::string json(R"({
         "jobs": [
-            {
-                "title": "Senior DevOps Engineer", 
-                "salary": 135000.0
-            },
-            null,
-	        null,
-            {
-                "title": "Security Analyst",
-                "salary": 110000.0
-            }
-        ]
-    })");
+					 {
+					     "title": "Senior DevOps Engineer", 
+					     "salary": 135000.0
+					 },
+					 null,
+					 null,
+					 {
+					     "title": "Security Analyst",
+					     "salary": 110000.0
+					 }
+               ]
+			})");
 
 	JobPostingWithOptionalJobInfo jobPosting;
 	rapidjson_util::unmarshal(json, jobPosting);
@@ -406,21 +409,21 @@ TEST(RapidUnmarshalTest, UnserializeHomogeneousArrayHavinghSharedPtrElemsWhenCon
 	ASSERT_EQ(jobPosting.jobs[0]->title, "Senior DevOps Engineer");
 	ASSERT_DOUBLE_EQ(jobPosting.jobs[0]->salary, 135000.0);
 
-	ASSERT_EQ(jobPosting.jobs[1], nullptr);
+	ASSERT_EQ(jobPosting.jobs[1], std::nullopt);
 
-	ASSERT_EQ(jobPosting.jobs[2], nullptr);
+	ASSERT_EQ(jobPosting.jobs[2], std::nullopt);
 
 	ASSERT_EQ(jobPosting.jobs[3]->title, "Security Analyst");
 	ASSERT_DOUBLE_EQ(jobPosting.jobs[3]->salary, 110000.0);
 }
 
-struct JobPostingWithSharedPtrOptionalJobInfo {
-	std::shared_ptr<std::vector<std::shared_ptr<JobInfo>>> jobs;
+struct OptionalJobPostingWithOptionalJobInfo {
+	std::optional<std::vector<std::optional<JobInfo>>> jobs;
 };
 
-RAPIDJSON_UTIL_DESCRIBE_MEMBERS(JobPostingWithSharedPtrOptionalJobInfo, (jobs))
+RAPIDJSON_UTIL_DESCRIBE_MEMBERS(OptionalJobPostingWithOptionalJobInfo, (jobs))
 
-TEST(RapidUnmarshalTest, UnserializeHomogeneousArrayWithSharedPtrHavingSharedPtrElemsWhenContainNulls) {
+TEST(RapidUnmarshalTest, UnserializeHomogeneousArrayWithOptionalHavingSharedPtrElemsWhenContainNulls) {
 	std::string json(R"({
         "jobs": [
             {
@@ -435,7 +438,7 @@ TEST(RapidUnmarshalTest, UnserializeHomogeneousArrayWithSharedPtrHavingSharedPtr
         ]
     })");
 
-	JobPostingWithSharedPtrOptionalJobInfo jobPosting;
+	OptionalJobPostingWithOptionalJobInfo jobPosting;
 	rapidjson_util::unmarshal(json, jobPosting);
 
 	ASSERT_EQ(jobPosting.jobs->size(), 3);
@@ -443,7 +446,7 @@ TEST(RapidUnmarshalTest, UnserializeHomogeneousArrayWithSharedPtrHavingSharedPtr
 	ASSERT_EQ((*jobPosting.jobs)[0]->title, "Senior C++ Engineer");
 	ASSERT_DOUBLE_EQ((*jobPosting.jobs)[0]->salary, 145000.0);
 
-	ASSERT_EQ((*jobPosting.jobs)[1], nullptr);
+	ASSERT_EQ((*jobPosting.jobs)[1], std::nullopt);
 
 	ASSERT_EQ((*jobPosting.jobs)[2]->title, "Business Analyst");
 	ASSERT_DOUBLE_EQ((*jobPosting.jobs)[2]->salary, 310000.0);
@@ -452,7 +455,7 @@ TEST(RapidUnmarshalTest, UnserializeHomogeneousArrayWithSharedPtrHavingSharedPtr
 struct EventInfo {
 	std::string event;
 	std::string page;
-	std::shared_ptr<float> duration;
+	std::optional<float> duration;
 };
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(EventInfo, (event, page, duration))
@@ -500,27 +503,28 @@ TEST(RapidUnmarshalTest, ThrowForHeterogeneousArrayWithoutSharedPtrWhenRequiredT
 }
 
 struct OptionalApiResponse {
-	std::shared_ptr<std::tuple<EventInfo, uint64_t, std::string>> response;
+	std::optional<std::tuple<EventInfo, uint64_t, std::string>> response;
 };
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(OptionalApiResponse, (response))
 
-TEST(RapidUnmarshalTest, UnserializeHeterogeneousArrayWithSharedPtrWhenNull) {
+TEST(RapidUnmarshalTest, UnserializeHeterogeneousArrayWithOptionalWhenNull) {
 	std::string json(R"({
 						"response": null
 						})");
 
 	OptionalApiResponse apiRes;
-	apiRes.response = std::make_shared<std::tuple<EventInfo, uint64_t, std::string>>(
-		                              std::make_tuple(EventInfo{"page_view", "/home", std::make_shared<float>(23.50f)}, 
-		                              	            37053240001, "arbitrary_session"));
+	apiRes.response = std::make_tuple(EventInfo{"page_view", "/home", 23.50f}, 
+		                              37053240001, "arbitrary_session");
+
+	ASSERT_NE(apiRes.response, std::nullopt);
 
 	rapidjson_util::unmarshal(json, apiRes);
 
-	ASSERT_EQ(apiRes.response, nullptr);
+	ASSERT_EQ(apiRes.response, std::nullopt);
 }
 
-TEST(RapidUnmarshalTest, UnserializeHeterogeneousArrayWithSharedPtrWhenPopulated) {
+TEST(RapidUnmarshalTest, UnserializeHeterogeneousArrayWithOptionalWhenPopulated) {
 	std::string json(R"({
 						    "response": [
 						        {

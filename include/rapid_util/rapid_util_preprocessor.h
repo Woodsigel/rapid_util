@@ -19,6 +19,7 @@
 #include <array>
 #include <type_traits>
 #include <memory>
+#include <optional>
 
 namespace rapidjson_util {
 
@@ -47,6 +48,9 @@ struct Descriptor {
 };
 
 template<typename T>
+using remove_const_and_reference_t = std::remove_const_t<std::remove_reference_t<T>>;
+
+template<typename T>
 struct member_type;
 
 template<typename T, typename C>
@@ -55,40 +59,42 @@ struct member_type<T C::*> {
 };
 
 template<typename T>
-using remove_const_and_reference_t = std::remove_const_t<std::remove_reference_t<T>>;
-
-template<typename T>
 using member_type_t = typename member_type<T>::type;
 
-template<typename T>
-struct is_std_shared_ptr_impl : std::false_type {};
 
-template<typename T>
-struct is_std_shared_ptr_impl<std::shared_ptr<T>> : std::true_type {};
+template<template<typename> typename Wrapper, typename T>
+struct is_wrapper : std::false_type {};
 
-template<typename T>
-struct is_std_shared_ptr :
-    is_std_shared_ptr_impl<remove_const_and_reference_t<T>> {};
+template<template<typename> typename Wrapper, typename T>
+struct is_wrapper<Wrapper, Wrapper<T>> : std::true_type {};
 
-template<typename T>
-constexpr bool is_std_shared_ptr_v = typename is_std_shared_ptr<T>::value;
+template<template<typename> typename Wrapper, typename T>
+struct remove_wrapper {
+    using type = T;
+};
 
-template<typename T>
-struct remove_std_shared_ptr_impl {
+template<template<typename> typename Wrapper, typename T>
+struct remove_wrapper<Wrapper, Wrapper<T>> {
     using type = T;
 };
 
 template<typename T>
-struct remove_std_shared_ptr_impl<std::shared_ptr<T>> {
-    using type = T;
-};
+struct is_std_optional_impl : is_wrapper<std::optional, T> {};
 
 template<typename T>
-struct remove_std_shared_ptr :
-    remove_std_shared_ptr_impl<remove_const_and_reference_t<T>> {};
+struct is_std_optional : is_std_optional_impl<remove_const_and_reference_t<T>> {};
 
 template<typename T>
-using remove_std_shared_ptr_t = typename remove_std_shared_ptr<T>::type;
+constexpr bool is_std_optional_v = typename is_std_optional<T>::value;
+
+template<typename T>
+struct remove_std_optional_impl : remove_wrapper<std::optional, T> {};
+
+template<typename T>
+struct remove_std_optional : remove_std_optional_impl<remove_const_and_reference_t<T>> {};
+
+template<typename T>
+using remove_std_optional_t = typename remove_std_optional<T>::type;
 
 // Empty specialization for debug type inspection
 template<typename Type>
@@ -108,7 +114,8 @@ constexpr bool is_json_primitive_core_type_v = std::disjunction_v<std::is_same<T
 
 
 template<typename T>
-constexpr bool is_json_primitive_type_v = is_json_primitive_core_type_v<std::remove_reference_t<remove_std_shared_ptr_t<T>>>;
+constexpr bool is_json_primitive_type_v = is_json_primitive_core_type_v<std::remove_reference_t<
+                                                                             remove_std_optional_t<T>>>;
 
 template<typename T>
 constexpr bool is_json_serializable_primitive_type_v =  is_json_primitive_type_v<T>
@@ -117,7 +124,7 @@ constexpr bool is_json_serializable_primitive_type_v =  is_json_primitive_type_v
                                                         && !std::is_const_v<T>;
 
 template<typename T>
-constexpr bool is_describable_struct_v = Descriptor<std::remove_reference_t<remove_std_shared_ptr_t<T>>>::is_describable;;
+constexpr bool is_describable_struct_v = Descriptor<std::remove_reference_t<remove_std_optional_t<T>>>::is_describable;
 
 
 template<typename T, typename = void>
@@ -129,7 +136,7 @@ struct is_json_serializable_fixed_array_impl<std::array<Elem, N>>
 
 template<typename T>
 struct is_json_serializable_fixed_array
-    : is_json_serializable_fixed_array_impl<std::remove_reference_t<remove_std_shared_ptr_t<T>>> {};
+    : is_json_serializable_fixed_array_impl<std::remove_reference_t<remove_std_optional_t<T>>> {};
 
 template<typename Array>
 constexpr bool is_json_serializable_fixed_array_v = is_json_serializable_fixed_array<Array>::value;
@@ -143,7 +150,7 @@ struct is_json_serializable_vector_impl<std::vector<Elem, Alloc>>
 
 template<typename T>
 struct is_json_serializable_vector
-    : is_json_serializable_vector_impl< std::remove_reference_t<remove_std_shared_ptr_t<T>>> {};
+    : is_json_serializable_vector_impl< std::remove_reference_t<remove_std_optional_t<T>>> {};
 
 template<typename T, typename = void>
 struct is_json_serializable_list_impl : std::false_type {};
@@ -154,7 +161,7 @@ struct is_json_serializable_list_impl<std::list<Elem, Alloc>>
 
 template<typename T>
 struct is_json_serializable_list
-    : is_json_serializable_list_impl<std::remove_reference_t<remove_std_shared_ptr_t<T>>> {};
+    : is_json_serializable_list_impl<std::remove_reference_t<remove_std_optional_t<T>>> {};
 
 template<typename Container>
 struct is_json_serializable_dynamic_array
@@ -168,26 +175,26 @@ template<typename T>
 constexpr bool is_json_serializable_sequential_container_v = is_json_serializable_fixed_array_v<T> || is_json_serializable_dynamic_array_v<T>;
 
 template<typename T, typename = void>
-struct has_shared_ptr_elements_impl : std::false_type {};
+struct has_optional_elements_impl : std::false_type {};
 
 template<template<typename, typename> typename Container, typename Alloc, typename U>
-struct has_shared_ptr_elements_impl<Container<std::shared_ptr<U>, Alloc>,
-                               std::enable_if_t<is_json_serializable_dynamic_array_v<Container<std::shared_ptr<U>, Alloc>>>>
+struct has_optional_elements_impl<Container<std::optional<U>, Alloc>,
+                               std::enable_if_t<is_json_serializable_dynamic_array_v<Container<std::optional<U>, Alloc>>>>
     : std::true_type {};
 
 template<template<typename, size_t> typename Array, size_t N, typename U>
-struct has_shared_ptr_elements_impl<Array<std::shared_ptr<U>, N>,
-                               std::enable_if_t<is_json_serializable_fixed_array_v<Array<std::shared_ptr<U>, N>>>>
+struct has_optional_elements_impl<Array<std::optional<U>, N>,
+                               std::enable_if_t<is_json_serializable_fixed_array_v<Array<std::optional<U>, N>>>>
     : std::true_type {};
 
 template<typename Container>
-struct has_shared_ptr_elements_impl<std::shared_ptr<Container>,
-                               std::enable_if_t<has_shared_ptr_elements_impl<Container>::value>>
+struct has_optional_elements_impl<std::optional<Container>,
+                               std::enable_if_t<has_optional_elements_impl<Container>::value>>
                                : std::true_type {};
 
 template<typename Container>
-struct has_shared_ptr_elements :
-    has_shared_ptr_elements_impl<remove_const_and_reference_t<Container>> {};;
+struct has_std_optional_elements :
+    has_optional_elements_impl<remove_const_and_reference_t<Container>> {};
 
 template<typename T>
 struct is_std_tuple : std::false_type {};
@@ -228,7 +235,7 @@ public:
 
 template<typename T>
 struct is_json_serializable_tuple {
-    static constexpr bool value = is_json_serializable_tuple_imp<std::remove_reference_t<remove_std_shared_ptr_t<T>>>::value;
+    static constexpr bool value = is_json_serializable_tuple_imp<std::remove_reference_t<remove_std_optional_t<T>>>::value;
 };
 
 template<typename T>

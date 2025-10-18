@@ -107,56 +107,57 @@ TEST(RapidMarshalTest, SerializePrimitiveTypes) {
 	ASSERT_JSON_STREQ(truncateDecimals(actual, 2), expect);
 }
 
-struct NullableFields {
-	std::shared_ptr<int> IntPtr = nullptr;
-	std::shared_ptr<int64_t> Int64Ptr = nullptr;
-	std::shared_ptr<uint64_t> Uint64Ptr = nullptr;
-	std::shared_ptr<bool> BoolPtr = nullptr;
-	std::shared_ptr<float> FloatPtr = nullptr;
-	std::shared_ptr<double> DoublePtr = nullptr;
-	std::shared_ptr<std::string> StrPtr = nullptr;
+struct NullableFieldsWithOptional {
+	std::optional<int> IntNumber;
+	std::optional<int64_t> Int64Number;
+	std::optional<uint64_t> Uint64Number;
+	std::optional<bool> Bool;
+	std::optional<float> FloatNumber;
+	std::optional<double> DoubleNumber;
+	std::optional<std::string> Str;
 };
 
-RAPIDJSON_UTIL_DESCRIBE_MEMBERS(NullableFields, (IntPtr, Int64Ptr, Uint64Ptr, BoolPtr, FloatPtr, DoublePtr, StrPtr))
+RAPIDJSON_UTIL_DESCRIBE_MEMBERS(NullableFieldsWithOptional, (IntNumber, Int64Number, Uint64Number, Bool, FloatNumber, DoubleNumber, Str))
 
-TEST(RapidUnmarshalTest, SerializePrimitiveTypesWithSharedPtrWhenNull) {
-	NullableFields  f;
+TEST(RapidUnmarshalTest, SerializeNullablePrimitiveTypesWithOptionalWhenNull) {
+	NullableFieldsWithOptional  f;
 
 	auto actual = rapidjson_util::marshal(f);
 
 	auto expect = R"({
-						"IntPtr"    : null, 
-						"Int64Ptr"  : null,
-						"Uint64Ptr" : null, 
-						"BoolPtr"   : null, 
-						"FloatPtr"  : null, 
-						"DoublePtr" : null,
-						"StrPtr"    : null
+						"IntNumber"    : null, 
+						"Int64Number"  : null,
+						"Uint64Number" : null, 
+						"Bool" : null, 
+						"FloatNumber"  : null, 
+						"DoubleNumber" : null,
+						"Str" : null
                      })";
 
 	ASSERT_JSON_STREQ(actual, expect);
 }
 
-TEST(RapidUnmarshalTest, SerializePrimitiveTypesWithSharedPtrWhenPopulated) {
-	NullableFields  f;
-	f.IntPtr = std::make_shared<int>(66);
-	f.Int64Ptr = std::make_shared<int64_t>(4137901254LL);
-	f.Uint64Ptr = std::make_shared<uint64_t>(5843644404370511615ULL);
-	f.BoolPtr = std::make_shared<bool>(false);
-	f.FloatPtr = std::make_shared<float>(94.887f);
-	f.DoublePtr = std::make_shared <double>(50.241);
-	f.StrPtr = std::make_shared<std::string>("Ptr");
+TEST(RapidUnmarshalTest, SerializeNullablePrimitiveTypesWithOptionalWhenPopulated) {
+	NullableFieldsWithOptional  f;
+
+	f.IntNumber = 66;
+	f.Int64Number = 4137901254LL;
+	f.Uint64Number = 5843644404370511615ULL;
+	f.Bool = false;
+	f.FloatNumber = 94.887f;
+	f.DoubleNumber = 50.241;
+	f.Str = "Str";
 
 	auto actual = rapidjson_util::marshal(f);
 
 	auto expect = R"({
-						"IntPtr"    : 66, 
-						"Int64Ptr"  : 4137901254,
-						"Uint64Ptr" : 5843644404370511615, 
-						"BoolPtr"   : false, 
-						"FloatPtr"  : 94.887, 
-						"DoublePtr" : 50.241,
-						"StrPtr"    : "Ptr"
+						"IntNumber"    : 66, 
+						"Int64Number"  : 4137901254,
+						"Uint64Number" : 5843644404370511615, 
+						"Bool"         : false, 
+						"FloatNumber"  : 94.887, 
+						"DoubleNumber" : 50.241,
+						"Str"          : "Str"
                      })";
 
 	ASSERT_JSON_STREQ(truncateDecimals(actual, 3), expect);
@@ -211,13 +212,13 @@ RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Author, (name, nationality))
 
 struct Book {
 	std::string title;
-	std::shared_ptr<Author> author;
+	std::optional<Author> author;
 };
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Book, (title, author))
 
-TEST(RapidUnmarshalTest, SerializeNestedStructWithSharedPtrWhenNull) {
-	Book book{ "Classic of Poetry", nullptr };
+TEST(RapidUnmarshalTest, SerializeNestedStructWithOptionalWhenNull) {
+	Book book{ "Classic of Poetry", std::nullopt };
 
 	auto actual = rapidjson_util::marshal(book);
 
@@ -230,9 +231,8 @@ TEST(RapidUnmarshalTest, SerializeNestedStructWithSharedPtrWhenNull) {
 }
 
 
-TEST(RapidUnmarshalTest, SerializeNestedStructWithSharedPtrWhenPopulated) {
-	Book book{ "The Nine Chapters on the Mathematical Art", 
-			   std::make_shared<Author>(Author{"Liu Hui", "China"})};
+TEST(RapidUnmarshalTest, SerializeNestedStructWithOptionalWhenPopulated) {
+	Book book{ "The Nine Chapters on the Mathematical Art", Author{"Liu Hui", "China"} };
 
 	auto actual = rapidjson_util::marshal(book);
 
@@ -246,6 +246,7 @@ TEST(RapidUnmarshalTest, SerializeNestedStructWithSharedPtrWhenPopulated) {
 
 	ASSERT_JSON_STREQ(actual, expect);
 }
+
 
 struct Course {
 	std::string courseCode;
@@ -285,16 +286,16 @@ TEST(RapidMarshalTest, SerializeHomogeneousArray) {
 
 struct StudentWithOptionalCourseList {
 	int studentId;
-	std::shared_ptr<std::list<Course>> enrolledCourses;
+	std::optional<std::list<Course>> enrolledCourses;
 };
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(StudentWithOptionalCourseList, (studentId, enrolledCourses))
 
-TEST(RapidUnmarshalTest, SerializeHomogeneousArrayWithSharedPtrWhenNull) {
+TEST(RapidUnmarshalTest, SerializeHomogeneousArrayWithOptionalWhenNull) {
 	StudentWithOptionalCourseList student;
 
 	student.studentId = 100;
-	student.enrolledCourses = nullptr;
+	student.enrolledCourses = std::nullopt;
 
 	auto actual = rapidjson_util::marshal(student);
 
@@ -306,11 +307,11 @@ TEST(RapidUnmarshalTest, SerializeHomogeneousArrayWithSharedPtrWhenNull) {
 	ASSERT_JSON_STREQ(actual, expect);
 }
 
-TEST(RapidUnmarshalTest, SerializeHomogeneousArrayWithSharedPtrWhenEmpty) {
+TEST(RapidUnmarshalTest, SerializeHomogeneousArrayWithOptionalWhenEmpty) {
 	StudentWithOptionalCourseList student;
 
 	student.studentId = 200;
-	student.enrolledCourses = std::make_shared<std::list<Course>>();
+	student.enrolledCourses = std::list<Course>{};
 
 	auto actual = rapidjson_util::marshal(student);
 
@@ -322,10 +323,10 @@ TEST(RapidUnmarshalTest, SerializeHomogeneousArrayWithSharedPtrWhenEmpty) {
 	ASSERT_JSON_STREQ(actual, expect);
 }
 
-TEST(RapidUnmarshalTest, SerializeHomogeneousArrayWithSharedPtrWhenPopulated) {
+TEST(RapidUnmarshalTest, SerializeHomogeneousArrayWithOptionalWhenPopulated) {
 	StudentWithOptionalCourseList student;
 	student.studentId = 300;
-	student.enrolledCourses = std::make_shared<std::list<Course>>();
+	student.enrolledCourses = std::list<Course>{};
 
 	student.enrolledCourses->emplace_back(Course{ "CS101", "Introduction to Computer Science", "B+", 3 });
 	student.enrolledCourses->emplace_back(Course{ "CHEM115", "General Chemistry I", "C+", 4 });
@@ -344,21 +345,22 @@ TEST(RapidUnmarshalTest, SerializeHomogeneousArrayWithSharedPtrWhenPopulated) {
 	ASSERT_JSON_STREQ(actual, expect);
 }
 
+
 struct StudentWithOptionalCourseElements {
 	int studentId;
-	std::vector<std::shared_ptr<Course>> enrolledCourses;
+	std::vector<std::optional<Course>> enrolledCourses;
 };
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(StudentWithOptionalCourseElements, (studentId, enrolledCourses))
 
 
-TEST(RapidUnmarshalTest, SerializeHomogeneousArrayWithSharedPtrWhenContainNulls) {
+TEST(RapidUnmarshalTest, SerializeHomogeneousArrayWithOptionalWhenContainNulls) {
 	StudentWithOptionalCourseElements student;
 	student.studentId = 400;
-	student.enrolledCourses.emplace_back(nullptr);
-	student.enrolledCourses.emplace_back(std::make_shared<Course>(Course{ "CS101", "Introduction to Computer Science", "B+", 3 }));
-	student.enrolledCourses.emplace_back(nullptr);
-	student.enrolledCourses.emplace_back(std::make_shared<Course>(Course{ "ENG150", "Shakespeare's Major Works", "A-", 3 }));
+	student.enrolledCourses.emplace_back(std::nullopt);
+	student.enrolledCourses.emplace_back(Course{ "CS101", "Introduction to Computer Science", "B+", 3 });
+	student.enrolledCourses.emplace_back(std::nullopt);
+	student.enrolledCourses.emplace_back(Course{ "ENG150", "Shakespeare's Major Works", "A-", 3 });
 
 	auto actual = rapidjson_util::marshal(student);
 
@@ -407,15 +409,15 @@ TEST(RapidMarshalTest, SerializeHeterogeneousArray) {
 
 struct ResponseWithOptionalContent {
 	std::string header;
-	std::shared_ptr<std::tuple<std::string, int, User>> content;
+	std::optional<std::tuple<std::string, int, User>> content;
 };
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(ResponseWithOptionalContent, (header, content))
 
-TEST(RapidMarshalTest, SerializeHeterogeneousArrayWithSharedPtrWhenNull) {
+TEST(RapidMarshalTest, SerializeHeterogeneousArrayWithOptionalWhenNull) {
 	ResponseWithOptionalContent response;
 	response.header = "500/Internal Server Error";
-	response.content = nullptr;
+	response.content = std::nullopt;
 
 
 	auto actual = rapidjson_util::marshal(response);
@@ -428,10 +430,10 @@ TEST(RapidMarshalTest, SerializeHeterogeneousArrayWithSharedPtrWhenNull) {
 	ASSERT_JSON_STREQ(actual, expect);
 }
 
-TEST(RapidMarshalTest, SerializeHeterogeneousArrayWithSharedPtrWhenPopulated) {
+TEST(RapidMarshalTest, SerializeHeterogeneousArrayWithOptionalWhenPopulated) {
 	ResponseWithOptionalContent response;
 	response.header = "/404/Not Found";
-	response.content = std::make_shared<std::tuple<std::string, int, User>>(std::make_tuple("failure", 500, User{ 85, "Wu" }));;
+	response.content = std::make_tuple("failure", 500, User{ 85, "Wu" });
 
 
 	auto actual = rapidjson_util::marshal(response);

@@ -5,14 +5,14 @@ struct Person {
     std::string name;
     int age;
     bool isStudent;
-    std::shared_ptr<std::string> email;
+    std::optional<std::string> email;
 };
 
 // Describe Person members for serialization
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Person, (name, age, isStudent, email))
 
 void marshal_basic_usage() {
-    Person person{ "Alice", 25, true, nullptr};
+    Person person{ "Alice", 25, true, std::nullopt};
 
     auto json = rapidjson_util::marshal(person);
     std::cout << "=== Basic Usage Example ===" << std::endl;
@@ -62,7 +62,7 @@ RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Product, (productId, name, price, quantity))
 
 struct Inventory {
     std::string warehouse;
-    std::vector<std::shared_ptr<Product>> products;  
+    std::vector<std::optional<Product>> products;  
 };
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Inventory, (warehouse, products))
@@ -71,11 +71,11 @@ void marshal_homogeneous_array() {
     Inventory inventory;
     inventory.warehouse = "Main Storage";
     inventory.products = {
-        nullptr,
-        std::make_shared<Product>(Product{"P1001", "Laptop", 999.99, 50}),
-        std::make_shared<Product>(Product{"P1002", "Mouse", 29.99, 200}),
-        std::make_shared<Product>(Product{"P1003", "Keyboard", 79.99, 75}),
-        nullptr,
+        std::nullopt,
+        Product{"P1001", "Laptop", 999.99, 50},
+        Product{"P1002", "Mouse", 29.99, 200},
+        Product{"P1003", "Keyboard", 79.99, 75},
+        std::nullopt,
     };
 
     auto json = rapidjson_util::marshal(inventory);

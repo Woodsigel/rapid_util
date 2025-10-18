@@ -71,7 +71,7 @@ namespace detail {
 
 enum WrapperType {
     None,
-    StdSharedPtr
+    StdOptional
 };
 
 enum JsonSourceType {
@@ -82,8 +82,7 @@ enum JsonSourceType {
 };
 
 template<typename T>
-constexpr WrapperType wrapper_type_trait_v =
-                               is_std_shared_ptr_v<T> ? WrapperType::StdSharedPtr : WrapperType::None;
+constexpr WrapperType wrapper_type_trait_v = is_std_optional_v<T> ? WrapperType::StdOptional : WrapperType::None;
 
 template<size_t JsonSourceType, size_t WrapperType, bool isConstQualified>
 struct JsonValueCreator;
@@ -102,45 +101,45 @@ template<bool isConstQualified>
 struct JsonValueCreator<JsonSourceType::Struct, WrapperType::None, isConstQualified> {
     template<typename T>
     static std::shared_ptr<JsonObject> create(T& value) {
-        static_assert(!is_std_shared_ptr_v<T>);
+        static_assert(!is_std_optional_v<T>);
 
         return std::make_shared<JsonObject>(buildJsonTreeFrom(value));
     }
 };
 
 template<>
-struct JsonValueCreator<JsonSourceType::Struct, WrapperType::StdSharedPtr, true> {
+struct JsonValueCreator<JsonSourceType::Struct, WrapperType::StdOptional, true> {
     template<typename T>
     static std::shared_ptr<JsonNullableObject> create(T& value) {
-        static_assert(is_std_shared_ptr_v<T> && std::is_const_v<T>);
+        static_assert(is_std_optional_v<T> && std::is_const_v<T>);
 
-        if (value == nullptr)
-            return std::make_shared<JsonNullableObject>();
-        else
+        if (value.has_value())
             return  std::make_shared<JsonNullableObject>(buildJsonTreeFrom(std::as_const(*value)));
+        else
+            return std::make_shared<JsonNullableObject>();
     }
 };
 
 template<>
-struct JsonValueCreator<JsonSourceType::Struct, WrapperType::StdSharedPtr, false> {
+struct JsonValueCreator<JsonSourceType::Struct, WrapperType::StdOptional, false> {
     template<typename T>
     static std::shared_ptr<JsonNullableObject> create(T& value) {
-        static_assert(is_std_shared_ptr_v<T> && !std::is_const_v<T>);
+        static_assert(is_std_optional_v<T> && !std::is_const_v<T>);
 
-        auto object = (value == nullptr) ? std::make_shared<JsonNullableObject>() :
-            std::make_shared<JsonNullableObject>(buildJsonTreeFrom(*value));
+        auto object = (value.has_value()) ? std::make_shared<JsonNullableObject>(buildJsonTreeFrom(*value)) :
+                                            std::make_shared<JsonNullableObject>();
+                                           
 
-        auto sharedPtrResetter = [&value]() { value.reset(); };
-        auto sharedPtrReinitializer = [&value]()
-        {
-            using BaseType = remove_std_shared_ptr_t<T>;
-            value = std::make_shared<BaseType>();
+        auto referencedValueResetter = [&value]() { value.reset(); };
+        auto referencedValueReinitializer = [&value]() {
+            using BaseType = remove_std_optional_t<T>;
+            value = BaseType{};
 
-            auto object = JsonValueCreator<JsonSourceType::Struct, WrapperType::StdSharedPtr, false>::create(value);
+            auto object = JsonValueCreator<JsonSourceType::Struct, WrapperType::StdOptional, false>::create(value);
             return object->getMembers();
         };
 
-        object->setReferencedSharedPtrHandlers(sharedPtrReinitializer, sharedPtrResetter);
+        object->setReferencedValueHandlers(referencedValueReinitializer, referencedValueResetter);
 
         return object;
     }
@@ -167,69 +166,69 @@ template<bool isConstQualified>
 struct JsonValueCreator<JsonSourceType::Sequential, WrapperType::None, isConstQualified> {
     template<typename T>
     static std::shared_ptr<JsonArray> create(T& sequence) {
-        static_assert(!is_std_shared_ptr_v<T>);
+        static_assert(!is_std_optional_v<T>);
 
         auto elements = convertToJsonValuesFromSeq(sequence);
-        auto jsonArray = std::make_shared<JsonArray>(elements, has_shared_ptr_elements<T>::value);
+        auto jsonArray = std::make_shared<JsonArray>(elements, has_std_optional_elements<T>::value);
 
-        if constexpr (!std::is_const_v<T> && is_json_serializable_dynamic_array_v<T>)
+        if constexpr (!isConstQualified && is_json_serializable_dynamic_array_v<T>)
             jsonArray->setArrayResizer([sequencePtr = &sequence](std::size_t newSize) {
-            sequencePtr->resize(newSize);
-            return  convertToJsonValuesFromSeq(*sequencePtr);
-                });
-
+                                        sequencePtr->resize(newSize);
+                                        return  convertToJsonValuesFromSeq(*sequencePtr);
+                                    });
+            
         return jsonArray;
     }
 };
 
 template<>
-struct JsonValueCreator<JsonSourceType::Sequential, WrapperType::StdSharedPtr, true> {
+struct JsonValueCreator<JsonSourceType::Sequential, WrapperType::StdOptional, true> {
     template<typename T>
     static std::shared_ptr<JsonNullableArray> create(T& sequence) {
-        static_assert(std::is_const_v<T> && is_std_shared_ptr_v<T>);
+        static_assert(is_std_optional_v<T> && std::is_const_v<T>);
 
-        bool hasSharedPtrElems = has_shared_ptr_elements<T>::value;
-        if (nullptr == sequence)
-            return std::make_shared<JsonNullableArray>(hasSharedPtrElems);
+        bool hasOptionalElems = has_std_optional_elements<T>::value;
+        if (!sequence.has_value()) 
+            return std::make_shared<JsonNullableArray>(hasOptionalElems);
 
-        else {
-            auto elements = convertToJsonValuesFromSeq(std::as_const(*sequence));
-            return std::make_shared<JsonNullableArray>(elements, hasSharedPtrElems);
-        }
+        auto elements = convertToJsonValuesFromSeq(std::as_const(*sequence));
+        return std::make_shared<JsonNullableArray>(elements, hasOptionalElems);
+
     }
 };
 
 template<>
-struct JsonValueCreator<JsonSourceType::Sequential, WrapperType::StdSharedPtr, false> {
+struct JsonValueCreator<JsonSourceType::Sequential, WrapperType::StdOptional, false> {
     template<typename T>
     static std::shared_ptr<JsonNullableArray> create(T& sequence) {
-        static_assert(!std::is_const_v<T> && is_std_shared_ptr_v<T>);
+        static_assert(is_std_optional_v<T> &&  !std::is_const_v<T>);
 
-        bool hasSharedPtrElems = has_shared_ptr_elements<T>::value;
-        auto jsonArray = (sequence == nullptr) ? std::make_shared<JsonNullableArray>(hasSharedPtrElems) :
-            std::make_shared<JsonNullableArray>(convertToJsonValuesFromSeq(*sequence), hasSharedPtrElems);
-
-
-        auto sharedPtrReinitializer = [&sequence]()
-        {
-            using BaseType = remove_std_shared_ptr_t<T>;
-            sequence = std::make_shared<BaseType>();
-
+        bool hasOptionalElems = has_std_optional_elements<T>::value;
+        auto jsonArray = (sequence.has_value()) ?
+                            std::make_shared<JsonNullableArray>(convertToJsonValuesFromSeq(*sequence), hasOptionalElems) :
+                            std::make_shared<JsonNullableArray>(hasOptionalElems);
+                                
+        auto optValueReinitializer = [&sequence]() {
+            using BaseType = remove_std_optional_t<T>;
+            sequence = BaseType{};
+        
             return std::vector<std::shared_ptr<JsonValue>>{};
         };
-
-        auto resizer = [&sequence, sharedPtrReinitializer](std::size_t newSize) {
-            if (sequence == nullptr)
-                sharedPtrReinitializer();
-
-            sequence->resize(newSize);
-            return  convertToJsonValuesFromSeq(*sequence); };
-
-        auto sharedPtrResetter = [&sequence]() { sequence.reset(); };
-
+        
+        auto resizer = 
+                        [&sequence, optValueReinitializer](std::size_t newSize) {
+                            if (!sequence.has_value())
+                                optValueReinitializer();
+        
+                            sequence->resize(newSize);
+                            return  convertToJsonValuesFromSeq(*sequence); 
+                         };
+        
+        auto optValueResetter = [&sequence]() { sequence.reset(); };
+        
         jsonArray->setArrayResizer(resizer);
-        jsonArray->setReferencedSharedPtrHandlers(sharedPtrReinitializer, sharedPtrResetter);
-
+        jsonArray->setReferencedValueHandlers(optValueReinitializer, optValueResetter);
+        
         return jsonArray;
     }
 };
@@ -265,7 +264,7 @@ template<bool isConstQualified>
 struct JsonValueCreator<JsonSourceType::Tuple, WrapperType::None, isConstQualified> {
     template<typename T>
     static std::shared_ptr<JsonArray> create(T& tuple) {
-        static_assert(!is_std_shared_ptr_v<T>);
+        static_assert(!is_std_optional_v<T>);
 
         auto elements = convertToJsonValuesFromTup(tuple);
         return  std::make_shared<JsonArray>(elements);
@@ -273,42 +272,43 @@ struct JsonValueCreator<JsonSourceType::Tuple, WrapperType::None, isConstQualifi
 };
 
 template<>
-struct JsonValueCreator<JsonSourceType::Tuple, WrapperType::StdSharedPtr, true> {
+struct JsonValueCreator<JsonSourceType::Tuple, WrapperType::StdOptional, true> {
     template<typename T>
     static std::shared_ptr<JsonNullableArray> create(T& tuple) {
-        static_assert(std::is_const_v<T> && is_std_shared_ptr_v<T>);
+        static_assert(is_std_optional_v<T> && std::is_const_v<T>);
 
-        if (nullptr == tuple)
+        if (!tuple.has_value())
             return std::make_shared<JsonNullableArray>();
 
-        else {
-            auto elements = convertToJsonValuesFromTup(std::as_const(*tuple));
-            return std::make_shared<JsonNullableArray>(elements);
-        }
+        auto elements = convertToJsonValuesFromTup(std::as_const(*tuple));
+        return std::make_shared<JsonNullableArray>(elements);
+
     }
 };
 
 template<>
-struct JsonValueCreator<JsonSourceType::Tuple, WrapperType::StdSharedPtr, false> {
+struct JsonValueCreator<JsonSourceType::Tuple, WrapperType::StdOptional, false> {
     template<typename T>
     static std::shared_ptr<JsonNullableArray> create(T& tuple) {
-        static_assert(!std::is_const_v<T> && is_std_shared_ptr_v<T>);
+        static_assert(is_std_optional_v<T> && !std::is_const_v<T>);
 
-        auto jsonArray = (tuple == nullptr) ? std::make_shared<JsonNullableArray>() :
-            std::make_shared<JsonNullableArray>(convertToJsonValuesFromTup(*tuple));
+        auto jsonArray = (tuple.has_value()) ?
+                            std::make_shared<JsonNullableArray>(convertToJsonValuesFromTup(*tuple)) :
+                            std::make_shared<JsonNullableArray>();
+                                              
 
 
-        auto sharedPtrReinitializer = [&tuple]()
+        auto referencedValueReinitializer = [&tuple]()
         {
-            using BaseType = remove_std_shared_ptr_t<T>;
-            tuple = std::make_shared<BaseType>();
+            using BaseType = remove_std_optional_t<T>;
+            tuple = BaseType{};
 
             return convertToJsonValuesFromTup(*tuple);
         };
 
-        auto sharedPtrResetter = [&tuple]() { tuple.reset(); };
+        auto referencedValueResetter = [&tuple]() { tuple.reset(); };
 
-        jsonArray->setReferencedSharedPtrHandlers(sharedPtrReinitializer, sharedPtrResetter);
+        jsonArray->setReferencedValueHandlers(referencedValueReinitializer, referencedValueResetter);
 
         return jsonArray;
     }

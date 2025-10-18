@@ -216,34 +216,23 @@ public:
 
 	enum class OwnershipType {
 		Raw, 
-		SharedPtr
+		StdOptional
 	};
 
 	/**
       * Constructs a JsonPrimitiveValue that maintains a pointer to a struct member.
-      * The member can be a regular attribute or a shared_ptr wrapper.
-      * Only shared_ptr members are allowed to be null.
+      * The member can be a regular attribute or a optional wrapper, only std::optional
+	  * members are allowed to be null.
       *
-      * @template param T The member type (e.g. int, std::shared_ptr<int>, const std::string, etc.)
+      * @template param T The member type (e.g. int, std::optional<int>, const std::string, etc.)
       * @param _value Pointer to the struct member that will be updated
       */
 	template<typename T>
 	JsonPrimitiveValue(T* _value) : value(_value) {
-		using BaseType = std::remove_const_t<remove_std_shared_ptr_t<T>>;
-
-		if constexpr (std::is_same_v<BaseType, int>) type = StoredType::IntPtr;
-		else if constexpr (std::is_same_v<BaseType, int64_t>) type = StoredType::Int64Ptr;
-		else if constexpr (std::is_same_v<BaseType, uint64_t>) type = StoredType::Uint64Ptr;
-		else if constexpr (std::is_same_v<BaseType, bool>) type = StoredType::BoolPtr;
-		else if constexpr (std::is_same_v<BaseType, float>) type = StoredType::FloatPtr;
-		else if constexpr (std::is_same_v<BaseType, double>) type = StoredType::DoublePtr;
-		else if constexpr (std::is_same_v<BaseType, std::string>) type = StoredType::StringPtr;
-
-		if constexpr (is_std_shared_ptr_v<T>)
-			isNull = (*_value == nullptr);
-
+		type = getStoredType<T>();
+		ptrOwnershipType = getOwnershipType<T>();
+		isNull = checkIsNull<T>(_value);
 		pointToConst = std::is_const_v<T>;
-		ptrOwnershipType = is_std_shared_ptr_v<T> ? OwnershipType::SharedPtr : OwnershipType::Raw;
 	}
 
 	/**
@@ -261,7 +250,7 @@ public:
 	}
 
 	/**
-      * @return How the member is owned (raw pointer or shared_ptr wrapper)
+      * @return How the member is owned (raw pointer or pointer to a optional wrapper)
       */
 	OwnershipType ownershipType() const {
 		return ptrOwnershipType;
@@ -286,10 +275,10 @@ public:
 	}
 
 	/**
-	  * Checks if the struct's smart pointer member is currently null.
+	  * Checks if the struct's member is currently null.
 	  * For raw pointer to struct members, this always returns false
 	  */
-	bool isReferencedSharedPtrNull() const {
+	bool isReferencedValueNull() const {
 		if (OwnershipType::Raw == ptrOwnershipType)
 			return false;
 		else
@@ -297,23 +286,22 @@ public:
 	}
 
 	/**
-	 * Resets referenced std::shared_ptr objects to null.
+	 * Resets referenced std::optional struct's member to std::nullopt.
 	 *
 	 * @pre isPointToConst() must be false (struct's member must be non-const qualified)
 	 *
-	 * @note Only works with std::shared_ptr types - will assert if called on raw pointers
 	 */
 	void resetReferencedValue() {
 		assert(!isPointToConst());
 
-		if (ownershipType() != OwnershipType::SharedPtr)
+		if (ownershipType() == OwnershipType::Raw)
 			return;
 
-		#define RESET_TO_NULL(storedType, CXXType)										   \
-		    case StoredType::storedType: {								                   \
-				auto value = std::any_cast<std::shared_ptr<CXXType>*>(storedValue());      \
-				value->reset();                                                            \
-				break;                                                                     \
+		#define RESET_TO_NULL(storedType, CXXType)												\
+		    case StoredType::storedType: {														\
+				auto value = std::any_cast<std::optional<CXXType>*>(storedValue());			    \
+				value->reset();																    \
+				break;                                                                          \
 			}
 
 		switch (storedType()) {
@@ -332,35 +320,25 @@ public:
 	}
 
 	/**
-	  * Unwrap a const pointer to the underlying data for read-only access.
-	  *
-	  * For raw pointer members, returns the direct const pointer to the struct member.
-	  * For smart pointer members, returns a const pointer to the object managed by the 
-	  * struct's smart pointer member. 
+	  * @brief Unwrap a const pointer to the underlying data for read-only access.
 	  * 
 	  * @pre isPointToConst() must be true (member is const-qualified)
-	  * @pre isReferencedSharedPtrNull() must be false
+	  * @pre isReferencedValueNull() must be false
 	  */
 	template<typename T>
 	const T* unwrapConstPointer() {
 		assert(isPointToConst());
-		assert(!isReferencedSharedPtrNull());
+		assert(!isReferencedValueNull());
 
-		if (JsonPrimitiveValue::OwnershipType::Raw == ownershipType())
+		if (OwnershipType::Raw == ownershipType())
 			return std::any_cast<const T*>(storedValue());
 
-		else {
-			const std::shared_ptr<T> value = *std::any_cast<const std::shared_ptr<T>*>(storedValue());
-			return const_cast<const T*>(value.get());
-		}
+		const std::optional<T>* opt = std::any_cast<const std::optional<T>*>(storedValue());
+		return const_cast<const T*>(&(opt->value()));
 	}
 
 	/**
-	 * Unwraps a pointer to the underlying data for read-write access.
-	 *
-	 * For raw pointer members, returns the direct raw pointer to the struct member.
-	 * For smart pointer members, return the pointer to the object managed by the struct's
-	 * smart pointer member, if the smart pointer is null, initializes it with a default-constructed.
+	 * @brief Unwraps a pointer to the underlying data for read-write access.
 	 * 
 	 * @pre isPointToConst() must be false (member is not const-qualified)
 	 */ 
@@ -368,15 +346,13 @@ public:
 	T* unwrapPointer() {
 		assert(!isPointToConst());
 
-		if (JsonPrimitiveValue::OwnershipType::Raw == ownershipType())
+		if(JsonPrimitiveValue::OwnershipType::Raw == ownershipType())
 			return std::any_cast<T*>(storedValue());
 
-		else {
-			initializeIfReferencedSharedPtrIsNull();
-			std::shared_ptr<T> value = *std::any_cast<std::shared_ptr<T>*>(storedValue());
+		initializeIfReferencedValueIsNull();
+		std::optional<T>* opt = std::any_cast<std::optional<T>*>(storedValue());
 
-			return value.get();
-		}
+		return &(opt->value());
 	}
 
 private:
@@ -386,17 +362,45 @@ private:
 	std::any value;
 	bool isNull;
 
-	void initializeIfReferencedSharedPtrIsNull() {
+	template<typename T>
+	bool checkIsNull(const T* value) {
+		if constexpr (is_std_optional_v<T>)
+			return !value->has_value();  
+		else
+			return false;
+	}
+
+	template<typename T>
+	constexpr OwnershipType getOwnershipType() {
+		if constexpr (is_std_optional_v<T>) return OwnershipType::StdOptional;
+		else return OwnershipType::Raw;
+	}
+
+	template<typename T>
+	constexpr StoredType getStoredType() {
+		using BaseType = remove_std_optional_t<std::remove_const_t<T>>;
+
+		if constexpr (std::is_same_v<BaseType, int>)       return StoredType::IntPtr;
+		else if constexpr (std::is_same_v<BaseType, int64_t>)  return StoredType::Int64Ptr;
+		else if constexpr (std::is_same_v<BaseType, uint64_t>) return StoredType::Uint64Ptr;
+		else if constexpr (std::is_same_v<BaseType, bool>)     return StoredType::BoolPtr;
+		else if constexpr (std::is_same_v<BaseType, float>)    return StoredType::FloatPtr;
+		else if constexpr (std::is_same_v<BaseType, double>)   return StoredType::DoublePtr;
+		else if constexpr (std::is_same_v<BaseType, std::string>) return StoredType::StringPtr;
+		else static_assert(false, "Unsupported type");
+	}
+
+	void initializeIfReferencedValueIsNull() {
 		assert(!isPointToConst());
 
-		if (OwnershipType::SharedPtr != ptrOwnershipType || !isReferencedSharedPtrNull())
+		if (OwnershipType::Raw == ptrOwnershipType || !isReferencedValueNull())
 			return;
 
-        #define REINITIALIZE(storedType, CXXType)                                      \
-		    case JsonPrimitiveValue::StoredType::storedType: {                             \
-				auto value = std::any_cast<std::shared_ptr<CXXType>*>(storedValue());  \
-				*value = std::make_shared<CXXType>();                                  \
-				break;                                                                 \
+        #define REINITIALIZE(storedType, CXXType)                                           \
+		    case JsonPrimitiveValue::StoredType::storedType: {                              \
+				auto value = std::any_cast<std::optional<CXXType>*>(storedValue());         \
+				*value = CXXType{};                                                         \
+				break;                                                                      \
 			}
 
 		switch (storedType()) {
@@ -409,7 +413,7 @@ private:
 			REINITIALIZE(StringPtr, std::string)
 		}
 
-        #undef RE_INITIALIZE
+        #undef REINITIALIZE
 
 		isNull = false;
 	}
@@ -448,8 +452,8 @@ protected:
 
 class JsonNullableObject : public JsonObject {
 public:
-	using SharedPtrReinitializer = std::function <std::vector<JsonAttribute>()>;
-	using SharedPtrResetter = std::function<void()>;
+	using ReferencedValueReinitializer = std::function <std::vector<JsonAttribute>()>;
+	using ReferencedValueResetter = std::function<void()>;
 
 	JsonNullableObject() : isNull(true) {
 	}
@@ -458,7 +462,7 @@ public:
 		members = _members;
 	}
 
-	void setReferencedSharedPtrHandlers(SharedPtrReinitializer _reinitializer, SharedPtrResetter _resetter) {
+	void setReferencedValueHandlers(ReferencedValueReinitializer _reinitializer, ReferencedValueResetter _resetter) {
 		assert(_reinitializer != nullptr);
 		assert(_resetter != nullptr);
 
@@ -466,11 +470,11 @@ public:
 		resetter = _resetter;
 	}
 
-	bool isReferencedSharedPtrNull() const {
+	bool isReferencedValueNull() const {
 		return isNull;
 	}
 
-	void resetReferencedSharedPtr() {
+	void resetReferencedValue() {
 		if (!resetter) return;
 
 		resetter();
@@ -479,7 +483,7 @@ public:
 		members.clear();
 	}
 
-	void reinitializeReferencedSharedPtr() {
+	void reinitializeReferencedValue() {
 		if (!reinitializer) return;
 
 		members = reinitializer();
@@ -491,18 +495,18 @@ public:
 	}
 
 private:
-	SharedPtrReinitializer reinitializer;
-	SharedPtrResetter resetter;
+	ReferencedValueReinitializer reinitializer;
+	ReferencedValueResetter resetter;
 	bool isNull;
 };
 
 
 class JsonArray : public JsonValue {
 public:
-	using ArrayResizer = std::function <std::vector<std::shared_ptr<JsonValue>>(std::size_t)>;
+	using ArrayResizer = std::function<std::vector<std::shared_ptr<JsonValue>>(std::size_t)>;
 
-	JsonArray(const std::vector<std::shared_ptr<JsonValue>>& _elements = {}, bool _hasSharedPtrElems = false) :
-		elements(_elements), hasSharedPtrElems(_hasSharedPtrElems) {
+	JsonArray(const std::vector<std::shared_ptr<JsonValue>>& _elements = {}, bool _hasOptionalElems = false) :
+		elements(_elements), hasOptionalElems(_hasOptionalElems) {
 	}
 
 	void setArrayResizer(ArrayResizer _resizer) {
@@ -523,8 +527,8 @@ public:
 		return elements.size();
 	}
 
-	bool hasSharedPtrElements() const {
-		return hasSharedPtrElems;
+	bool hasOptionalElements() const {
+		return hasOptionalElems;
 	}
 
 	std::vector<std::shared_ptr<JsonValue>> getElements() const {
@@ -540,25 +544,25 @@ public:
 protected:
 	std::vector<std::shared_ptr<JsonValue>> elements;
 	ArrayResizer resizer = nullptr;
-	bool hasSharedPtrElems;
+	bool hasOptionalElems;
 };
 
 class JsonNullableArray : public JsonArray {
 public:
-	using SharedPtrResetter = std::function<void()>;
-	using SharedPtrReinitializer = std::function <std::vector<std::shared_ptr<JsonValue>>()>;
+	using ReferencedValueResetter = std::function<void()>;
+	using ReferencedValueReinitializer = std::function <std::vector<std::shared_ptr<JsonValue>>()>;
 
-	JsonNullableArray(bool _hasSharedPtrElems = false) : isNull(true) {
-		hasSharedPtrElems = _hasSharedPtrElems;
+	JsonNullableArray(bool _hasOptionalElems = false) : isNull(true) {
+		hasOptionalElems = _hasOptionalElems;
 	}
 
-	JsonNullableArray(const std::vector<std::shared_ptr<JsonValue>>& _elements, bool _hasSharedPtrElems = false) 
+	JsonNullableArray(const std::vector<std::shared_ptr<JsonValue>>& _elements, bool _hasOptionalElems = false)
 		: isNull(false) {
 		elements = _elements;
-		hasSharedPtrElems = _hasSharedPtrElems;
+		hasOptionalElems = _hasOptionalElems;
 	}
 
-	void setReferencedSharedPtrHandlers(SharedPtrReinitializer _reinitializer, SharedPtrResetter _resetter) {
+	void setReferencedValueHandlers(ReferencedValueReinitializer _reinitializer, ReferencedValueResetter _resetter) {
 		assert(_reinitializer != nullptr);
 		assert(_resetter != nullptr);
 
@@ -566,11 +570,11 @@ public:
 		resetter = _resetter;
 	}
 
-	bool isReferencedSharedPtrNull() const {
+	bool isReferencedValueNull() const {
 		return isNull;
 	}
 
-	void resetReferencedSharedPtr() {
+	void resetReferencedValue() {
 		if (!resetter) return;
 
 		resetter();
@@ -579,7 +583,7 @@ public:
 		elements.clear();
 	}
 
-	void reinitializeReferencedSharedPtr() {
+	void reinitializeReferencedValue() {
 		if (!reinitializer) return;
 
 		elements = reinitializer();
@@ -592,8 +596,8 @@ public:
 
 private:
 	bool isNull;
-	SharedPtrResetter resetter = nullptr;
-	SharedPtrReinitializer reinitializer = nullptr;
+	ReferencedValueResetter resetter = nullptr;
+	ReferencedValueReinitializer reinitializer = nullptr;
 };
 
 
@@ -611,7 +615,7 @@ inline std::string JsonWriter::witeToJson(JsonObject* root) {
 inline void JsonWriter::visit(JsonPrimitiveValue* primitiveValue, rapidjson::Value& jsonOutput) {
 	assert(primitiveValue->isPointToConst());
 
-	if (JsonPrimitiveValue::OwnershipType::SharedPtr == primitiveValue->ownershipType() && primitiveValue->isReferencedSharedPtrNull()) {
+	if (JsonPrimitiveValue::OwnershipType::Raw != primitiveValue->ownershipType() && primitiveValue->isReferencedValueNull()) {
 		jsonOutput.SetNull();
 		return;
 	}
@@ -681,7 +685,7 @@ inline void JsonWriter::visit(JsonObject* object, rapidjson::Value& jsonOutput) 
 }
 
 inline void JsonWriter::visit(JsonNullableObject* object, rapidjson::Value& jsonOutput) {
-	if (object->isReferencedSharedPtrNull()) {
+	if (object->isReferencedValueNull()) {
 		jsonOutput.SetNull();
 		return;
 	}
@@ -707,7 +711,7 @@ inline void JsonWriter::visit(JsonArray* array, rapidjson::Value& jsonOutput) {
 
 inline void JsonWriter::visit(JsonNullableArray* array, rapidjson::Value& jsonOutput)
 {
-	if (array->isReferencedSharedPtrNull()) {
+	if (array->isReferencedValueNull()) {
 		jsonOutput.SetNull();
 		return;
 	}
@@ -788,7 +792,7 @@ private:
 inline void JsonReader::visit(JsonPrimitiveValue* primitiveValue, rapidjson::Value& jsonInput) {
 	assert(!primitiveValue->isPointToConst());
 
-	if (jsonInput.IsNull() && primitiveValue->ownershipType() == JsonPrimitiveValue::OwnershipType::SharedPtr)
+	if (jsonInput.IsNull() && primitiveValue->ownershipType() != JsonPrimitiveValue::OwnershipType::Raw)
 		return primitiveValue->resetReferencedValue();
 
 	switch (primitiveValue->storedType()) {
@@ -873,10 +877,10 @@ inline void JsonReader::visit(JsonObject* object, rapidjson::Value& jsonInput) {
 
 inline void JsonReader::visit(JsonNullableObject* object, rapidjson::Value& jsonInput) {
 	if (jsonInput.IsNull())
-		return object->resetReferencedSharedPtr();
+		return object->resetReferencedValue();
 
-	if(object->isReferencedSharedPtrNull())
-		object->reinitializeReferencedSharedPtr();
+	if(object->isReferencedValueNull())
+		object->reinitializeReferencedValue();
 
 	readObjectMembers(object, jsonInput);
 }
@@ -894,7 +898,7 @@ inline bool hasNullElements(const rapidjson::Value& value) {
 inline void JsonReader::readArrayElements(JsonArray* array, rapidjson::Value& jsonInput) {
 	RapidjsonValueTypeValidator::validate(jsonInput, QueryType::IsArray);
 
-	if(!array->hasSharedPtrElements()) 
+	if(!array->hasOptionalElements())
 		ThrowUnless(!hasNullElements(jsonInput), TypeMismatchException("JSON array contains null elements"));
 
 	auto jsonArray = jsonInput.GetArray();
@@ -919,10 +923,10 @@ inline void JsonReader::visit(JsonArray* array, rapidjson::Value& jsonInput) {
 
 inline void JsonReader::visit(JsonNullableArray* array, rapidjson::Value& jsonInput) {
 	if (jsonInput.IsNull())
-		return array->resetReferencedSharedPtr();
+		return array->resetReferencedValue();
 
-	if (array->isReferencedSharedPtrNull())
-		array->reinitializeReferencedSharedPtr();
+	if (array->isReferencedValueNull())
+		array->reinitializeReferencedValue();
 
 	readArrayElements(array, jsonInput);
 }

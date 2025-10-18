@@ -15,13 +15,14 @@ TEST(JsonValueTypeTraitTest, SupportsValidJsonTypes) {
 	static_assert(is_json_serializable_primitive_type_v<std::string>);
 	static_assert(is_json_serializable_primitive_type_v<float>);
 	static_assert(is_json_serializable_primitive_type_v<double>);
-	static_assert(is_json_serializable_primitive_type_v<std::shared_ptr<int>>);
+	static_assert(is_json_serializable_primitive_type_v<std::optional<int>>);
 }
 
 TEST(JsonValueTypeTraitTest, RejectsUnserializableTypes) {
 	using aUnSerialableType = std::stringstream;
 
-	static_assert(!is_json_serializable_primitive_type_v<int*>, "Raw pointers are not allowed, use std::shared_ptr instead");
+	static_assert(!is_json_serializable_primitive_type_v<int*>, "Raw pointers are not allowed, use std::optional instead");
+	static_assert(!is_json_serializable_primitive_type_v<std::optional<int*>>);
 	static_assert(!is_json_serializable_primitive_type_v<char*>, "Using std::string for parsing string");
 	static_assert(!is_json_serializable_primitive_type_v<const std::string>, "Const-qualified types are not allowed");
 	static_assert(!is_json_serializable_primitive_type_v<aUnSerialableType>, "Not a valid JSON ValueType");
@@ -41,25 +42,24 @@ TEST(JsonValueTypeTraitTest, ValidatesTupleSerializableElementTypes) {
 
 }
 
-struct AStruct {
-
-};
-
 template<typename T>
 struct TypeHolder {
 
 };
 
 TEST(JsonValueTypeTraitTest, IdentifiesContainersWithSharedPtrElements) {
-	static_assert(has_shared_ptr_elements<std::vector<std::shared_ptr<int>>>::value);
-	static_assert(has_shared_ptr_elements<std::shared_ptr<std::vector<std::shared_ptr<std::string>>>>::value);
+	using aUnSerialableType = std::stringstream;
 
-	static_assert(has_shared_ptr_elements<std::list<std::shared_ptr<double>>>::value);
-	static_assert(has_shared_ptr_elements<std::shared_ptr<std::list<std::shared_ptr<float>>>>::value);
+	static_assert(has_std_optional_elements<std::vector<std::optional<int>>>::value);
+	static_assert(has_std_optional_elements<std::optional<std::vector<std::optional<std::string>>>>::value);
 
-	static_assert(has_shared_ptr_elements<std::array<std::shared_ptr<float>, 5>>::value);
-	static_assert(has_shared_ptr_elements<std::shared_ptr<std::array<std::shared_ptr<bool>, 10>>>::value);
+	static_assert(has_std_optional_elements<std::list<std::optional<double>>>::value);
+	static_assert(has_std_optional_elements<std::optional<std::list<std::optional<float>>>>::value);
 
-	static_assert(!has_shared_ptr_elements<std::vector<std::shared_ptr<AStruct>>>::value);
-	static_assert(!has_shared_ptr_elements<TypeHolder<std::shared_ptr<bool>>>::value);
+	static_assert(has_std_optional_elements<std::array<std::optional<float>, 5>>::value);
+	static_assert(has_std_optional_elements<std::optional<std::array<std::optional<bool>, 10>>>::value);
+
+	static_assert(!has_std_optional_elements<std::vector<std::optional<aUnSerialableType>>>::value);
+	static_assert(!has_std_optional_elements<TypeHolder<std::optional<bool>>>::value,
+		          "TypeHolder is not a standard sequential container.");
 }

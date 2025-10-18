@@ -1,11 +1,11 @@
-#include "rapid_util/rapid_util.h"
+﻿#include "rapid_util/rapid_util.h"
 #include <iostream>
 
 struct Person {
     std::string name;
     int age;
     bool isStudent;
-    std::shared_ptr<std::string> email;
+    std::optional<std::string> email;
 };
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Person, (name, age, isStudent, email))
@@ -27,13 +27,13 @@ void unmarshal_basic_usage() {
     std::cout << "  Name: " << person.name << std::endl;
     std::cout << "  Age: " << person.age << std::endl;
     std::cout << "  Is Student: " << (person.isStudent ? "Yes" : "No")  << std::endl;
-    std::cout << "  Email: " << (person.email ? *person.email : "null") << "\n" << std::endl;
+    std::cout << "  Email: " << (person.email ? person.email.value() : "null") << "\n" << std::endl;
 }
 
 struct Address {
     std::string street;
     std::string city;
-    std::shared_ptr<int> zipCode;
+    std::optional<int> zipCode;
 };
 
 struct Employee {
@@ -65,7 +65,7 @@ void unmarshal_nested_structure() {
     std::cout << "  Name: " << employee.name << std::endl;
     std::cout << "  Address: " << employee.address.street << ", "
         << employee.address.city << ", ";
-    auto zipCode = employee.address.zipCode == nullptr ? "null" : std::to_string(*employee.address.zipCode);
+    auto zipCode = employee.address.zipCode.has_value() ? std::to_string(employee.address.zipCode.value()) : "null";
     std::cout << zipCode << std::endl;
     std::cout << "  Salary: " << employee.salary << "\n" << std::endl;
 }
@@ -105,7 +105,7 @@ void unmarshal_homogeneous_array() {
     std::cout << "  Products:" << std::endl;
     for (const auto& product : inventory.products) {
         std::cout << "    - " << product.productId << ": " << product.name
-            << " ($" << product.price << ", Qty: " << product.quantity << ")" << std::endl;
+            << " (￥" << product.price << ", Qty: " << product.quantity << ")" << std::endl;
     }
     std::cout << std::endl;
 }
@@ -118,7 +118,7 @@ struct SensorReading {
 struct SystemStatus {
     std::string timestamp;
     std::tuple<bool, int, SensorReading, std::string> statusData;
-    std::shared_ptr<std::tuple<double, std::string, int>> diagnostics;
+    std::optional<std::tuple<double, std::string, int>> diagnostics;
 };
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(SensorReading, (sensorType, value))
@@ -147,7 +147,7 @@ void unmarshal_heterogeneous_array() {
     std::cout << "    - Status: " << status << "\n" << std::endl;
 
     if (systemStatus.diagnostics) {
-        const auto& [uptime, health, operations] = *systemStatus.diagnostics;
+        const auto& [uptime, health, operations] = systemStatus.diagnostics.value();
         std::cout << "  Diagnostics:" << std::endl;
         std::cout << "    - Uptime: " << uptime << "%" << std::endl;
         std::cout << "    - Health: " << health << std::endl;

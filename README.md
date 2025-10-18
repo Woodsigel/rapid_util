@@ -1,4 +1,5 @@
 
+
 # rapid_util
 
 
@@ -10,7 +11,7 @@ A simple C++17 based JSON marshal and unmarshal utility for converting between C
 - **Nested Structures**: Support for complex object hierarchies
 - **Homogeneous Arrays**: Support for JSON homogeneous array serialization using `std::vector`, `std::list`, and `std::array`
 - **Heterogeneous Arrays**: Support for JSON heterogeneous array serialization using `std::tuple`
-- **JSON Null Values**: Support for JSON null values using `std::shared_ptr`
+- **JSON Null Values**: Support for JSON null values using `std::optional`
 
 ## Usage
 
@@ -22,14 +23,14 @@ struct Person {
     std::string name;
     int age;
     bool isStudent;
-    std::shared_ptr<std::string> email;
+    std::optional<std::string> email;
 };
 
 // Describe Person members for serialization
-RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Person, (name, age, isStudent, email)))
+RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Person, (name, age, isStudent, email))
 
 // Serialize to JSON
-Person Alice{"Alice", 25, true, nullptr};
+Person Alice{ "Alice", 25, true, std::nullopt };
 std::string json = rapidjson_util::marshal(Alice);
 // Result: {"name":"Alice","age":25,"isStudent":true,"email":null}
 ```
@@ -51,7 +52,7 @@ std::cout << "Unmarshaled Person:" << std::endl;
 std::cout << "  Name: " << person.name << std::endl;
 std::cout << "  Age: " << person.age << std::endl;
 std::cout << "  Is Student: " << (person.isStudent ? "Yes" : "No")  << std::endl;
-std::cout << "  Email: " << (person.email ? *person.email : "null") << std::endl;
+std::cout << "  Email: " << (person.email.has_value() ? person.email.value() : "null") << std::endl;
 ```
 ### Nested Structures Serialization
 ```
@@ -110,10 +111,17 @@ std::cout << "  Address: " << employee.address.street << ", "
     << employee.address.city << ", " << employee.address.zipCode << std::endl;
 std::cout << "  Salary: " << employee.salary << "\n" << std::endl;
 
+struct Credential {
+    std::string username;
+    std::string passwd;
+};
+
+RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Credential, (username, passwd))
+
 struct DatabaseConfig {
-	std::string host;
-	int port;
-	std::shared_ptr<Credential> credential;  // Optional nested object
+    std::string host;
+    int port;
+    std::optional<Credential> credential;  // Optional nested object
 };
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(DatabaseConfig, (host, port, credential))
@@ -130,7 +138,7 @@ rapidjson_util::unmarshal(json, config);
 std::cout << "Unmarshaled DatabaseConfig:" << std::endl;
 std::cout << "  Host: " << config.host << std::endl;
 std::cout << "  Port: " << config.port << std::endl;
-assert(config.credential == nullptr);
+assert(config.credential == std::nullopt);
 ```
 
 ## Installation
