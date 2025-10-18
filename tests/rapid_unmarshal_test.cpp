@@ -423,7 +423,7 @@ struct OptionalJobPostingWithOptionalJobInfo {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(OptionalJobPostingWithOptionalJobInfo, (jobs))
 
-TEST(RapidUnmarshalTest, UnserializeHomogeneousArrayWithOptionalHavingOptionalElemsWhenContainNulls) {
+TEST(RapidUnmarshalTest, UnserializeNullableHomogeneousArrayHavingOptionalElemsWhenContainNulls) {
 	std::string json(R"({
         "jobs": [
             {
