@@ -385,7 +385,7 @@ struct JobPostingWithOptionalJobInfo {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(JobPostingWithOptionalJobInfo, (jobs))
 
-TEST(RapidUnmarshalTest, UnserializeHomogeneousArrayHavinghSharedPtrElemsWhenContainNulls) {
+TEST(RapidUnmarshalTest, UnserializeHomogeneousArrayHavinghOptionalElemsWhenContainNulls) {
 	std::string json(R"({
         "jobs": [
 					 {
@@ -423,7 +423,7 @@ struct OptionalJobPostingWithOptionalJobInfo {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(OptionalJobPostingWithOptionalJobInfo, (jobs))
 
-TEST(RapidUnmarshalTest, UnserializeHomogeneousArrayWithOptionalHavingSharedPtrElemsWhenContainNulls) {
+TEST(RapidUnmarshalTest, UnserializeHomogeneousArrayWithOptionalHavingOptionalElemsWhenContainNulls) {
 	std::string json(R"({
         "jobs": [
             {
@@ -489,7 +489,7 @@ TEST(RapidUnmarshalTest, UnserializeHeterogeneousArray) {
 	ASSERT_EQ(sessionId, "session_12345");
 }
 
-TEST(RapidUnmarshalTest, ThrowForHeterogeneousArrayWithoutSharedPtrWhenRequiredTupleIsNull) {
+TEST(RapidUnmarshalTest, ThrowForHeterogeneousArrayWithoutOptionalWhenRequiredTupleIsNull) {
 	std::string json(R"({ "response": null })");
 
 	try {
@@ -508,7 +508,7 @@ struct OptionalApiResponse {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(OptionalApiResponse, (response))
 
-TEST(RapidUnmarshalTest, UnserializeHeterogeneousArrayWithOptionalWhenNull) {
+TEST(RapidUnmarshalTest, UnserializeNullableHeterogeneousArrayWithOptionalWhenNull) {
 	std::string json(R"({
 						"response": null
 						})");
@@ -524,7 +524,7 @@ TEST(RapidUnmarshalTest, UnserializeHeterogeneousArrayWithOptionalWhenNull) {
 	ASSERT_EQ(apiRes.response, std::nullopt);
 }
 
-TEST(RapidUnmarshalTest, UnserializeHeterogeneousArrayWithOptionalWhenPopulated) {
+TEST(RapidUnmarshalTest, UnserializeNullableHeterogeneousArrayWithOptionalWhenPopulated) {
 	std::string json(R"({
 						    "response": [
 						        {
