@@ -275,7 +275,7 @@ constexpr bool is_json_serializable_v = is_json_serializable_primitive_type_v<T>
 
 #define RAPIDJSON_UTIL_CALL(F, C, x) F(C, x)
 
-#define RAPIDJSON_UTIL_FOR_EACH_0(F, C, x)
+#define RAPIDJSON_UTIL_FOR_EACH_0(F, C) static_assert(false, "Members to be described cannot be empty.");
 #define RAPIDJSON_UTIL_FOR_EACH_1(F, C, x) RAPIDJSON_UTIL_CALL(F, C, x)
 #define RAPIDJSON_UTIL_FOR_EACH_2(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_1(F, C, __VA_ARGS__))
 #define RAPIDJSON_UTIL_FOR_EACH_3(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_2(F, C, __VA_ARGS__))

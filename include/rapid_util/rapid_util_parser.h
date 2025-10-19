@@ -479,8 +479,8 @@ public:
 
 		resetter();
 
-		isNull = true;
 		members.clear();
+		isNull = true;
 	}
 
 	void reinitializeReferencedValue() {
