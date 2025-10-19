@@ -160,7 +160,7 @@ struct JsonValueCreator<JsonSourceType::Struct, WrapperType::StdOptional, true> 
         static_assert(is_std_optional_v<T> && std::is_const_v<T>);
 
         if (value.has_value())
-            return  std::make_shared<JsonNullableObject>(buildJsonTreeFrom(std::as_const(*value)));
+            return std::make_shared<JsonNullableObject>(buildJsonTreeFrom(std::as_const(*value)));
         else
             return std::make_shared<JsonNullableObject>();
     }
@@ -177,12 +177,14 @@ struct JsonValueCreator<JsonSourceType::Struct, WrapperType::StdOptional, false>
                                            
         auto referencedValueResetter = [&value]() { value.reset(); };
         auto referencedValueReinitializer = [&value]() {
-            using BaseType = remove_std_optional_t<T>;
-            value = BaseType{};
-
-            auto object = JsonValueCreator<JsonSourceType::Struct, WrapperType::StdOptional, false>::create(value);
-            return object->getMembers();
-        };
+                                                    using BaseType = remove_std_optional_t<T>;
+                                                    value = BaseType{};
+                                                
+                                                    auto object = JsonValueCreator<JsonSourceType::Struct, 
+                                                                                   WrapperType::StdOptional, 
+                                                                                   false>::create(value);
+                                                    return object->getMembers();
+                                                };
 
         object->setReferencedValueHandlers(referencedValueReinitializer, referencedValueResetter);
 
@@ -202,9 +204,9 @@ struct JsonValueCreator<JsonSourceType::Sequential, WrapperType::None, isConstQu
 
         if constexpr(!isConstQualified && is_json_serializable_dynamic_array_v<T>)
             jsonArray->setArrayResizer([sequencePtr = &sequence](std::size_t newSize) {
-                                        sequencePtr->resize(newSize);
-                                        return  convertToJsonValuesFromSeq(*sequencePtr);
-                                    });
+                                                                 sequencePtr->resize(newSize);
+                                                                 return  convertToJsonValuesFromSeq(*sequencePtr);
+                                                             });
             
         return jsonArray;
     }
@@ -217,12 +219,13 @@ struct JsonValueCreator<JsonSourceType::Sequential, WrapperType::StdOptional, tr
         static_assert(is_std_optional_v<T> && std::is_const_v<T>);
 
         bool hasOptionalElems = has_std_optional_elements<T>::value;
+
         if (!sequence.has_value()) 
             return std::make_shared<JsonNullableArray>(hasOptionalElems);
-
-        auto elements = convertToJsonValuesFromSeq(std::as_const(*sequence));
-
-        return std::make_shared<JsonNullableArray>(elements, hasOptionalElems);
+        else {
+            auto elements = convertToJsonValuesFromSeq(std::as_const(*sequence));
+            return std::make_shared<JsonNullableArray>(elements, hasOptionalElems);
+        }
     }
 };
 
@@ -238,19 +241,18 @@ struct JsonValueCreator<JsonSourceType::Sequential, WrapperType::StdOptional, fa
                             std::make_shared<JsonNullableArray>(hasOptionalElems);
                                 
         auto optValueReinitializer = [&sequence]() {
-            using BaseType = remove_std_optional_t<T>;
-            sequence = BaseType{};
-        
-            return std::vector<std::shared_ptr<JsonValue>>{};
-        };
-        
+                                            using BaseType = remove_std_optional_t<T>;
+                                            sequence = BaseType{};
+                                        
+                                            return std::vector<std::shared_ptr<JsonValue>>{};
+                                        };
         auto resizer = [&sequence, optValueReinitializer](std::size_t newSize) {
-                            if (!sequence.has_value())
-                                optValueReinitializer();
+                                            if (!sequence.has_value())
+                                                optValueReinitializer();
         
-                            sequence->resize(newSize);
-                            return  convertToJsonValuesFromSeq(*sequence); 
-                         };
+                                            sequence->resize(newSize);
+                                            return  convertToJsonValuesFromSeq(*sequence); 
+                                         };
         auto optValueResetter = [&sequence]() { sequence.reset(); };
         
         jsonArray->setArrayResizer(resizer);
@@ -298,13 +300,12 @@ struct JsonValueCreator<JsonSourceType::Tuple, WrapperType::StdOptional, false> 
                             std::make_shared<JsonNullableArray>(convertToJsonValuesFromTup(*tuple)) :
                             std::make_shared<JsonNullableArray>();
                                               
-        auto referencedValueReinitializer = [&tuple]()
-        {
-            using BaseType = remove_std_optional_t<T>;
-            tuple = BaseType{};
-
-            return convertToJsonValuesFromTup(*tuple);
-        };
+        auto referencedValueReinitializer = [&tuple]() {
+                                                    using BaseType = remove_std_optional_t<T>;
+                                                    tuple = BaseType{};
+                                                
+                                                    return convertToJsonValuesFromTup(*tuple);
+                                                };
         auto referencedValueResetter = [&tuple]() { tuple.reset(); };
 
         jsonArray->setReferencedValueHandlers(referencedValueReinitializer, referencedValueResetter);
