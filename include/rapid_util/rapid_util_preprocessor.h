@@ -218,16 +218,16 @@ constexpr bool is_std_tuple_v = is_std_tuple<T>::value;
 
 
 template<typename T>
-struct is_json_serializable_tuple_imp {
+struct is_json_serializable_tuple_impl {
     static constexpr bool value = false;
 };
 
 template<typename First, typename... Remaining >
-struct is_json_serializable_tuple_imp<std::tuple<First, Remaining...>> {
+struct is_json_serializable_tuple_impl<std::tuple<First, Remaining...>> {
 private:
     static constexpr bool check_first() {
         if constexpr (is_std_tuple_v<First>) 
-            return is_json_serializable_tuple_imp<First>::value;
+            return is_json_serializable_tuple_impl<First>::value;
         else 
             return is_json_serializable_primitive_type_v<First> ||
                    is_json_serializable_sequential_container_v<First> ||
@@ -238,7 +238,7 @@ private:
         if constexpr (sizeof...(Remaining) == 0) 
             return true;
         else 
-            return is_json_serializable_tuple_imp<std::tuple<Remaining...>>::value;
+            return is_json_serializable_tuple_impl<std::tuple<Remaining...>>::value;
     }
 
 public:
@@ -247,7 +247,7 @@ public:
 
 template<typename T>
 struct is_json_serializable_tuple {
-    static constexpr bool value = is_json_serializable_tuple_imp<std::remove_reference_t<remove_std_optional_t<T>>>::value;
+    static constexpr bool value = is_json_serializable_tuple_impl<std::remove_reference_t<remove_std_optional_t<T>>>::value;
 };
 
 template<typename T>

@@ -40,7 +40,7 @@ namespace rapidjson_util {
  */
 template<typename Struct> 
 std::string marshal(const Struct& s) noexcept {
-    return detail::marshalImp(s);
+    return detail::marshalImpl(s);
 }
 
 /**
@@ -64,7 +64,7 @@ std::string marshal(const Struct& s) noexcept {
  */
 template<typename Struct>
 void unmarshal(std::string_view json, Struct& s) {
-    return detail::unmarshalImp(json, s);
+    return detail::unmarshalImpl(json, s);
 }
 
 namespace detail {
@@ -384,7 +384,7 @@ std::vector<JsonAttribute> buildJsonTreeFrom(Struct& s) {
 
 
 template<typename Struct>
-std::string marshalImp(const Struct& s) {
+std::string marshalImpl(const Struct& s) {
     auto root = std::make_shared<JsonObject>(buildJsonTreeFrom(s));
 
     JsonWriter writer;
@@ -392,7 +392,7 @@ std::string marshalImp(const Struct& s) {
 }
 
 template<typename Struct>
-void unmarshalImp(std::string_view json, Struct& s)  {
+void unmarshalImpl(std::string_view json, Struct& s)  {
     JsonReader reader(json);
 
     auto root = std::make_shared<JsonObject>(buildJsonTreeFrom(s));
