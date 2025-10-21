@@ -69,8 +69,11 @@ void unmarshal(std::string_view json, Struct& s) {
 
 namespace detail {
 
+template<typename T>
+std::shared_ptr<JsonValue> convertToJsonValueFrom(T& value);
+
 template<typename Sequence>
-std::vector<std::shared_ptr<JsonValue>> convertToJsonValuesFromSeq(Sequence& sequence) {
+std::vector<std::shared_ptr<JsonValue>> convertSequenceToJsonArrayElements(Sequence& sequence) {
     std::vector<std::shared_ptr<JsonValue>> elements;
 
     for (auto&& it : sequence) {
@@ -87,24 +90,14 @@ std::vector<std::shared_ptr<JsonValue>> convertToJsonValuesFromSeq(Sequence& seq
 }
 
 template<typename Tuple>
-std::vector <std::shared_ptr<JsonValue>> convertToJsonValuesFromTup(Tuple& tuple) {
+std::vector <std::shared_ptr<JsonValue>> convertTupleToJsonArrayElements(Tuple& tuple) {
     std::vector<std::shared_ptr<JsonValue>> elements;
 
     std::apply([&elements](auto&&... tupleArgs) {
         auto process = [&elements](auto&& arg) {
             using elemType = remove_const_and_reference_t<decltype(arg)>;
 
-            if constexpr (is_json_serializable_primitive_type_v<elemType>)
-                elements.push_back(createJsonPrimitiveValueFrom(arg));
-
-            else if constexpr (is_describable_struct_v<elemType>)
-                elements.push_back(createJsonObjectFrom(arg));
-
-            else if constexpr (is_json_serializable_tuple_v<elemType>)
-                elements.push_back(createJsonArrayFromTup(arg));
-
-            else if constexpr (is_json_serializable_sequential_container_v<elemType>)
-                elements.push_back(createJsonArrayFromSeq(arg));
+            elements.push_back(convertToJsonValueFrom(arg));
         };
 
         (process(std::forward<decltype(tupleArgs)>(tupleArgs)), ...);
@@ -199,13 +192,13 @@ struct JsonValueCreator<JsonSourceType::Sequential, WrapperType::None, isConstQu
     static std::shared_ptr<JsonArray> create(T& sequence) {
         static_assert(!is_std_optional_v<T>);
 
-        auto elements = convertToJsonValuesFromSeq(sequence);
+        auto elements = convertSequenceToJsonArrayElements(sequence);
         auto jsonArray = std::make_shared<JsonArray>(elements, has_std_optional_elements<T>::value);
 
         if constexpr(!isConstQualified && is_json_serializable_dynamic_array_v<T>)
             jsonArray->setArrayResizer([sequencePtr = &sequence](std::size_t newSize) {
                                                                  sequencePtr->resize(newSize);
-                                                                 return  convertToJsonValuesFromSeq(*sequencePtr);
+                                                                 return  convertSequenceToJsonArrayElements(*sequencePtr);
                                                              });
             
         return jsonArray;
@@ -223,7 +216,7 @@ struct JsonValueCreator<JsonSourceType::Sequential, WrapperType::StdOptional, tr
         if (!sequence.has_value()) 
             return std::make_shared<JsonNullableArray>(hasOptionalElems);
         else {
-            auto elements = convertToJsonValuesFromSeq(std::as_const(*sequence));
+            auto elements = convertSequenceToJsonArrayElements(std::as_const(*sequence));
             return std::make_shared<JsonNullableArray>(elements, hasOptionalElems);
         }
     }
@@ -237,7 +230,7 @@ struct JsonValueCreator<JsonSourceType::Sequential, WrapperType::StdOptional, fa
 
         bool hasOptionalElems = has_std_optional_elements<T>::value;
         auto jsonArray = (sequence.has_value()) ?
-                            std::make_shared<JsonNullableArray>(convertToJsonValuesFromSeq(*sequence), hasOptionalElems) :
+                            std::make_shared<JsonNullableArray>(convertSequenceToJsonArrayElements(*sequence), hasOptionalElems) :
                             std::make_shared<JsonNullableArray>(hasOptionalElems);
                                 
         auto optValueReinitializer = [&sequence]() {
@@ -251,7 +244,7 @@ struct JsonValueCreator<JsonSourceType::Sequential, WrapperType::StdOptional, fa
                                                 optValueReinitializer();
         
                                             sequence->resize(newSize);
-                                            return  convertToJsonValuesFromSeq(*sequence); 
+                                            return  convertSequenceToJsonArrayElements(*sequence); 
                                          };
         auto optValueResetter = [&sequence]() { sequence.reset(); };
         
@@ -269,7 +262,7 @@ struct JsonValueCreator<JsonSourceType::Tuple, WrapperType::None, isConstQualifi
     static std::shared_ptr<JsonArray> create(T& tuple) {
         static_assert(!is_std_optional_v<T>);
 
-        auto elements = convertToJsonValuesFromTup(tuple);
+        auto elements = convertTupleToJsonArrayElements(tuple);
 
         return  std::make_shared<JsonArray>(elements);
     }
@@ -284,7 +277,7 @@ struct JsonValueCreator<JsonSourceType::Tuple, WrapperType::StdOptional, true> {
         if (!tuple.has_value())
             return std::make_shared<JsonNullableArray>();
 
-        auto elements = convertToJsonValuesFromTup(std::as_const(*tuple));
+        auto elements = convertTupleToJsonArrayElements(std::as_const(*tuple));
 
         return std::make_shared<JsonNullableArray>(elements);
     }
@@ -297,14 +290,14 @@ struct JsonValueCreator<JsonSourceType::Tuple, WrapperType::StdOptional, false> 
         static_assert(is_std_optional_v<T> && !std::is_const_v<T>);
 
         auto jsonArray = (tuple.has_value()) ?
-                            std::make_shared<JsonNullableArray>(convertToJsonValuesFromTup(*tuple)) :
+                            std::make_shared<JsonNullableArray>(convertTupleToJsonArrayElements(*tuple)) :
                             std::make_shared<JsonNullableArray>();
                                               
         auto referencedValueReinitializer = [&tuple]() {
                                                     using BaseType = remove_std_optional_t<T>;
                                                     tuple = BaseType{};
                                                 
-                                                    return convertToJsonValuesFromTup(*tuple);
+                                                    return convertTupleToJsonArrayElements(*tuple);
                                                 };
         auto referencedValueResetter = [&tuple]() { tuple.reset(); };
 
@@ -344,6 +337,27 @@ std::shared_ptr<JsonValue> createJsonArrayFromTup(T& tuple) {
 }
 
 
+template<typename T>
+std::shared_ptr<JsonValue> convertToJsonValueFrom(T& value) {
+    using ValueType = remove_const_and_reference_t<T>;
+
+    if constexpr (is_json_serializable_primitive_type_v<ValueType>)
+        return createJsonPrimitiveValueFrom(value);
+
+    else if constexpr (is_describable_struct_v<ValueType>)
+        return createJsonObjectFrom(value);
+
+    else if constexpr (is_json_serializable_tuple_v<ValueType>)
+        return createJsonArrayFromTup(value);
+
+    else if constexpr (is_json_serializable_sequential_container_v<ValueType>)
+        return createJsonArrayFromSeq(value);
+
+    else 
+        static_assert(false, "Unsupported type for JSON serialization");
+}
+
+
 template<typename Desc>
 std::string getMemberName(Desc descriptor) {
     return std::string(descriptor.name());
@@ -363,21 +377,11 @@ std::vector<JsonAttribute> buildJsonTreeFrom(Struct& s) {
 
     auto descriptors = Descriptor<std::remove_const_t<Struct>>::member_descriptors;
     for_each(descriptors, [&s, &members](auto desc) {
-        std::string name = getMemberName(desc);
-        using MemberType = remove_const_and_reference_t<decltype(getMemberValueRef(s, desc))>;
-
-        if constexpr (is_json_serializable_primitive_type_v<MemberType>)
-            members.push_back(JsonAttribute{ name, createJsonPrimitiveValueFrom(getMemberValueRef(s, desc)) });
-
-        else if constexpr (is_json_serializable_sequential_container_v<MemberType>)
-            members.push_back(JsonAttribute{ name, createJsonArrayFromSeq(getMemberValueRef(s, desc)) });
-
-        else if constexpr (is_json_serializable_tuple_v<MemberType>)
-            members.push_back(JsonAttribute{ name, createJsonArrayFromTup(getMemberValueRef(s, desc)) });
-
-        else if constexpr (is_describable_struct_v<MemberType>)
-            members.push_back(JsonAttribute{ name, createJsonObjectFrom(getMemberValueRef(s, desc)) });
-        });
+                              std::string name = getMemberName(desc);
+                              decltype(auto) valueRef = getMemberValueRef(s, desc);
+                              
+                              members.push_back(JsonAttribute{ name, convertToJsonValueFrom(valueRef) });
+                          });
 
     return members;
 }
@@ -385,18 +389,18 @@ std::vector<JsonAttribute> buildJsonTreeFrom(Struct& s) {
 
 template<typename Struct>
 std::string marshalImpl(const Struct& s) {
-    auto root = std::make_shared<JsonObject>(buildJsonTreeFrom(s));
+    JsonObject root(buildJsonTreeFrom(s));
 
     JsonWriter writer;
-    return writer.witeToJson(root.get());
+    return writer.witeToJson(&root);
 }
 
 template<typename Struct>
 void unmarshalImpl(std::string_view json, Struct& s)  {
     JsonReader reader(json);
 
-    auto root = std::make_shared<JsonObject>(buildJsonTreeFrom(s));
-    reader.readFromJson(root.get());
+    JsonObject root(buildJsonTreeFrom(s));
+    reader.readFromJson(&root);
 }
 
 
