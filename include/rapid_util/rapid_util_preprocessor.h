@@ -12,7 +12,6 @@
 #ifndef __RAPIDJSON_UTIL_PREPROCESSOR_H__
 #define __RAPIDJSON_UTIL_PREPROCESSOR_H__
 
-#include <type_traits>
 #include <string>
 #include <list>
 #include <vector>
