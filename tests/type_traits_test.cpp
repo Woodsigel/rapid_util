@@ -22,7 +22,9 @@ TEST(JsonValueTypeTraitTest, RejectUnserializableTypes) {
 	using aUnSerialableType = std::stringstream;
 
 	static_assert(!is_json_serializable_primitive_type_v<int*>, "Raw pointers are not allowed, use std::optional instead");
+	static_assert(!is_json_serializable_primitive_type_v<int&>, "References are not allowed, use std::optional instead");
 	static_assert(!is_json_serializable_primitive_type_v<std::optional<int*>>);
+	static_assert(!is_json_serializable_primitive_type_v<std::optional<int&>>);
 	static_assert(!is_json_serializable_primitive_type_v<char*>, "Using std::string for parsing string");
 	static_assert(!is_json_serializable_primitive_type_v<const std::string>, "Const-qualified types are not allowed");
 	static_assert(!is_json_serializable_primitive_type_v<aUnSerialableType>, "Not a valid JSON ValueType");

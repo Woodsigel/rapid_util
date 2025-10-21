@@ -117,8 +117,7 @@ constexpr bool is_json_primitive_core_type_v = std::disjunction_v<std::is_same<T
                                                              std::is_same<T, float>,
                                                              std::is_same<T, double>>;
 template<typename T>
-constexpr bool is_json_primitive_type_v = is_json_primitive_core_type_v<std::remove_reference_t<
-                                                                             remove_std_optional_t<T>>>;
+constexpr bool is_json_primitive_type_v = is_json_primitive_core_type_v<remove_std_optional_t<T>>;
 
 template<typename T>
 constexpr bool is_json_serializable_primitive_type_v =  is_json_primitive_type_v<T>

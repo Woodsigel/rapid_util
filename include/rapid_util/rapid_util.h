@@ -69,6 +69,7 @@ void unmarshal(std::string_view json, Struct& s) {
 
 namespace detail {
 
+
 template<typename T>
 std::shared_ptr<JsonValue> convertToJsonValueFrom(T& value);
 
