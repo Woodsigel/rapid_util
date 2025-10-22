@@ -75,34 +75,24 @@ std::shared_ptr<JsonValue> convertToJsonValueFrom(T& value);
 
 template<typename Sequence>
 std::vector<std::shared_ptr<JsonValue>> convertSequenceToJsonArrayElements(Sequence& sequence) {
+    static_assert(is_json_serializable_sequential_container_v<Sequence>);
+
     std::vector<std::shared_ptr<JsonValue>> elements;
 
-    for (auto&& it : sequence) {
-        using elemType = remove_const_and_reference_t<decltype(it)>;
-
-        if constexpr (is_json_serializable_primitive_type_v<elemType>)
-            elements.push_back(createJsonPrimitiveValueFrom(it));
-
-        else if constexpr (is_describable_struct_v<elemType>)
-            elements.push_back(createJsonObjectFrom(it));
-    }
-
+    for (auto&& item : sequence)
+        elements.push_back(convertToJsonValueFrom(item));
+        
     return elements;
 }
 
 template<typename Tuple>
 std::vector <std::shared_ptr<JsonValue>> convertTupleToJsonArrayElements(Tuple& tuple) {
+    static_assert(is_json_serializable_tuple_v<Tuple>);
+
     std::vector<std::shared_ptr<JsonValue>> elements;
 
     std::apply([&elements](auto&&... tupleArgs) {
-        auto process = [&elements](auto&& arg) {
-            using elemType = remove_const_and_reference_t<decltype(arg)>;
-
-            elements.push_back(convertToJsonValueFrom(arg));
-        };
-
-        (process(std::forward<decltype(tupleArgs)>(tupleArgs)), ...);
-        }, tuple);
+                           (..., (elements.push_back(convertToJsonValueFrom(tupleArgs))));}, tuple);
 
     return elements;
 }
