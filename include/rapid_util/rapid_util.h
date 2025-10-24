@@ -355,7 +355,7 @@ std::string getMemberName(Desc descriptor) {
 }
 
 template<typename Struct, typename Desc>
-decltype(auto) getMemberValueRef(Struct& s, Desc descriptor) {
+auto& getMemberValueRef(Struct& s, Desc descriptor) {
     return s.*(descriptor.pointer());
 }
 
