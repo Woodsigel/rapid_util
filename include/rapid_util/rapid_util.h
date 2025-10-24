@@ -369,7 +369,7 @@ std::vector<JsonAttribute> buildJsonTreeFrom(Struct& s) {
     auto descriptors = Descriptor<std::remove_const_t<Struct>>::member_descriptors;
     for_each(descriptors, [&s, &members](auto desc) {
                               std::string name = getMemberName(desc);
-                              decltype(auto) valueRef = getMemberValueRef(s, desc);
+                              auto& valueRef = getMemberValueRef(s, desc);
                               
                               members.push_back(JsonAttribute{ name, convertToJsonValueFrom(valueRef) });
                           });
