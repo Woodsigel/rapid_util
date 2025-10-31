@@ -28,7 +28,7 @@ struct TypeList {
 };
 
 template<typename... Types>
-constexpr auto make_typelist(Types&&...) noexcept {
+constexpr auto make_typelist(Types&&...) {
     return TypeList<Types...> {};
 }
 
@@ -36,7 +36,7 @@ template<typename F,
     template<typename ...> typename List,
     typename ...Descriptors>
 void for_each(const List<Descriptors...>& , F&& f) {
-    ((std::invoke(std::forward<F>(f), Descriptors{})), ...);
+    ((..., std::invoke(std::forward<F>(f), Descriptors{})));
 }
 
 template<typename Struct>
