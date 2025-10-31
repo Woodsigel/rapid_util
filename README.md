@@ -1,6 +1,6 @@
 # rapid_util
 
-A simple C++17 JSON utility built on RapidJSON that automatically serializes and deserializes C++ structs to JSON using member fields as keys. The reflection preprocessors in this utility are inspired by [Boost Describe library](https://www.boost.org/doc/libs/1_89_0/libs/describe/doc/html/describe.html), with simplifications for ease of use and reduced dependencies.
+A simple C++17 JSON utility built on [RapidJSON](https://rapidjson.org/) that automatically serializes and deserializes C++ structs to JSON using member fields as keys. The reflection preprocessors in this utility are inspired by [Boost Describe library](https://www.boost.org/doc/libs/1_89_0/libs/describe/doc/html/describe.html), with simplifications for ease of use and reduced dependencies.
 
 ## Features
 
