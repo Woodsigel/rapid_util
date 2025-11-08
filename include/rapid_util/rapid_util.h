@@ -71,7 +71,7 @@ namespace detail {
 
 
 template<typename T>
-std::shared_ptr<JsonValue> convertToJsonValueFrom(T& value);
+std::shared_ptr<JsonValue> convertToJsonValueFrom(T& memberRef);
 
 template<typename Sequence>
 std::vector<std::shared_ptr<JsonValue>> convertSequenceToJsonArrayElements(Sequence& sequence) {
@@ -329,20 +329,20 @@ std::shared_ptr<JsonValue> createJsonArrayFromTup(T& tuple) {
 
 
 template<typename T>
-std::shared_ptr<JsonValue> convertToJsonValueFrom(T& value) {
+std::shared_ptr<JsonValue> convertToJsonValueFrom(T& memberRef) {
     using ValueType = std::remove_const_t<T>;
 
     if constexpr (is_json_serializable_primitive_type_v<ValueType>)
-        return createJsonPrimitiveValueFrom(value);
+        return createJsonPrimitiveValueFrom(memberRef);
 
     else if constexpr (is_describable_struct_v<ValueType>)
-        return createJsonObjectFrom(value);
+        return createJsonObjectFrom(memberRef);
 
     else if constexpr (is_json_serializable_tuple_v<ValueType>)
-        return createJsonArrayFromTup(value);
+        return createJsonArrayFromTup(memberRef);
 
     else if constexpr (is_json_serializable_sequential_container_v<ValueType>)
-        return createJsonArrayFromSeq(value);
+        return createJsonArrayFromSeq(memberRef);
 
     else 
         static_assert(false, "Unsupported type for JSON serialization");
