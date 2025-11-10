@@ -100,7 +100,7 @@ template<typename T>
 using remove_std_optional_t = typename remove_std_optional<T>::type;
 
 
-// Empty specialization for debug type inspection
+// Use for debugging type inspection
 template<typename Type>
 struct type_displayer {
 };
