@@ -405,7 +405,7 @@ void unmarshalImpl(std::string_view json, Struct& s)  {
 #define RAPIDJSON_UTIL_DESCRIBE_MEMBERS_IMP(C, members)  template<> struct rapidjson_util::detail::Descriptor<C> {     \
      	static constexpr bool is_describable = true;                                                                   \
         static constexpr auto member_descriptors = make_typelist(                                                      \
-                      RAPIDJSON_UTIL_REMOVE_FIRST_ARG(RAPIDJSON_UTIL_FOR_EACH(                                         \
+                      RAPIDJSON_UTIL_REMOVE_FIRST_ARG(~ RAPIDJSON_UTIL_FOR_EACH(                                       \
                           RAPIDJSON_UTIL_MEMBER_META, C, RAPIDJSON_UTIL_UNPACK members)));                             \
         };
 
