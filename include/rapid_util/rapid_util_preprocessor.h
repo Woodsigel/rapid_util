@@ -259,133 +259,74 @@ constexpr bool is_json_serializable_v = is_json_serializable_primitive_type_v<T>
 }  // namespace detail
 }  // namespace rapidjson_util 
 
+#define RAPIDJSON_UTIL_EMPTY
+
 
 #define RAPIDJSON_UTIL_STRINGIFY(x) RAPIDJSON_UTIL_STRINGIFY_I(x)
 #define RAPIDJSON_UTIL_STRINGIFY_I(x) #x
 
-#define RAPIDJSON_UTIL_REMOVE_FIRST_ARG(...) RAPIDJSON_UTIL_REMOVE_FIRST_ARG_I((__VA_ARGS__))
-#define RAPIDJSON_UTIL_REMOVE_FIRST_ARG_I(x) RAPIDJSON_UTIL_REMOVE_FIRST_ARG_II x
-#define RAPIDJSON_UTIL_REMOVE_FIRST_ARG_II(x, ...) __VA_ARGS__
 
 #define RAPIDJSON_UTIL_UNPACK(...) __VA_ARGS__
 
+
 #define RAPIDJSON_UTIL_EXPAND(x) x
 
-#define RAPIDJSON_UTIL_CALL(F, C, x) F(C, x)
 
-#define RAPIDJSON_UTIL_FOR_EACH_0(F, C) static_assert(false, "Members to be described cannot be empty.");
-#define RAPIDJSON_UTIL_FOR_EACH_1(F, C, x) RAPIDJSON_UTIL_CALL(F, C, x)
-#define RAPIDJSON_UTIL_FOR_EACH_2(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_1(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_3(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_2(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_4(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_3(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_5(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_4(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_6(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_5(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_7(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_6(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_8(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_7(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_9(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_8(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_10(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_9(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_11(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_10(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_12(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_11(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_13(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_12(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_14(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_13(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_15(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_14(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_16(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_15(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_17(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_16(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_18(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_17(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_19(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_18(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_20(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_19(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_21(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_20(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_22(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_21(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_23(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_22(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_24(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_23(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_25(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_24(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_26(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_25(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_27(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_26(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_28(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_27(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_29(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_28(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_30(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_29(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_31(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_30(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_32(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_31(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_33(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_32(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_34(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_33(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_35(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_34(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_36(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_35(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_37(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_36(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_38(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_37(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_39(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_38(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_40(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_39(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_41(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_40(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_42(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_41(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_43(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_42(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_44(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_43(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_45(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_44(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_46(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_45(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_47(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_46(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_48(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_47(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_49(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_48(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_50(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_49(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_51(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_50(F, C, __VA_ARGS__))
-#define RAPIDJSON_UTIL_FOR_EACH_52(F, C, x, ...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_CALL(F, C, x)  RAPIDJSON_UTIL_FOR_EACH_51(F, C, __VA_ARGS__))
+#define RAPIDJSON_UTIL_CAT(a, b) RAPIDJSON_UTIL_CAT_I(a, b)
+#define RAPIDJSON_UTIL_CAT_I(a, b) a ## b 
 
 
-#define RAPIDJSON_UTIL_EXTRACT(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40,  _41, _42, _43, _44, _45, _46, _47, _48, _49, _50, _51, _52, V, ...) V
+#define RAPIDJSON_UTIL_EVAL(...) RAPIDJSON_UTIL_EVAL128(__VA_ARGS__)
+#define RAPIDJSON_UTIL_EVAL128(...) RAPIDJSON_UTIL_EVAL64(RAPIDJSON_UTIL_EVAL64(__VA_ARGS__))
+#define RAPIDJSON_UTIL_EVAL64(...) RAPIDJSON_UTIL_EVAL32(RAPIDJSON_UTIL_EVAL32(__VA_ARGS__))
+#define RAPIDJSON_UTIL_EVAL32(...) RAPIDJSON_UTIL_EVAL16(RAPIDJSON_UTIL_EVAL16(__VA_ARGS__))
+#define RAPIDJSON_UTIL_EVAL16(...) RAPIDJSON_UTIL_EVAL8(RAPIDJSON_UTIL_EVAL8(__VA_ARGS__))
+#define RAPIDJSON_UTIL_EVAL8(...) RAPIDJSON_UTIL_EVAL4(RAPIDJSON_UTIL_EVAL4(__VA_ARGS__))
+#define RAPIDJSON_UTIL_EVAL4(...) RAPIDJSON_UTIL_EVAL2(RAPIDJSON_UTIL_EVAL2(__VA_ARGS__))
+#define RAPIDJSON_UTIL_EVAL2(...) RAPIDJSON_UTIL_EVAL1(RAPIDJSON_UTIL_EVAL1(__VA_ARGS__))
+#define RAPIDJSON_UTIL_EVAL1(...) __VA_ARGS__
 
-                        
-#define RAPIDJSON_UTIL_FOR_EACH(F,  ...)                                                                                 \
-      RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_EXTRACT(__VA_ARGS__,                                    \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_52,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_51,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_50,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_49,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_48,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_47,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_46,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_45,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_44,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_43,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_42,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_41,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_40,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_39,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_38,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_37,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_36,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_35,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_34,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_33,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_32,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_31,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_30,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_29,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_28,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_27,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_26,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_25,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_24,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_23,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_22,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_21,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_20,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_19,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_18,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_17,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_16,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_15,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_14,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_13,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_12,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_11,                             \
-																 RAPIDJSON_UTIL_FOR_EACH_10,                             \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_9,                              \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_8,                              \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_7,                              \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_6,                              \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_5,                              \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_4,                              \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_3,                              \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_2,                              \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_1,                              \
-                                                                 RAPIDJSON_UTIL_FOR_EACH_0))(F, __VA_ARGS__))        
+
+#define RAPIDJSON_UTIL_GET_FIRST_ARG(a, ...) a
+#define RAPIDJSON_UTIL_GET_SECOND_ARG(a, b, ...) b
+
+
+#define RAPIDJSON_UTIL_IS_PROBE(...) RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_GET_SECOND_ARG(__VA_ARGS__, 0))
+#define RAPIDJSON_UTIL_PROBE ~, 1
+
+
+#define RAPIDJSON_UTIL_NOT(x) RAPIDJSON_UTIL_IS_PROBE(RAPIDJSON_UTIL_CAT(RAPIDJSON_UTIL_NOT_ , x))
+#define RAPIDJSON_UTIL_NOT_0 RAPIDJSON_UTIL_PROBE
+
+
+#define RAPIDJSON_UTIL_BOOL(x) RAPIDJSON_UTIL_NOT(RAPIDJSON_UTIL_NOT(x))
+
+
+#define RAPIDJSON_UTIL_IS_EMPTY(...) RAPIDJSON_UTIL_NOT(RAPIDJSON_UTIL_GET_FIRST_ARG( RAPIDJSON_UTIL_END_ARG_ __VA_ARGS__ )())
+#define RAPIDJSON_UTIL_END_ARG_() 0
+
+
+#define RAPIDJSON_UTIL_IF_ELSE(condition) RAPIDJSON_UTIL_CAT(RAPIDJSON_UTIL_IF_ELSE_, RAPIDJSON_UTIL_BOOL(condition) )
+#define RAPIDJSON_UTIL_IF_ELSE_1(...)  __VA_ARGS__ RAPIDJSON_UTIL_IF_1_ELSE
+#define RAPIDJSON_UTIL_IF_ELSE_0(...)              RAPIDJSON_UTIL_IF_0_ELSE
+#define RAPIDJSON_UTIL_IF_1_ELSE(...) 
+#define RAPIDJSON_UTIL_IF_0_ELSE(...) __VA_ARGS__
+
+
+#define RAPIDJSON_UTIL_STRIP_COMMAS(x, ...) RAPIDJSON_UTIL_EVAL(RAPIDJSON_UTIL_STRIP_COMMAS_I(x, __VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_I(x, ...)  x                                                                 \
+        RAPIDJSON_UTIL_IF_ELSE(RAPIDJSON_UTIL_IS_EMPTY(__VA_ARGS__))                                             \
+        ()                                                                                                       \
+        ( RAPIDJSON_UTIL_STRIP_COMMAS_II RAPIDJSON_UTIL_EMPTY () (__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_II() RAPIDJSON_UTIL_STRIP_COMMAS_I
+
+
+#define RAPIDJSON_UTIL_FOR_EACH(F, C, x, ...)   RAPIDJSON_UTIL_EVAL(RAPIDJSON_UTIL_FOR_EACH_I(F, C, x, __VA_ARGS__))
+#define RAPIDJSON_UTIL_FOR_EACH_I(F, C, x, ...) F(C, x)                                                               \
+        RAPIDJSON_UTIL_IF_ELSE(RAPIDJSON_UTIL_IS_EMPTY(__VA_ARGS__))                                                  \
+        ( /* Do nothing, just terminate */ )                                                                          \
+        (, RAPIDJSON_UTIL_FOR_EACH_II RAPIDJSON_UTIL_EMPTY () (F, C, __VA_ARGS__))             
+#define RAPIDJSON_UTIL_FOR_EACH_II() RAPIDJSON_UTIL_FOR_EACH_I
 
 
 #endif

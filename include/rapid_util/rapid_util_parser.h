@@ -455,8 +455,7 @@ public:
 	using ReferencedValueReinitializer = std::function <std::vector<JsonAttribute>()>;
 	using ReferencedValueResetter = std::function<void()>;
 
-	JsonNullableObject() : isNull(true) {
-	}
+	JsonNullableObject() : isNull(true) {}
 
 	JsonNullableObject(const std::vector<JsonAttribute>& _members) : isNull(false) {
 		members = _members;
@@ -880,6 +879,7 @@ inline void JsonReader::visit(JsonObject* object, rapidjson::Value& jsonInput) {
 inline void JsonReader::visit(JsonNullableObject* object, rapidjson::Value& jsonInput) {
 	if (jsonInput.IsNull())
 		return object->resetReferencedValue();
+
 
 	if(object->isReferencedValueNull())
 		object->reinitializeReferencedValue();

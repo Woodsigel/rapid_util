@@ -11,7 +11,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_executable(rapidUtilMarshal marshal_example.cpp)
 add_executable(rapidUtilUnmarshal unmarshal_example.cpp)
-
+ 
 # Download and build RapidJSON if not found
 find_package(RapidJSON QUIET)
 if(NOT RapidJSON_FOUND)
@@ -19,7 +19,7 @@ if(NOT RapidJSON_FOUND)
 	ExternalProject_Add(
 		rapidjson
 		GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
-		GIT_TAG v1.1.0  # Specific tag
+		GIT_TAG v1.1.0  
 		CONFIGURE_COMMAND ""  # No configure needed for header-only
 		BUILD_COMMAND ""      # No build needed for header-only  
 		INSTALL_COMMAND ""    # No install needed for header-only
