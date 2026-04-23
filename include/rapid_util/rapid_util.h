@@ -127,8 +127,8 @@ struct JsonValueCreator<JsonSourceType::Primitive, UnusedWrapperType, UnusedIsCo
 };
 
 
-template<bool isConstQualified>
-struct JsonValueCreator<JsonSourceType::Struct, WrapperType::None, isConstQualified> {
+template<bool unusedIsConstQualified>
+struct JsonValueCreator<JsonSourceType::Struct, WrapperType::None, unusedIsConstQualified> {
     template<typename T>
     static std::shared_ptr<JsonObject> create(T& value) {
         static_assert(!is_std_optional_v<T>);
@@ -227,18 +227,21 @@ struct JsonValueCreator<JsonSourceType::Sequential, WrapperType::StdOptional, fa
                             std::make_shared<JsonNullableArray>(containOptionalElems);
                                 
         auto optValueReinitializer = [&sequence]() {
-                                            using BaseType = remove_std_optional_t<T>;
-                                            sequence = BaseType{};
-                                        
-                                            return std::vector<std::shared_ptr<JsonValue>>{};
-                                        };
-        auto resizer = [&sequence, optValueReinitializer](std::size_t newSize) {
-                                            if (!sequence.has_value())
-                                                optValueReinitializer();
+                                          using BaseType = remove_std_optional_t<T>;
+                                          sequence = BaseType{};
+                                          
+                                          return std::vector<std::shared_ptr<JsonValue>>{};
+                                     };
+
+        auto resizer = [&sequence, optValueReinitializer]
+                       (std::size_t newSize) {
+                            if (!sequence.has_value())
+                                optValueReinitializer();
         
-                                            sequence->resize(newSize);
-                                            return  convertSequenceToJsonArrayElements(sequence.value());
-                                         };
+                            sequence->resize(newSize);
+                            return  convertSequenceToJsonArrayElements(sequence.value());
+                        };
+
         auto optValueResetter = [&sequence]() { sequence.reset(); };
         
         jsonArray->setArrayResizer(resizer);
@@ -249,8 +252,8 @@ struct JsonValueCreator<JsonSourceType::Sequential, WrapperType::StdOptional, fa
 };
 
 
-template<bool isConstQualified>
-struct JsonValueCreator<JsonSourceType::Tuple, WrapperType::None, isConstQualified> {
+template<bool UnusedIsConstQualified>
+struct JsonValueCreator<JsonSourceType::Tuple, WrapperType::None, UnusedIsConstQualified> {
     template<typename T>
     static std::shared_ptr<JsonArray> create(T& tuple) {
         static_assert(!is_std_optional_v<T>);
@@ -288,11 +291,12 @@ struct JsonValueCreator<JsonSourceType::Tuple, WrapperType::StdOptional, false> 
                             std::make_shared<JsonNullableArray>();
                                               
         auto referencedValueReinitializer = [&stdOptionalTup]() {
-                                                    using BaseType = remove_std_optional_t<T>;
-                                                    stdOptionalTup = BaseType{};
-                                                
-                                                    return convertTupleToJsonArrayElements(stdOptionalTup.value());
-                                                };
+                               using BaseType = remove_std_optional_t<T>;
+                               stdOptionalTup = BaseType{};
+                               
+                               return convertTupleToJsonArrayElements(stdOptionalTup.value());
+                            };
+
         auto referencedValueResetter = [&stdOptionalTup]() { stdOptionalTup.reset(); };
 
         jsonArray->setReferencedValueHandlers(referencedValueReinitializer, referencedValueResetter);
