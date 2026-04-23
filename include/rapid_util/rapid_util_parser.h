@@ -88,7 +88,7 @@ class JsonArray;
 class JsonNullableArray;
 
 template<typename Exception>
-void ThrowUnless(bool condition, Exception&& exception) {
+void ThrowExceptionUnless(bool condition, Exception&& exception) {
 	if (!condition)
 		throw std::forward<Exception>(exception);
 }
@@ -860,7 +860,7 @@ inline void  JsonReader::readObjectMembers(JsonObject* object, rapidjson::Value&
 
 	for (auto&& member : object->getMembers()) {
 		auto name = member.name.c_str();
-		ThrowUnless(jsonInput.HasMember(name), MemberNotFoundException(name));
+		ThrowExceptionUnless(jsonInput.HasMember(name), MemberNotFoundException(name));
 
 		try {
 			member.value->accept(*this, jsonInput[name]);
@@ -902,10 +902,10 @@ inline void JsonReader::readArrayElements(JsonArray* array, rapidjson::Value& js
 	RapidjsonValueTypeValidator::validate(jsonInput, QueryType::IsArray);
 
 	if(!array->hasOptionalElements())
-		ThrowUnless(!hasNullElements(jsonInput), TypeMismatchException("JSON array contains null elements"));
+		ThrowExceptionUnless(!hasNullElements(jsonInput), TypeMismatchException("JSON array contains null elements"));
 
 	auto jsonArray = jsonInput.GetArray();
-	ThrowUnless(jsonArray.Size() == array->size() || array->isResizable(), ArrayLengthMismatchException(
+	ThrowExceptionUnless(jsonArray.Size() == array->size() || array->isResizable(), ArrayLengthMismatchException(
 									"Array size mismatch: JSON contains " + std::to_string(jsonArray.Size()) +
 									" elements, but given array has fixed capacity of " + std::to_string(array->size()) +
 									" elements and cannot be resized."));
