@@ -474,7 +474,7 @@ public:
 	}
 
 	void resetReferencedValue() {
-		if (!resetter) return;
+		assert(resetter != nullptr);
 
 		resetter();
 
@@ -483,7 +483,7 @@ public:
 	}
 
 	void reinitializeReferencedValue() {
-		if (!reinitializer) return;
+		assert(reinitializer != nullptr);
 
 		members = reinitializer();
 		isNull = false;
@@ -550,7 +550,7 @@ protected:
 class JsonNullableArray : public JsonArray {
 public:
 	using ReferencedValueResetter = std::function<void()>;
-	using ReferencedValueReinitializer = std::function <std::vector<std::shared_ptr<JsonValue>>()>;
+	using ReferencedValueReinitializer = std::function<std::vector<std::shared_ptr<JsonValue>>()>;
 
 	JsonNullableArray(bool _hasOptionalElems = false) : isNull(true) {
 		hasOptionalElems = _hasOptionalElems;
@@ -575,7 +575,7 @@ public:
 	}
 
 	void resetReferencedValue() {
-		if (!resetter) return;
+		assert(resetter != nullptr);
 
 		resetter();
 
@@ -584,7 +584,7 @@ public:
 	}
 
 	void reinitializeReferencedValue() {
-		if (!reinitializer) return;
+		assert(reinitializer != nullptr);
 
 		elements = reinitializer();
 		isNull = false;

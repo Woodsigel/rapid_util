@@ -52,16 +52,16 @@ struct TypeHolder {
 TEST(JsonValueTypeTraitTest, IdentifyContainersWithNullableElementsUsingStdOptional) {
 	using aUnSerialableType = std::stringstream;
 
-	static_assert(has_std_optional_elements<std::vector<std::optional<int>>>::value);
-	static_assert(has_std_optional_elements<std::optional<std::vector<std::optional<std::string>>>>::value);
+	static_assert(contain_std_optional_elements<std::vector<std::optional<int>>>::value);
+	static_assert(contain_std_optional_elements<std::optional<std::vector<std::optional<std::string>>>>::value);
 
-	static_assert(has_std_optional_elements<std::list<std::optional<double>>>::value);
-	static_assert(has_std_optional_elements<std::optional<std::list<std::optional<float>>>>::value);
+	static_assert(contain_std_optional_elements<std::list<std::optional<double>>>::value);
+	static_assert(contain_std_optional_elements<std::optional<std::list<std::optional<float>>>>::value);
 
-	static_assert(has_std_optional_elements<std::array<std::optional<float>, 5>>::value);
-	static_assert(has_std_optional_elements<std::optional<std::array<std::optional<bool>, 10>>>::value);
+	static_assert(contain_std_optional_elements<std::array<std::optional<float>, 5>>::value);
+	static_assert(contain_std_optional_elements<std::optional<std::array<std::optional<bool>, 10>>>::value);
 
-	static_assert(!has_std_optional_elements<std::vector<std::optional<aUnSerialableType>>>::value);
-	static_assert(!has_std_optional_elements<TypeHolder<std::optional<bool>>>::value,
+	static_assert(!contain_std_optional_elements<std::vector<std::optional<aUnSerialableType>>>::value);
+	static_assert(!contain_std_optional_elements<TypeHolder<std::optional<bool>>>::value,
 		          "TypeHolder is not a standard sequential container.");
 }

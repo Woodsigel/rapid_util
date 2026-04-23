@@ -183,26 +183,26 @@ constexpr bool is_json_serializable_sequential_container_v = is_json_serializabl
 
 
 template<typename T, typename = void>
-struct has_optional_elements_impl : std::false_type {};
+struct contain_optional_elements_impl : std::false_type {};
 
 template<template<typename, typename> typename Container, typename Alloc, typename U>
-struct has_optional_elements_impl<Container<std::optional<U>, Alloc>,
+struct contain_optional_elements_impl<Container<std::optional<U>, Alloc>,
                                std::enable_if_t<is_json_serializable_dynamic_array_v<Container<std::optional<U>, Alloc>>>>
     : std::true_type {};
 
 template<template<typename, size_t> typename Array, size_t N, typename U>
-struct has_optional_elements_impl<Array<std::optional<U>, N>,
+struct contain_optional_elements_impl<Array<std::optional<U>, N>,
                                std::enable_if_t<is_json_serializable_fixed_array_v<Array<std::optional<U>, N>>>>
     : std::true_type {};
 
 template<typename Container>
-struct has_optional_elements_impl<std::optional<Container>,
-                               std::enable_if_t<has_optional_elements_impl<Container>::value>>
+struct contain_optional_elements_impl<std::optional<Container>,
+                               std::enable_if_t<contain_optional_elements_impl<Container>::value>>
                                : std::true_type {};
 
 template<typename Container>
-struct has_std_optional_elements :
-    has_optional_elements_impl<remove_const_and_reference_t<Container>> {};
+struct contain_std_optional_elements :
+    contain_optional_elements_impl<remove_const_and_reference_t<Container>> {};
 
 
 template<typename T>
