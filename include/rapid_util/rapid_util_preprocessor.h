@@ -196,7 +196,8 @@ constexpr bool is_json_serializable_dynamic_array_v = is_json_serializable_dynam
 
 
 template<typename T>
-constexpr bool is_json_serializable_sequential_container_v = is_json_serializable_fixed_array_v<T> || is_json_serializable_dynamic_array_v<T>;
+constexpr bool is_json_serializable_sequential_container_v = is_json_serializable_fixed_array_v<T> || 
+                                                             is_json_serializable_dynamic_array_v<T>;
 
 
 template<typename Container>
@@ -219,7 +220,6 @@ private:
     struct contain_optional_elements_impl<std::optional<Container>,
         std::enable_if_t<contain_optional_elements_impl<Container>::value>>
         : std::true_type {};
-
 
 public:
     static constexpr bool value = contain_optional_elements_impl<remove_const_and_reference_t<Container>>::value;
@@ -269,7 +269,6 @@ private:
 
 public:
     static constexpr bool value = is_json_serializable_tuple_impl<std::remove_reference_t<remove_std_optional_t<T>>>::value;
-
 };
 
 template<typename T>
@@ -522,8 +521,5 @@ constexpr bool is_json_serializable_v = is_json_serializable_primitive_type_v<T>
                                                                  RAPIDJSON_UTIL_STRIP_COMMAS_2,                          \
                                                                  RAPIDJSON_UTIL_STRIP_COMMAS_1,                          \
                                                                  RAPIDJSON_UTIL_STRIP_COMMAS_0))(__VA_ARGS__))   
-
-
-
 
 #endif

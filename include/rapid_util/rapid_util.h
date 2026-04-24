@@ -43,6 +43,7 @@ std::string marshal(const Struct& s) noexcept {
     return detail::marshalImpl(s);
 }
 
+
 /**
  * @brief Deserialize a JSON string to populate a C++ struct
  *
