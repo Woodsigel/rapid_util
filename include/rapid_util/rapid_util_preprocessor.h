@@ -282,8 +282,6 @@ constexpr bool is_json_serializable_v = is_json_serializable_primitive_type_v<T>
 }  // namespace detail
 }  // namespace rapidjson_util 
 
-#define RAPIDJSON_UTIL_EMPTY
-
 
 #define RAPIDJSON_UTIL_STRINGIFY(x) RAPIDJSON_UTIL_STRINGIFY_I(x)
 #define RAPIDJSON_UTIL_STRINGIFY_I(x) #x
