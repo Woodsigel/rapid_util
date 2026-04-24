@@ -390,59 +390,58 @@ constexpr bool is_json_serializable_v = is_json_serializable_primitive_type_v<T>
                                                                  RAPIDJSON_UTIL_FOR_EACH_0))(F, __VA_ARGS__))   
 
 #define RAPIDJSON_UTIL_STRIP_COMMAS_0()
-#define RAPIDJSON_UTIL_STRIP_COMMAS_1(_1) _1
-#define RAPIDJSON_UTIL_STRIP_COMMAS_2(_1, _2) _1 _2
-#define RAPIDJSON_UTIL_STRIP_COMMAS_3(_1, _2, _3) _1 _2 _3
-#define RAPIDJSON_UTIL_STRIP_COMMAS_4(_1, _2, _3, _4) _1 _2 _3 _4
-#define RAPIDJSON_UTIL_STRIP_COMMAS_5(_1, _2, _3, _4, _5) _1 _2 _3 _4 _5
-#define RAPIDJSON_UTIL_STRIP_COMMAS_6(_1, _2, _3, _4, _5, _6) _1 _2 _3 _4 _5 _6
-#define RAPIDJSON_UTIL_STRIP_COMMAS_7(_1, _2, _3, _4, _5, _6, _7) _1 _2 _3 _4 _5 _6 _7
-#define RAPIDJSON_UTIL_STRIP_COMMAS_8(_1, _2, _3, _4, _5, _6, _7, _8) _1 _2 _3 _4 _5 _6 _7 _8
-#define RAPIDJSON_UTIL_STRIP_COMMAS_9(_1, _2, _3, _4, _5, _6, _7, _8, _9) _1 _2 _3 _4 _5 _6 _7 _8 _9
-#define RAPIDJSON_UTIL_STRIP_COMMAS_10(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10
-#define RAPIDJSON_UTIL_STRIP_COMMAS_11(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11
-#define RAPIDJSON_UTIL_STRIP_COMMAS_12(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12
-#define RAPIDJSON_UTIL_STRIP_COMMAS_13(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13
-#define RAPIDJSON_UTIL_STRIP_COMMAS_14(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14
-#define RAPIDJSON_UTIL_STRIP_COMMAS_15(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15
-#define RAPIDJSON_UTIL_STRIP_COMMAS_16(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16
-#define RAPIDJSON_UTIL_STRIP_COMMAS_17(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17
-#define RAPIDJSON_UTIL_STRIP_COMMAS_18(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18
-#define RAPIDJSON_UTIL_STRIP_COMMAS_19(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19
-#define RAPIDJSON_UTIL_STRIP_COMMAS_20(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20
-#define RAPIDJSON_UTIL_STRIP_COMMAS_21(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21
-#define RAPIDJSON_UTIL_STRIP_COMMAS_22(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22
-#define RAPIDJSON_UTIL_STRIP_COMMAS_23(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23
-#define RAPIDJSON_UTIL_STRIP_COMMAS_24(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24
-#define RAPIDJSON_UTIL_STRIP_COMMAS_25(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25
-#define RAPIDJSON_UTIL_STRIP_COMMAS_26(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26
-#define RAPIDJSON_UTIL_STRIP_COMMAS_27(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27
-#define RAPIDJSON_UTIL_STRIP_COMMAS_28(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28
-#define RAPIDJSON_UTIL_STRIP_COMMAS_29(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29
-#define RAPIDJSON_UTIL_STRIP_COMMAS_30(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30
-#define RAPIDJSON_UTIL_STRIP_COMMAS_31(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30 _31
-#define RAPIDJSON_UTIL_STRIP_COMMAS_32(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30 _31 _32
-#define RAPIDJSON_UTIL_STRIP_COMMAS_33(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30 _31 _32 _33
-#define RAPIDJSON_UTIL_STRIP_COMMAS_34(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30 _31 _32 _33 _34
-#define RAPIDJSON_UTIL_STRIP_COMMAS_35(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30 _31 _32 _33 _34 _35
-#define RAPIDJSON_UTIL_STRIP_COMMAS_36(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30 _31 _32 _33 _34 _35 _36
-#define RAPIDJSON_UTIL_STRIP_COMMAS_37(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30 _31 _32 _33 _34 _35 _36 _37
-#define RAPIDJSON_UTIL_STRIP_COMMAS_38(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30 _31 _32 _33 _34 _35 _36 _37 _38
-#define RAPIDJSON_UTIL_STRIP_COMMAS_39(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30 _31 _32 _33 _34 _35 _36 _37 _38 _39
-#define RAPIDJSON_UTIL_STRIP_COMMAS_40(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30 _31 _32 _33 _34 _35 _36 _37 _38 _39 _40
-#define RAPIDJSON_UTIL_STRIP_COMMAS_41(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, _41) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30 _31 _32 _33 _34 _35 _36 _37 _38 _39 _40 _41
-#define RAPIDJSON_UTIL_STRIP_COMMAS_42(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, _41, _42) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30 _31 _32 _33 _34 _35 _36 _37 _38 _39 _40 _41 _42
-#define RAPIDJSON_UTIL_STRIP_COMMAS_43(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, _41, _42, _43) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30 _31 _32 _33 _34 _35 _36 _37 _38 _39 _40 _41 _42 _43
-#define RAPIDJSON_UTIL_STRIP_COMMAS_44(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, _41, _42, _43, _44) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30 _31 _32 _33 _34 _35 _36 _37 _38 _39 _40 _41 _42 _43 _44
-#define RAPIDJSON_UTIL_STRIP_COMMAS_45(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, _41, _42, _43, _44, _45) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30 _31 _32 _33 _34 _35 _36 _37 _38 _39 _40 _41 _42 _43 _44 _45
-#define RAPIDJSON_UTIL_STRIP_COMMAS_46(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, _41, _42, _43, _44, _45, _46) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30 _31 _32 _33 _34 _35 _36 _37 _38 _39 _40 _41 _42 _43 _44 _45 _46
-#define RAPIDJSON_UTIL_STRIP_COMMAS_47(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, _41, _42, _43, _44, _45, _46, _47) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30 _31 _32 _33 _34 _35 _36 _37 _38 _39 _40 _41 _42 _43 _44 _45 _46 _47
-#define RAPIDJSON_UTIL_STRIP_COMMAS_48(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, _41, _42, _43, _44, _45, _46, _47, _48) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30 _31 _32 _33 _34 _35 _36 _37 _38 _39 _40 _41 _42 _43 _44 _45 _46 _47 _48
-#define RAPIDJSON_UTIL_STRIP_COMMAS_49(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, _41, _42, _43, _44, _45, _46, _47, _48, _49) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30 _31 _32 _33 _34 _35 _36 _37 _38 _39 _40 _41 _42 _43 _44 _45 _46 _47 _48 _49
-#define RAPIDJSON_UTIL_STRIP_COMMAS_50(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, _41, _42, _43, _44, _45, _46, _47, _48, _49, _50) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30 _31 _32 _33 _34 _35 _36 _37 _38 _39 _40 _41 _42 _43 _44 _45 _46 _47 _48 _49 _50
-#define RAPIDJSON_UTIL_STRIP_COMMAS_51(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, _41, _42, _43, _44, _45, _46, _47, _48, _49, _50, _51) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30 _31 _32 _33 _34 _35 _36 _37 _38 _39 _40 _41 _42 _43 _44 _45 _46 _47 _48 _49 _50 _51
-#define RAPIDJSON_UTIL_STRIP_COMMAS_52(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, _41, _42, _43, _44, _45, _46, _47, _48, _49, _50, _51, _52) _1 _2 _3 _4 _5 _6 _7 _8 _9 _10 _11 _12 _13 _14 _15 _16 _17 _18 _19 _20 _21 _22 _23 _24 _25 _26 _27 _28 _29 _30 _31 _32 _33 _34 _35 _36 _37 _38 _39 _40 _41 _42 _43 _44 _45 _46 _47 _48 _49 _50 _51 _52
-
+#define RAPIDJSON_UTIL_STRIP_COMMAS_1(x) x
+#define RAPIDJSON_UTIL_STRIP_COMMAS_2(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_1(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_3(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_2(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_4(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_3(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_5(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_4(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_6(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_5(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_7(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_6(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_8(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_7(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_9(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_8(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_10(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_9(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_11(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_10(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_12(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_11(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_13(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_12(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_14(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_13(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_15(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_14(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_16(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_15(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_17(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_16(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_18(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_17(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_19(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_18(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_20(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_19(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_21(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_20(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_22(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_21(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_23(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_22(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_24(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_23(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_25(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_24(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_26(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_25(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_27(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_26(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_28(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_27(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_29(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_28(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_30(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_29(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_31(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_30(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_32(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_31(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_33(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_32(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_34(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_33(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_35(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_34(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_36(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_35(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_37(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_36(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_38(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_37(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_39(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_38(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_40(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_39(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_41(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_40(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_42(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_41(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_43(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_42(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_44(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_43(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_45(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_44(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_46(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_45(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_47(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_46(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_48(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_47(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_49(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_48(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_50(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_49(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_51(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_50(__VA_ARGS__))
+#define RAPIDJSON_UTIL_STRIP_COMMAS_52(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_51(__VA_ARGS__))
 
 #define RAPIDJSON_UTIL_STRIP_COMMAS(...)                                                                         \
       RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_EXTRACT(__VA_ARGS__, ~,                                 \
@@ -499,6 +498,7 @@ constexpr bool is_json_serializable_v = is_json_serializable_primitive_type_v<T>
                                                                  RAPIDJSON_UTIL_STRIP_COMMAS_2,                          \
                                                                  RAPIDJSON_UTIL_STRIP_COMMAS_1,                          \
                                                                  RAPIDJSON_UTIL_STRIP_COMMAS_0))(__VA_ARGS__))   
+
 
 
 
