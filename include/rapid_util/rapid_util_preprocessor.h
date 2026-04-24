@@ -81,20 +81,28 @@ struct remove_wrapper<Wrapper, Wrapper<T>> {
 
 
 template<typename T>
-struct is_std_optional_impl : is_wrapper<std::optional, T> {};
+struct is_std_optional {
+private:
+    template<typename T>
+    struct is_std_optional_impl : is_wrapper<std::optional, T> {};
 
-template<typename T>
-struct is_std_optional : is_std_optional_impl<remove_const_and_reference_t<T>> {};
+public:
+    static constexpr bool value = is_std_optional_impl<remove_const_and_reference_t<T>>::value;
+};
 
 template<typename T>
 constexpr bool is_std_optional_v = typename is_std_optional<T>::value;
 
 
 template<typename T>
-struct remove_std_optional_impl : remove_wrapper<std::optional, T> {};
+struct remove_std_optional {
+private:
+    template<typename T>
+    struct remove_std_optional_impl : remove_wrapper<std::optional, T> {};
 
-template<typename T>
-struct remove_std_optional : remove_std_optional_impl<remove_const_and_reference_t<T>> {};
+public:
+    using type = typename remove_std_optional_impl<remove_const_and_reference_t<T>>::type;
+};
 
 template<typename T>
 using remove_std_optional_t = typename remove_std_optional<T>::type;
@@ -130,44 +138,53 @@ template<typename T>
 constexpr bool is_describable_struct_v = Descriptor<std::remove_reference_t<remove_std_optional_t<T>>>::is_describable;
 
 
-template<typename T, typename = void>
-struct is_json_serializable_fixed_array_impl : std::false_type {};
-
-template<typename Elem, std::size_t N>
-struct is_json_serializable_fixed_array_impl<std::array<Elem, N>>
-    : std::bool_constant<is_json_serializable_primitive_type_v<Elem> || is_describable_struct_v<Elem>> {};
-
 template<typename T>
-struct is_json_serializable_fixed_array
-    : is_json_serializable_fixed_array_impl<std::remove_reference_t<remove_std_optional_t<T>>> {};
+struct is_json_serializable_fixed_array {
+private:
+    template<typename T, typename = void>
+    struct is_json_serializable_fixed_array_impl : std::false_type {};
+
+    template<typename Elem, std::size_t N>
+    struct is_json_serializable_fixed_array_impl<std::array<Elem, N>>
+        : std::bool_constant<is_json_serializable_primitive_type_v<Elem> || is_describable_struct_v<Elem>> {};
+
+public:
+    constexpr static bool value = is_json_serializable_fixed_array_impl<std::remove_reference_t<remove_std_optional_t<T>>>::value;
+};
 
 template<typename Array>
 constexpr bool is_json_serializable_fixed_array_v = is_json_serializable_fixed_array<Array>::value;
 
 
-template<typename T, typename = void>
-struct is_json_serializable_vector_impl : std::false_type {};
+template<typename T>
+struct is_json_serializable_vector {
+private:
+    template<typename T, typename = void>
+    struct is_json_serializable_vector_impl : std::false_type {};
 
-template<typename Elem, typename Alloc>
-struct is_json_serializable_vector_impl<std::vector<Elem, Alloc>>
-    : std::bool_constant<is_json_serializable_primitive_type_v<Elem> || is_describable_struct_v<Elem>> {};
+    template<typename Elem, typename Alloc>
+    struct is_json_serializable_vector_impl<std::vector<Elem, Alloc>>
+        : std::bool_constant<is_json_serializable_primitive_type_v<Elem> || is_describable_struct_v<Elem>> {};
+
+public:
+    constexpr static bool value = is_json_serializable_vector_impl< std::remove_reference_t<remove_std_optional_t<T>>>::value;
+};
+
 
 template<typename T>
-struct is_json_serializable_vector
-    : is_json_serializable_vector_impl< std::remove_reference_t<remove_std_optional_t<T>>> {};
+struct is_json_serializable_list {
+private:
+    template<typename T, typename = void>
+    struct is_json_serializable_list_impl : std::false_type {};
 
+    template<typename Elem, typename Alloc>
+    struct is_json_serializable_list_impl<std::list<Elem, Alloc>>
+        : std::bool_constant<is_json_serializable_primitive_type_v<Elem> || is_describable_struct_v<Elem>> {};
 
-template<typename T, typename = void>
-struct is_json_serializable_list_impl : std::false_type {};
-
-template<typename Elem, typename Alloc>
-struct is_json_serializable_list_impl<std::list<Elem, Alloc>>
-      : std::bool_constant<is_json_serializable_primitive_type_v<Elem> || is_describable_struct_v<Elem>> {};
-
-template<typename T>
-struct is_json_serializable_list
-    : is_json_serializable_list_impl<std::remove_reference_t<remove_std_optional_t<T>>> {};
-
+public:
+    constexpr static bool value = is_json_serializable_list_impl<std::remove_reference_t<remove_std_optional_t<T>>>::value;
+};
+ 
 
 template<typename Container>
 struct is_json_serializable_dynamic_array
@@ -182,27 +199,31 @@ template<typename T>
 constexpr bool is_json_serializable_sequential_container_v = is_json_serializable_fixed_array_v<T> || is_json_serializable_dynamic_array_v<T>;
 
 
-template<typename T, typename = void>
-struct contain_optional_elements_impl : std::false_type {};
-
-template<template<typename, typename> typename Container, typename Alloc, typename U>
-struct contain_optional_elements_impl<Container<std::optional<U>, Alloc>,
-                               std::enable_if_t<is_json_serializable_dynamic_array_v<Container<std::optional<U>, Alloc>>>>
-    : std::true_type {};
-
-template<template<typename, size_t> typename Array, size_t N, typename U>
-struct contain_optional_elements_impl<Array<std::optional<U>, N>,
-                               std::enable_if_t<is_json_serializable_fixed_array_v<Array<std::optional<U>, N>>>>
-    : std::true_type {};
-
 template<typename Container>
-struct contain_optional_elements_impl<std::optional<Container>,
-                               std::enable_if_t<contain_optional_elements_impl<Container>::value>>
-                               : std::true_type {};
+struct contain_std_optional_elements {
+private:
+    template<typename T, typename = void>
+    struct contain_optional_elements_impl : std::false_type {};
 
-template<typename Container>
-struct contain_std_optional_elements :
-    contain_optional_elements_impl<remove_const_and_reference_t<Container>> {};
+    template<template<typename, typename> typename Container, typename Alloc, typename U>
+    struct contain_optional_elements_impl<Container<std::optional<U>, Alloc>,
+        std::enable_if_t<is_json_serializable_dynamic_array_v<Container<std::optional<U>, Alloc>>>>
+        : std::true_type {};
+
+    template<template<typename, size_t> typename Array, size_t N, typename U>
+    struct contain_optional_elements_impl<Array<std::optional<U>, N>,
+        std::enable_if_t<is_json_serializable_fixed_array_v<Array<std::optional<U>, N>>>>
+        : std::true_type {};
+
+    template<typename Container>
+    struct contain_optional_elements_impl<std::optional<Container>,
+        std::enable_if_t<contain_optional_elements_impl<Container>::value>>
+        : std::true_type {};
+
+
+public:
+    static constexpr bool value = contain_optional_elements_impl<remove_const_and_reference_t<Container>>::value;
+};
 
 
 template<typename T>
@@ -216,36 +237,39 @@ constexpr bool is_std_tuple_v = is_std_tuple<T>::value;
 
 
 template<typename T>
-struct is_json_serializable_tuple_impl {
-    static constexpr bool value = false;
-};
-
-template<typename First, typename... Remaining >
-struct is_json_serializable_tuple_impl<std::tuple<First, Remaining...>> {
+struct is_json_serializable_tuple {
 private:
-    static constexpr bool check_first() {
-        if constexpr (is_std_tuple_v<First>) 
-            return is_json_serializable_tuple_impl<First>::value;
-        else 
-            return is_json_serializable_primitive_type_v<First> ||
-                   is_json_serializable_sequential_container_v<First> ||
-                   is_describable_struct_v<First>;
-    }
+    template<typename T>
+    struct is_json_serializable_tuple_impl {
+        static constexpr bool value = false;
+    };
 
-    static constexpr bool check_remaining() {
-        if constexpr (sizeof...(Remaining) == 0) 
-            return true;
-        else 
-            return is_json_serializable_tuple_impl<std::tuple<Remaining...>>::value;
-    }
+    template<typename First, typename... Remaining >
+    struct is_json_serializable_tuple_impl<std::tuple<First, Remaining...>> {
+    private:
+        static constexpr bool check_first() {
+            if constexpr (is_std_tuple_v<First>)
+                return is_json_serializable_tuple_impl<First>::value;
+            else
+                return is_json_serializable_primitive_type_v<First> ||
+                is_json_serializable_sequential_container_v<First> ||
+                is_describable_struct_v<First>;
+        }
+
+        static constexpr bool check_remaining() {
+            if constexpr (sizeof...(Remaining) == 0)
+                return true;
+            else
+                return is_json_serializable_tuple_impl<std::tuple<Remaining...>>::value;
+        }
+
+    public:
+        static constexpr bool value = check_first() && check_remaining();
+    };
 
 public:
-    static constexpr bool value = check_first() && check_remaining();
-};
-
-template<typename T>
-struct is_json_serializable_tuple {
     static constexpr bool value = is_json_serializable_tuple_impl<std::remove_reference_t<remove_std_optional_t<T>>>::value;
+
 };
 
 template<typename T>
