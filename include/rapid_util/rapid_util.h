@@ -296,7 +296,7 @@ struct JsonValueCreator<JsonSourceType::Tuple, WrapperType::StdOptional, false> 
         auto referencedValueReinitializer = [&stdOptionalTup]() {
                                using BaseType = remove_std_optional_t<T>;
 
-                               // Initialize the std::tuple<...> variable from std::null_opt
+                               // Initialize the std::optional<std::tuple<...>> variable from std::null_opt
                                stdOptionalTup = BaseType{};
                                
                                // After initialization, update the subtree of its nested member pointers recursively
@@ -418,7 +418,7 @@ void unmarshalImpl(std::string_view json, Struct& s)  {
 #define RAPIDJSON_UTIL_DESCRIBE_MEMBERS_IMP(C, members)  template<> struct rapidjson_util::detail::Descriptor<C> {     \
      	static constexpr bool is_describable = true;                                                                   \
         static constexpr auto member_descriptors = make_typelist(                                                      \
-                       RAPIDJSON_UTIL_FOR_EACH(RAPIDJSON_UTIL_MEMBER_META, C, RAPIDJSON_UTIL_UNPACK members));         \
+                       RAPIDJSON_UTIL_FOR_EACH(RAPIDJSON_UTIL_MEMBER_META, C, RAPIDJSON_UTIL_UNPACK members)); \
         };
 
 
@@ -434,7 +434,6 @@ void unmarshalImpl(std::string_view json, Struct& s)  {
 #define RAPIDJSON_UTIL_DESCRIBE_MEMBERS(C, members)                        \
         static_assert(std::is_class_v<C>);                                 \
         RAPIDJSON_UTIL_CHECK_MEMBERS_ARE_SERIALIZABLE(C, members)          \
-        RAPIDJSON_UTIL_DESCRIBE_MEMBERS_IMP(C, members)
-        
+        RAPIDJSON_UTIL_DESCRIBE_MEMBERS_IMP(C, members)                 
         
 #endif
