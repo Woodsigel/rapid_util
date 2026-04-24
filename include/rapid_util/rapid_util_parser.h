@@ -461,6 +461,25 @@ public:
 		members = _members;
 	}
 
+	/**
+	  * @brief This function assigns the provided function objects to handle reinitialization
+	  *        and resetting of referenced member values (e.g., with std::optional wrappers).
+	  *
+	  * @param _reinitializer Callback used to reinitialize a referenced value.
+	  *                       E.g., For std::optional<myStruct>, after _reinitializer
+	  *                       invocation, the std::optional<myStruct> object will be
+	  *                       initialized from std::null_opt. Its children form a subtree
+	  *                       that maintains its nested member pointers, which will be
+	  *                       updated accordingly, and its children of the subtree will be
+	  *                       returned from the _reinitializer callback handler.
+	  *
+	  * @param _resetter      Callback used to reset a referenced value.
+	  *                       E.g., For std::optional<myStruct>, after _resetter
+	  *                       invocation, the std::optional<myStruct> object will be
+	  *                       set to std::null_opt, and the subtree of member pointers
+	  *                       of this object will be removed accordingly.
+	  *
+	  */
 	void setReferencedValueHandlers(ReferencedValueReinitializer _reinitializer, ReferencedValueResetter _resetter) {
 		assert(_reinitializer != nullptr);
 		assert(_resetter != nullptr);
@@ -562,6 +581,26 @@ public:
 		hasOptionalElems = _hasOptionalElems;
 	}
 
+	/**
+	  * @brief Sets the callback handlers for referenced array value operations. This function
+	  *        assigns the provided function objects to handle reinitialization and resetting of
+	  *        referenced array-like member values (e.g., with std::optional<std::tuple<...>> or
+	  *        std::optional<std::vector<...>>).
+	  *
+	  * @param _reinitializer Callback used to reinitialize a member referenced value.
+	  *                       E.g., For std::optional<std::tuple<...>>, after _reinitializer
+	  *                       invocation, the std::optional<std::tuple<...>> object will be
+	  *                       initialized from std::null_opt. Its contained elements represent
+	  *                       a subtree that maintains nested member pointers. This subtree
+	  *                       will be updated accordingly, and the elements of the updated
+	  *                       subtree will be returned from the _reinitializer callback handler.
+	  *
+	  * @param _resetter      Callback used to reset a referenced value.
+	  *                       E.g., For std::optional<std::vector<int>>, after _resetter
+	  *                       invocation, the std::optional<std::vector<int>> object will be
+	  *                       set to std::null_opt, and the elements of this vector attribute
+	  *                       will be cleaned accordingly.
+	  */
 	void setReferencedValueHandlers(ReferencedValueReinitializer _reinitializer, ReferencedValueResetter _resetter) {
 		assert(_reinitializer != nullptr);
 		assert(_resetter != nullptr);

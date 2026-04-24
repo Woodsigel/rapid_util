@@ -162,8 +162,11 @@ struct JsonValueCreator<JsonSourceType::Struct, WrapperType::StdOptional, false>
         auto referencedValueResetter = [&stdOptionalStruct]() { stdOptionalStruct.reset(); };
         auto referencedValueReinitializer = [&stdOptionalStruct]() {
                                                     using BaseType = remove_std_optional_t<T>;
-                                                    stdOptionalStruct = BaseType{};
+
+                                                    // Initialize the std::optional<Struct> variable from std::null_opt
+                                                    stdOptionalStruct = BaseType{}; 
                                                 
+                                                    // After initialization, update the subtree of its nested member pointers recursively
                                                     auto object = JsonValueCreator<JsonSourceType::Struct, 
                                                                                    WrapperType::StdOptional, 
                                                                                    false>::create(stdOptionalStruct);
@@ -188,7 +191,7 @@ struct JsonValueCreator<JsonSourceType::Sequential, WrapperType::None, isConstQu
 
         if constexpr(!isConstQualified && is_json_serializable_dynamic_array_v<T>)
             jsonArray->setArrayResizer(
-                                 [&sequence](std::size_t newSize) {
+                                  [&sequence](std::size_t newSize) {
                                             sequence.resize(newSize);
                                             return  convertSequenceToJsonArrayElements(sequence);
                                        });
@@ -292,8 +295,11 @@ struct JsonValueCreator<JsonSourceType::Tuple, WrapperType::StdOptional, false> 
                                               
         auto referencedValueReinitializer = [&stdOptionalTup]() {
                                using BaseType = remove_std_optional_t<T>;
+
+                               // Initialize the std::tuple<...> variable from std::null_opt
                                stdOptionalTup = BaseType{};
                                
+                               // After initialization, update the subtree of its nested member pointers recursively
                                return convertTupleToJsonArrayElements(stdOptionalTup.value());
                             };
 
