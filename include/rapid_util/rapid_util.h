@@ -121,7 +121,7 @@ template<size_t UnusedWrapperType, bool UnusedIsConstQualified>
 struct JsonValueCreator<JsonSourceType::Primitive, UnusedWrapperType, UnusedIsConstQualified> {
     template<typename T>
     static std::shared_ptr<JsonPrimitiveValue> create(T& value) {
-        static_assert(is_json_serializable_primitive_type_v<std::remove_const_t<T>>);
+        static_assert(is_json_serializable_primitive_type_v<T>);
 
         return std::make_shared<JsonPrimitiveValue>(&value);
     }
@@ -315,28 +315,28 @@ struct JsonValueCreator<JsonSourceType::Tuple, WrapperType::StdOptional, false> 
 
 template<typename T>
 std::shared_ptr<JsonValue> createJsonPrimitiveValueFrom(T& value) {
-    static_assert(is_json_serializable_primitive_type_v<std::remove_const_t<T>>);
+    static_assert(is_json_serializable_primitive_type_v<T>);
 
     return JsonValueCreator<JsonSourceType::Primitive, wrapper_type_trait_v<T>, std::is_const_v<T>>::create(value);
 }
 
 template<typename T>
 std::shared_ptr<JsonValue> createJsonObjectFrom(T& value) {
-    static_assert(is_describable_struct_v<std::remove_const_t<T>>);
+    static_assert(is_describable_struct_v<T>);
 
     return JsonValueCreator<JsonSourceType::Struct, wrapper_type_trait_v<T>, std::is_const_v<T>>::create(value);
 }
 
 template<typename T>
 std::shared_ptr<JsonValue> createJsonArrayFromSeq(T& sequence) {
-    static_assert(is_json_serializable_sequential_container_v<std::remove_const_t<T>>);
+    static_assert(is_json_serializable_sequential_container_v<T>);
 
     return JsonValueCreator<JsonSourceType::Sequential, wrapper_type_trait_v<T>, std::is_const_v<T>>::create(sequence);
 }
 
 template<typename T>
 std::shared_ptr<JsonValue> createJsonArrayFromTup(T& tuple) {
-    static_assert(is_json_serializable_tuple_v<std::remove_const_t<T>>);
+    static_assert(is_json_serializable_tuple_v<T>);
 
     return JsonValueCreator<JsonSourceType::Tuple, wrapper_type_trait_v<T>, std::is_const_v<T>>::create(tuple);
 }
@@ -344,18 +344,16 @@ std::shared_ptr<JsonValue> createJsonArrayFromTup(T& tuple) {
 
 template<typename T>
 std::shared_ptr<JsonValue> convertToJsonValueFrom(T& memberRef) {
-    using ValueType = std::remove_const_t<T>;
-
-    if constexpr (is_json_serializable_primitive_type_v<ValueType>)
+    if constexpr (is_json_serializable_primitive_type_v<T>)
         return createJsonPrimitiveValueFrom(memberRef);
 
-    else if constexpr (is_describable_struct_v<ValueType>)
+    else if constexpr (is_describable_struct_v<T>)
         return createJsonObjectFrom(memberRef);
 
-    else if constexpr (is_json_serializable_tuple_v<ValueType>)
+    else if constexpr (is_json_serializable_tuple_v<T>)
         return createJsonArrayFromTup(memberRef);
 
-    else if constexpr (is_json_serializable_sequential_container_v<ValueType>)
+    else if constexpr (is_json_serializable_sequential_container_v<T>)
         return createJsonArrayFromSeq(memberRef);
 
     else 
@@ -376,7 +374,7 @@ auto& getMemberValueRef(Struct& s, Desc descriptor) {
 
 template<typename Struct>
 std::vector<JsonAttribute> buildJsonTreeFrom(Struct& s) {
-    static_assert(is_describable_struct_v<std::remove_const_t<Struct>>, "Use the RAPIDJSON_UTIL_DESCRIBE_MEMBERS macro to declare serializable struct members");
+    static_assert(is_describable_struct_v<Struct>, "Use the RAPIDJSON_UTIL_DESCRIBE_MEMBERS macro to declare serializable struct members");
 
     std::vector<JsonAttribute> members;
 
