@@ -407,32 +407,8 @@ void unmarshalImpl(std::string_view json, Struct& s)  {
 }
 
 
-#define RAPIDJSON_UTIL_CHECK_MEMBERS_ARE_SERIALIZABLE(C, members) \
-        RAPIDJSON_UTIL_STRIP_COMMAS(RAPIDJSON_UTIL_FOR_EACH(RAPIDJSON_UTIL_ASSERT_IS_SERIALIZABLE, C, RAPIDJSON_UTIL_UNPACK members))
-
-#define RAPIDJSON_UTIL_ASSERT_IS_SERIALIZABLE(C, member) \
-        static_assert(rapidjson_util::detail::is_json_serializable_v<rapidjson_util::detail::member_type_t<decltype(&C::member)>>, "Member variable types must be compatible with JSON value types.");
-
-
-#define RAPIDJSON_UTIL_DESCRIBE_MEMBERS_IMP(C, members)  template<> struct rapidjson_util::detail::Descriptor<C> {  \
-     	static constexpr bool is_describable = true;                                                                \
-        static constexpr auto member_descriptors = make_typelist(                                                   \
-                       RAPIDJSON_UTIL_FOR_EACH(RAPIDJSON_UTIL_MEMBER_META, C, RAPIDJSON_UTIL_UNPACK members));      \
-        };
-
-
-#define RAPIDJSON_UTIL_MEMBER_META(C, member)                                                    \
-	[]{ struct rapidjsonUtilDesc {                                                               \
-             static constexpr auto pointer() noexcept { return &C::member; }                     \
-             static constexpr auto name() noexcept { return RAPIDJSON_UTIL_STRINGIFY(member); }  \
-    }; return rapidjsonUtilDesc{}; }  () 
-
 }  // namespace detail
 }  // namespace rapidjson_util 
-
-#define RAPIDJSON_UTIL_DESCRIBE_MEMBERS(C, members)                \
-        static_assert(std::is_class_v<C>);                         \
-        RAPIDJSON_UTIL_CHECK_MEMBERS_ARE_SERIALIZABLE(C, members)  \
-        RAPIDJSON_UTIL_DESCRIBE_MEMBERS_IMP(C, members)                 
+           
         
 #endif

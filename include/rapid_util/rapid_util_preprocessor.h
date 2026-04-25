@@ -472,60 +472,88 @@ constexpr bool is_json_serializable_v = (is_json_serializable_primitive_type_v<T
 #define RAPIDJSON_UTIL_STRIP_COMMAS_51(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_50(__VA_ARGS__))
 #define RAPIDJSON_UTIL_STRIP_COMMAS_52(x, ...) RAPIDJSON_UTIL_EXPAND(x RAPIDJSON_UTIL_STRIP_COMMAS_51(__VA_ARGS__))
 
-#define RAPIDJSON_UTIL_STRIP_COMMAS(...)                                                                         \
-      RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_EXTRACT(__VA_ARGS__, ~,                                 \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_52,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_51,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_50,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_49,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_48,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_47,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_46,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_45,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_44,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_43,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_42,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_41,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_40,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_39,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_38,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_37,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_36,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_35,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_34,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_33,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_32,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_31,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_30,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_29,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_28,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_27,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_26,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_25,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_24,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_23,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_22,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_21,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_20,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_19,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_18,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_17,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_16,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_15,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_14,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_13,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_12,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_11,                         \
-																 RAPIDJSON_UTIL_STRIP_COMMAS_10,                         \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_9,                          \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_8,                          \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_7,                          \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_6,                          \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_5,                          \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_4,                          \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_3,                          \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_2,                          \
-                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_1,                          \
+#define RAPIDJSON_UTIL_STRIP_COMMAS(...)                                                                           \
+      RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_EXTRACT(__VA_ARGS__, ~,                           \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_52,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_51,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_50,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_49,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_48,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_47,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_46,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_45,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_44,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_43,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_42,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_41,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_40,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_39,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_38,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_37,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_36,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_35,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_34,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_33,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_32,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_31,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_30,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_29,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_28,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_27,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_26,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_25,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_24,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_23,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_22,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_21,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_20,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_19,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_18,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_17,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_16,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_15,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_14,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_13,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_12,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_11,                   \
+																 RAPIDJSON_UTIL_STRIP_COMMAS_10,                   \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_9,                    \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_8,                    \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_7,                    \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_6,                    \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_5,                    \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_4,                    \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_3,                    \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_2,                    \
+                                                                 RAPIDJSON_UTIL_STRIP_COMMAS_1,                    \
                                                                  RAPIDJSON_UTIL_STRIP_COMMAS_0))(__VA_ARGS__))   
+
+
+#define RAPIDJSON_UTIL_CHECK_MEMBERS_ARE_SERIALIZABLE(C, members) \
+        RAPIDJSON_UTIL_STRIP_COMMAS(RAPIDJSON_UTIL_FOR_EACH(RAPIDJSON_UTIL_ASSERT_IS_SERIALIZABLE, C, RAPIDJSON_UTIL_UNPACK members))
+
+#define RAPIDJSON_UTIL_ASSERT_IS_SERIALIZABLE(C, member) \
+        static_assert(rapidjson_util::detail::is_json_serializable_v<rapidjson_util::detail::member_type_t<decltype(&C::member)>>, "Member variable types must be compatible with JSON value types.");
+
+
+#define RAPIDJSON_UTIL_DESCRIBE_MEMBERS_IMP(C, members)  template<> struct rapidjson_util::detail::Descriptor<C> {  \
+     	static constexpr bool is_describable = true;                                                                \
+        static constexpr auto member_descriptors = make_typelist(                                                   \
+                       RAPIDJSON_UTIL_FOR_EACH(RAPIDJSON_UTIL_MEMBER_META, C, RAPIDJSON_UTIL_UNPACK members));      \
+        };
+
+
+#define RAPIDJSON_UTIL_MEMBER_META(C, member)                                                    \
+	[]{ struct rapidjsonUtilDesc {                                                               \
+             static constexpr auto pointer() noexcept { return &C::member; }                     \
+             static constexpr auto name() noexcept { return RAPIDJSON_UTIL_STRINGIFY(member); }  \
+    }; return rapidjsonUtilDesc{}; }  () 
+
+
+#define RAPIDJSON_UTIL_DESCRIBE_MEMBERS(C, members)                                                                              \
+        static_assert(std::is_class_v<C>, "RAPIDJSON_UTIL_DESCRIBE_MEMBERS should only be used with class or struct types");     \
+        RAPIDJSON_UTIL_CHECK_MEMBERS_ARE_SERIALIZABLE(C, members)                                                                \
+        RAPIDJSON_UTIL_DESCRIBE_MEMBERS_IMP(C, members)      
+
 
 #endif
