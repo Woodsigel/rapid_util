@@ -113,22 +113,16 @@ template<typename T>
 using remove_std_optional_t = typename remove_std_optional<T>::type;
 
 
-// Use for debugging type inspection
-template<typename Type>
-struct type_displayer {
-};
-
-
 template<typename T>
 constexpr bool is_json_primitive_core_type_v = std::disjunction_v<std::is_same<T, int>,
-                                                             std::is_same<T, int8_t>,
-                                                             std::is_same<T, int32_t>,
-                                                             std::is_same<T, int64_t>,
-                                                             std::is_same<T, uint64_t>,
-                                                             std::is_same<T, bool>,
-                                                             std::is_same<T, std::string>,
-                                                             std::is_same<T, float>,
-                                                             std::is_same<T, double>>;
+                                                                  std::is_same<T, int8_t>,
+                                                                  std::is_same<T, int32_t>,
+                                                                  std::is_same<T, int64_t>,
+                                                                  std::is_same<T, uint64_t>,
+                                                                  std::is_same<T, bool>,
+                                                                  std::is_same<T, std::string>,
+                                                                  std::is_same<T, float>,
+                                                                  std::is_same<T, double>>;
 template<typename T>
 constexpr bool is_json_serializable_primitive_type_v = is_json_primitive_core_type_v<std::remove_const_t<remove_std_optional_t<T>>>;
 
@@ -361,7 +355,7 @@ constexpr bool is_json_serializable_v = (is_json_serializable_primitive_type_v<T
 #define RAPIDJSON_UTIL_EXTRACT(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40,  _41, _42, _43, _44, _45, _46, _47, _48, _49, _50, _51, _52, V, ...) V
 
 
-#define RAPIDJSON_UTIL_FOR_EACH(F,  ...)                                                                         \
+#define RAPIDJSON_UTIL_FOR_EACH(F,  ...)                                                                                 \
       RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_EXTRACT(__VA_ARGS__,                                    \
                                                                  RAPIDJSON_UTIL_FOR_EACH_52,                             \
                                                                  RAPIDJSON_UTIL_FOR_EACH_51,                             \
