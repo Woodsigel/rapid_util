@@ -221,8 +221,10 @@ struct JsonValueCreator
         auto reinitializer = [&stdOptionalStruct]() {
             using BaseType = remove_std_optional_t<T>;
 
+            // Initialize the std::optional<Struct> variable from std::null_opt
             stdOptionalStruct = BaseType{};
 
+            // After initialization, update the subtree of its nested member pointers recursively
             auto object = JsonValueCreator<
                 JsonSourceType::Struct,
                 WrapperType::StdOptional,
@@ -396,7 +398,11 @@ struct JsonValueCreator
 
         auto reinitializer = [&stdOptionalTup]() {
             using BaseType = remove_std_optional_t<T>;
+
+            // Initialize the std::optional<std::tuple<...>> variable from std::null_opt
             stdOptionalTup = BaseType{};
+
+            // After initialization, update the subtree of its nested member pointers recursively
             return tupleToJsonArrayElems(stdOptionalTup.value());
         };
 
