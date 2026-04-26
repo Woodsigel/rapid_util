@@ -416,58 +416,16 @@ struct JsonValueCreator
 
 
 template<typename T>
-std::shared_ptr<JsonValue> 
-createJsonPrimitiveValue(T& value) {
-    static_assert(is_json_serializable_primitive_type_v<T>);
-
-    return JsonValueCreator<
-                                JsonSourceType::Primitive,
-                                wrapper_type_v<T>,
-                                std::is_const_v<T>
-                            >
-                            ::create(value);
-
-}
+using FromPrimitive = JsonValueCreator<JsonSourceType::Primitive, wrapper_type_v<T>, std::is_const_v<T>>;
 
 template<typename T>
-std::shared_ptr<JsonValue> 
-createJsonObject(T& value) {
-    static_assert(is_describable_struct_v<T>);
-
-    return JsonValueCreator<
-                                JsonSourceType::Struct, 
-                                wrapper_type_v<T>, 
-                                std::is_const_v<T>
-                            >
-                            ::create(value);
-}
+using FromStruct = JsonValueCreator<JsonSourceType::Struct, wrapper_type_v<T>, std::is_const_v<T>>;
 
 template<typename T>
-std::shared_ptr<JsonValue> 
-createJsonArrayFromSeq(T& sequence) {
-    static_assert(is_json_serializable_sequential_container_v<T>);
-
-    return JsonValueCreator<
-                               JsonSourceType::Sequential, 
-                               wrapper_type_v<T>, 
-                               std::is_const_v<T>
-                            >
-                            ::create(sequence);
-}
+using FromTuple = JsonValueCreator<JsonSourceType::Tuple, wrapper_type_v<T>, std::is_const_v<T>>;
 
 template<typename T>
-std::shared_ptr<JsonValue> 
-createJsonArrayFromTup(T& tuple) {
-
-    static_assert(is_json_serializable_tuple_v<T>);
-
-    return JsonValueCreator<
-                                JsonSourceType::Tuple,
-                                wrapper_type_v<T>,
-                                std::is_const_v<T>
-                           >
-                           ::create(tuple);
-}
+using FromSequence = JsonValueCreator<JsonSourceType::Sequential, wrapper_type_v<T>, std::is_const_v<T>>;
 
 
 template<typename T>
@@ -475,16 +433,16 @@ std::shared_ptr<JsonValue>
 convertToJsonValue(T& memberRef) {
 
     if constexpr (is_json_serializable_primitive_type_v<T>)
-        return createJsonPrimitiveValue(memberRef);
+        return FromPrimitive<T>::create(memberRef);
 
     else if constexpr (is_describable_struct_v<T>)
-        return createJsonObject(memberRef);
+        return FromStruct<T>::create(memberRef);
 
     else if constexpr (is_json_serializable_tuple_v<T>)
-        return createJsonArrayFromTup(memberRef);
+        return FromTuple<T>::create(memberRef);
 
     else if constexpr (is_json_serializable_sequential_container_v<T>)
-        return createJsonArrayFromSeq(memberRef);
+        return FromSequence<T>::create(memberRef);
 
     else 
         static_assert(false, "Unsupported type for JSON serialization");
