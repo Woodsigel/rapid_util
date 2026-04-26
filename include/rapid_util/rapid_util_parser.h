@@ -256,13 +256,6 @@ public:
 	}
 
 	/**
-      * @return The stored pointer as type-erased std::any
-      */
-	std::any storedValue() const {
-		return value;
-	}
-
-	/**
 	  * Accepts a JSON visitor for serialization/deserialization operations.
 	  * Modifications through the visitor will update the managed struct member.
 	  *
@@ -277,7 +270,7 @@ public:
 	  * Checks if the struct's member is currently null.
 	  * For raw pointer to struct members, this always returns false
 	  */
-	bool isReferencedValueNull() const {
+	bool isPointeeNull() const {
 		if (OwnershipType::Raw == ptrOwnershipType)
 			return false;
 		else
@@ -288,13 +281,12 @@ public:
 	 * Resets referenced std::optional struct's member to std::nullopt.
 	 *
 	 * @pre isPointToConst() must be false (struct's member must be non-const qualified)
-	 *
+	 * @pre ownershipType() must be OwnershipType::StdOptional (pointee must be an std::optional)
 	 */
-	void resetReferencedValue() {
+	void resetPointee() {
 		assert(!isPointToConst());
+		assert(ownershipType() == OwnershipType::StdOptional);
 
-		if (ownershipType() == OwnershipType::Raw)
-			return;
 
 		#define RESET_TO_NULL(storedType, CXXType)										\
 		    case StoredType::storedType: {												\
@@ -322,12 +314,12 @@ public:
 	  * @brief Unwrap a const pointer to the underlying data for read-only access.
 	  * 
 	  * @pre isPointToConst() must be true (member is const-qualified)
-	  * @pre isReferencedValueNull() must be false
+	  * @pre isPointeeNull() must be false
 	  */
 	template<typename T>
 	const T* unwrapConstPointer() {
 		assert(isPointToConst());
-		assert(!isReferencedValueNull());
+		assert(!isPointeeNull());
 
 		if (OwnershipType::Raw == ownershipType())
 			return std::any_cast<const T*>(storedValue());
@@ -348,7 +340,7 @@ public:
 		if(JsonPrimitiveValue::OwnershipType::Raw == ownershipType())
 			return std::any_cast<T*>(storedValue());
 
-		initializeIfReferencedValueIsNull();
+		initIfPointeeIsNull();
 		std::optional<T>* opt = std::any_cast<std::optional<T>*>(storedValue());
 
 		return &(opt->value());
@@ -360,6 +352,10 @@ private:
 	StoredType type;
 	std::any value;
 	bool isNull;
+
+	std::any storedValue() const {
+		return value;
+	}
 
 	template<typename T>
 	bool checkIsNull(const T* value) {
@@ -389,10 +385,11 @@ private:
 		else static_assert(false, "Unsupported type");
 	}
 
-	void initializeIfReferencedValueIsNull() {
+	void initIfPointeeIsNull() {
 		assert(!isPointToConst());
+		assert(ownershipType() == OwnershipType::StdOptional);
 
-		if (OwnershipType::Raw == ptrOwnershipType || !isReferencedValueNull())
+		if (!isPointeeNull())
 			return;
 
         #define REINITIALIZE(storedType, CXXType)                                        \
@@ -655,7 +652,8 @@ inline std::string JsonWriter::witeToJson(JsonObject* root) {
 inline void JsonWriter::visit(JsonPrimitiveValue* primitiveValue, rapidjson::Value& jsonOutput) {
 	assert(primitiveValue->isPointToConst());
 
-	if (JsonPrimitiveValue::OwnershipType::Raw != primitiveValue->ownershipType() && primitiveValue->isReferencedValueNull()) {
+	if (primitiveValue->isPointeeNull()) {
+		assert(primitiveValue->ownershipType() == JsonPrimitiveValue::OwnershipType::StdOptional);
 		jsonOutput.SetNull();
 		return;
 	}
@@ -838,7 +836,7 @@ inline void JsonReader::visit(JsonPrimitiveValue* primitiveValue, rapidjson::Val
 	assert(!primitiveValue->isPointToConst());
 
 	if (jsonInput.IsNull() && primitiveValue->ownershipType() != JsonPrimitiveValue::OwnershipType::Raw)
-		return primitiveValue->resetReferencedValue();
+		return primitiveValue->resetPointee();
 
 	switch (primitiveValue->storedType()) {
 		case JsonPrimitiveValue::StoredType::IntPtr: {
