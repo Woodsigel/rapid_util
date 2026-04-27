@@ -309,7 +309,7 @@ public:
 	  * @pre isPointToConst() must be false (struct's member must be non-const qualified)
 	  *
 	  */
-	void reinitOptionalPointee() {
+	void reinitOptionalPointeeIfNull() {
 		assert(ownershipType() == OwnershipType::StdOptional);
 		assert(!isPointToConst());
 
@@ -855,8 +855,8 @@ inline void JsonReader::visit(JsonPrimitiveValue* primitiveValue, rapidjson::Val
 	}
 
 
-	if (isStdOptional && primitiveValue->isPointeeNull()) 
-		primitiveValue->reinitOptionalPointee();
+	if (isStdOptional) 
+		primitiveValue->reinitOptionalPointeeIfNull();
 
 	switch (primitiveValue->storedType()) {
 		case JsonPrimitiveValue::StoredType::IntPtr: {
