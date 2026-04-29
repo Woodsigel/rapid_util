@@ -174,69 +174,68 @@ struct JsonValueCreator
     }
 };
 
-template<>
+
+template<bool isConstQualified>
 struct JsonValueCreator
     <
     JsonSourceType::Struct, 
     WrapperType::StdOptional, 
-    true
+    isConstQualified
     > {
 
     template<typename T>
     static std::shared_ptr<JsonNullableObject> 
-    create(T& stdOptionalStruct) {
+    create(T& optionalStruct) {
+        static_assert(is_std_optional_v<T>);
 
-        static_assert(is_std_optional_v<T> && std::is_const_v<T>);
+        auto object = optionalStructToNullableObject(optionalStruct);
+            
+        if constexpr (!isConstQualified)
+            attachOptionalReinitHandlers(object, optionalStruct);
 
-        if (stdOptionalStruct.has_value()) {
-            auto attributes = buildJsonTreeFrom(std::as_const(stdOptionalStruct.value()));
-            return std::make_shared<JsonNullableObject>(attributes);
-        }
-
-        else 
-            return std::make_shared<JsonNullableObject>();
-        
+        return object;
     }
-};
 
-template<>
-struct JsonValueCreator
-    <
-    JsonSourceType::Struct, 
-    WrapperType::StdOptional, 
-    false
-    > {
 
+private:
     template<typename T>
-    static std::shared_ptr<JsonNullableObject> 
-    create(T& stdOptionalStruct) {
-        static_assert(is_std_optional_v<T> && !std::is_const_v<T>);
-
-        auto object = stdOptionalStruct.has_value()
-            ? std::make_shared<JsonNullableObject>(buildJsonTreeFrom(stdOptionalStruct.value()))
-            : std::make_shared<JsonNullableObject>();
-                                           
-        auto resetter = [&stdOptionalStruct]() { stdOptionalStruct.reset(); };
-
-        auto reinitializer = [&stdOptionalStruct]() {
+    static std::shared_ptr<JsonNullableObject>
+    optionalStructToNullableObject(T& optionalStruct) {
+    
+        if (!optionalStruct.has_value())
+            return std::make_shared<JsonNullableObject>();
+    
+    
+        auto attributes = std::is_const_v<T> ?
+            buildJsonTreeFrom(std::as_const(optionalStruct.value())) :
+            buildJsonTreeFrom(optionalStruct.value());
+    
+        return std::make_shared<JsonNullableObject>(attributes);
+    }
+        
+        
+    template<typename T>
+    static void attachOptionalReinitHandlers(
+        std::shared_ptr<JsonNullableObject> object, T& optionalStruct) {
+        
+        auto resetter = [&optionalStruct]() { optionalStruct.reset(); };
+        auto reinitializer = [&optionalStruct]() {
             using BaseType = remove_std_optional_t<T>;
-
+        
             // Initialize the std::optional<Struct> variable from std::null_opt
-            stdOptionalStruct = BaseType{};
-
+            optionalStruct = BaseType{};
+        
             // After initialization, update the subtree of its nested member pointers recursively
             auto object = JsonValueCreator<
                 JsonSourceType::Struct,
                 WrapperType::StdOptional,
                 false
-            >::create(stdOptionalStruct);
-
+            >::create(optionalStruct);
+        
             return object->getMembers();
         };
-
+        
         object->setReferencedValueHandlers(reinitializer, resetter);
-
-        return object;
     }
 };
 
@@ -258,81 +257,93 @@ struct JsonValueCreator
         auto elements = seqToJsonArrayElems(sequence);
         auto jsonArray = std::make_shared<JsonArray>(elements, contain_std_optional_elements<T>::value);
 
-        if constexpr (!isConstQualified && is_json_serializable_dynamic_array_v<T>) {
-            jsonArray->setArrayResizer([&sequence](std::size_t newSize) {
-                sequence.resize(newSize);
-                return seqToJsonArrayElems(sequence);
-                });
-        }
+        if constexpr (!isConstQualified && is_json_serializable_dynamic_array_v<T>)
+            attachArrayResizer(jsonArray, sequence);
 
         return jsonArray;
     }
+
+private:
+    template<typename T>
+    static void
+    attachArrayResizer(std::shared_ptr<JsonArray> jsonArray, T& sequence) {
+        auto resizer = [&sequence](std::size_t newSize) {
+            sequence.resize(newSize);
+            return seqToJsonArrayElems(sequence);
+        };
+
+        jsonArray->setArrayResizer(resizer);
+    }
 };
 
-template<>
+
+template<bool isConstQualified>
 struct JsonValueCreator
     <
     JsonSourceType::Sequential, 
     WrapperType::StdOptional, 
-    true
+    isConstQualified
     > {
 
     template<typename T>
     static std::shared_ptr<JsonNullableArray> 
     create(T& sequence) {
-        static_assert(is_std_optional_v<T> && std::is_const_v<T>);
+
+        static_assert(is_std_optional_v<T>);
+
+        auto nullableArray = optionalSeqToNullableArray(sequence);
+
+        if constexpr (!isConstQualified)
+           attachOptionalReinitHandlers(nullableArray, sequence);
+      
+        
+        return nullableArray;
+    }
+
+
+private:
+    template<typename T>
+    static std::shared_ptr<JsonNullableArray>
+    optionalSeqToNullableArray(T& sequence) {
 
         bool containOpt = contain_std_optional_elements<T>::value;
-
-        if (sequence.has_value()) {
-            auto elements = seqToJsonArrayElems(std::as_const(sequence.value()));
-            return std::make_shared<JsonNullableArray>(elements, containOpt);
-        }
-
-        else 
+        if (!sequence.has_value())
             return std::make_shared<JsonNullableArray>(containOpt);
-        
-    }
-};
 
-template<>
-struct JsonValueCreator
-    <
-    JsonSourceType::Sequential, 
-    WrapperType::StdOptional, 
-    false
-    > {
+
+        auto elements = std::is_const_v<T> ?
+            seqToJsonArrayElems(std::as_const(sequence.value())) : 
+            seqToJsonArrayElems(sequence.value());
+
+        return std::make_shared<JsonNullableArray>(elements, containOpt);
+    }
 
     template<typename T>
-    static std::shared_ptr<JsonNullableArray> create(T& sequence) {
-        static_assert(is_std_optional_v<T> &&  !std::is_const_v<T>);
+    static void
+    attachOptionalReinitHandlers(
+    std::shared_ptr<JsonNullableArray> nullableArray, T& optionalSeq) {
 
-        bool containOpt = contain_std_optional_elements<T>::value;
-        auto jsonArray = sequence.has_value()
-            ? std::make_shared<JsonNullableArray>(seqToJsonArrayElems(sequence.value()), containOpt)
-            : std::make_shared<JsonNullableArray>(containOpt);
-
-        auto reinitializer = [&sequence]() {
+        auto reinitializer = [&optionalSeq]() {
             using BaseType = remove_std_optional_t<T>;
-            sequence = BaseType{};
+            optionalSeq = BaseType{};
             return std::vector<std::shared_ptr<JsonValue>>{};
         };
 
-        auto resizer = [&sequence, reinitializer](std::size_t newSize) {
-            if (!sequence.has_value()) {
+        auto resizer = [&optionalSeq, reinitializer](std::size_t newSize) {
+            if (!optionalSeq.has_value()) {
                 reinitializer();
             }
-            sequence->resize(newSize);
-            return seqToJsonArrayElems(sequence.value());
+            optionalSeq->resize(newSize);
+            return seqToJsonArrayElems(optionalSeq.value());
         };
 
-        auto resetter = [&sequence]() { sequence.reset(); };
+        auto resetter = [&optionalSeq]() { optionalSeq.reset(); };
 
-        jsonArray->setArrayResizer(resizer);
-        jsonArray->setReferencedValueHandlers(reinitializer, resetter);
-        
-        return jsonArray;
+
+        nullableArray->setArrayResizer(resizer);
+        nullableArray->setReferencedValueHandlers(reinitializer, resetter);
     }
+
 };
 
 
@@ -355,63 +366,65 @@ struct JsonValueCreator
     }
 };
 
-template<>
+
+template<bool isConstQualified>
 struct JsonValueCreator
     <
     JsonSourceType::Tuple, 
     WrapperType::StdOptional, 
-    true
+    isConstQualified
     > {
 
     template<typename T>
     static std::shared_ptr<JsonNullableArray> 
-    create(T& stdOptionalTup) {
-        static_assert(is_std_optional_v<T> && std::is_const_v<T>);
+    create(T& optionalSeq) {
 
-        if (stdOptionalTup.has_value()) {
-            auto elements = tupleToJsonArrayElems(std::as_const(stdOptionalTup.value()));
-            return std::make_shared<JsonNullableArray>(elements);
-        }
-            
-        else
+        static_assert(is_std_optional_v<T>);
+
+        auto nullableArray = optionalTupToNullableArray(optionalSeq); 
+
+        if constexpr (!isConstQualified) 
+            attachOptionalReinitHandlers(nullableArray, optionalSeq);
+
+        return nullableArray;
+    }
+
+
+private:
+    template<typename T>
+    static std::shared_ptr<JsonNullableArray> 
+    optionalTupToNullableArray(T& optionalTup) {
+
+        if(!optionalTup.has_value())
             return std::make_shared<JsonNullableArray>();
+
+        auto elements = std::is_const_v<T> ?
+            tupleToJsonArrayElems(std::as_const(optionalTup.value())) :
+            tupleToJsonArrayElems(optionalTup.value());
+
+        return std::make_shared<JsonNullableArray>(elements);
     }
-};
 
-template<>
-struct JsonValueCreator
-    <
-    JsonSourceType::Tuple, 
-    WrapperType::StdOptional, 
-    false
-    > {
 
-    template<typename T>
-    static std::shared_ptr<JsonNullableArray> 
-    create(T& stdOptionalTup) {
-
-        static_assert(is_std_optional_v<T> && !std::is_const_v<T>);
-
-        auto jsonArray = stdOptionalTup.has_value()
-            ? std::make_shared<JsonNullableArray>(tupleToJsonArrayElems(stdOptionalTup.value()))
-            : std::make_shared<JsonNullableArray>();
-
-        auto reinitializer = [&stdOptionalTup]() {
+        template<typename T>
+        static void
+        attachOptionalReinitHandlers(
+        std::shared_ptr<JsonNullableArray> nullableArray, T& optionalSeq) {
+        
+        auto reinitializer = [&optionalSeq]() {
             using BaseType = remove_std_optional_t<T>;
-
+        
             // Initialize the std::optional<std::tuple<...>> variable from std::null_opt
-            stdOptionalTup = BaseType{};
-
+            optionalSeq = BaseType{};
+        
             // After initialization, update the subtree of its nested member pointers recursively
-            return tupleToJsonArrayElems(stdOptionalTup.value());
+            return tupleToJsonArrayElems(optionalSeq.value());
         };
-
-        auto resetter = [&stdOptionalTup]() { stdOptionalTup.reset(); };
-
-        jsonArray->setReferencedValueHandlers(reinitializer, resetter);
-
-        return jsonArray;
-    }
+        
+        auto resetter = [&optionalSeq]() { optionalSeq.reset(); };
+        
+        nullableArray->setReferencedValueHandlers(reinitializer, resetter);
+   }
 };
 
 
