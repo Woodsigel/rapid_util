@@ -130,21 +130,18 @@ wrapper_type_v = is_std_optional_v<T> ? WrapperType::StdOptional :
 template
 <
     size_t JsonSourceType, 
-    size_t WrapperType, 
-    bool isConstQualified
+    size_t WrapperType
 >
 struct JsonValueCreator;
 
 template
 <
-    size_t UnusedWrapperType,
-    bool UnusedIsConstQualified
+    size_t UnusedWrapperType
 >
 struct JsonValueCreator
     <
      JsonSourceType::Primitive,
-     UnusedWrapperType, 
-     UnusedIsConstQualified
+     UnusedWrapperType
     > {
     
     template<typename T>
@@ -157,12 +154,11 @@ struct JsonValueCreator
 };
 
 
-template<bool unusedIsConstQualified>
+template<>
 struct JsonValueCreator
     <
     JsonSourceType::Struct, 
-    WrapperType::None, 
-    unusedIsConstQualified
+    WrapperType::None
     > {
 
     template<typename T>
@@ -175,12 +171,11 @@ struct JsonValueCreator
 };
 
 
-template<bool isConstQualified>
+template<>
 struct JsonValueCreator
     <
     JsonSourceType::Struct, 
-    WrapperType::StdOptional, 
-    isConstQualified
+    WrapperType::StdOptional
     > {
 
     template<typename T>
@@ -190,7 +185,7 @@ struct JsonValueCreator
 
         auto object = optionalStructToNullableObject(optionalStruct);
             
-        if constexpr (!isConstQualified)
+        if constexpr (!std::is_const_v<T>)
             attachOptionalReinitHandlers(object, optionalStruct);
 
         return object;
@@ -229,8 +224,7 @@ private:
             // After initialization, update the subtree of its nested member pointers recursively
             auto object = JsonValueCreator<
                 JsonSourceType::Struct,
-                WrapperType::StdOptional,
-                false
+                WrapperType::StdOptional
             >::create(optionalStruct);
         
             return object->getMembers();
@@ -241,12 +235,11 @@ private:
 };
 
 
-template<bool isConstQualified>
+template<>
 struct JsonValueCreator
     <
     JsonSourceType::Sequential, 
-    WrapperType::None, 
-    isConstQualified
+    WrapperType::None
     > {
 
     template<typename T>
@@ -258,7 +251,7 @@ struct JsonValueCreator
         auto elements = seqToJsonArrayElems(sequence);
         auto jsonArray = std::make_shared<JsonArray>(elements, contain_std_optional_elements<T>::value);
 
-        if constexpr (!isConstQualified && is_json_serializable_dynamic_array_v<T>)
+        if constexpr (!std::is_const_v<T> && is_json_serializable_dynamic_array_v<T>)
             attachArrayResizer(jsonArray, sequence);
 
         return jsonArray;
@@ -278,12 +271,11 @@ private:
 };
 
 
-template<bool isConstQualified>
+template<>
 struct JsonValueCreator
     <
     JsonSourceType::Sequential, 
-    WrapperType::StdOptional, 
-    isConstQualified
+    WrapperType::StdOptional
     > {
 
     template<typename T>
@@ -294,7 +286,7 @@ struct JsonValueCreator
 
         auto nullableArray = optionalSeqToNullableArray(optionalSeq);
 
-        if constexpr (!isConstQualified) {
+        if constexpr (!std::is_const_v<T>) {
             if constexpr (is_json_serializable_dynamic_array_v<T>)
                 attachArrayResizer(nullableArray, optionalSeq);
 
@@ -354,12 +346,11 @@ private:
 };
 
 
-template<bool UnusedIsConstQualified>
+template<>
 struct JsonValueCreator
     <
     JsonSourceType::Tuple, 
-    WrapperType::None, 
-    UnusedIsConstQualified
+    WrapperType::None
     > {
 
     template<typename T>
@@ -374,12 +365,11 @@ struct JsonValueCreator
 };
 
 
-template<bool isConstQualified>
+template<>
 struct JsonValueCreator
     <
     JsonSourceType::Tuple, 
-    WrapperType::StdOptional, 
-    isConstQualified
+    WrapperType::StdOptional
     > {
 
     template<typename T>
@@ -390,7 +380,7 @@ struct JsonValueCreator
 
         auto nullableArray = optionalTupToNullableArray(optionalSeq); 
 
-        if constexpr (!isConstQualified) 
+        if constexpr (!std::is_const_v<T>) 
             attachOptionalReinitHandlers(nullableArray, optionalSeq);
 
         return nullableArray;
@@ -436,16 +426,16 @@ private:
 
 
 template<typename T>
-using FromPrimitive = JsonValueCreator<JsonSourceType::Primitive, wrapper_type_v<T>, std::is_const_v<T>>;
+using FromPrimitive = JsonValueCreator<JsonSourceType::Primitive, wrapper_type_v<T>>;
 
 template<typename T>
-using FromStruct = JsonValueCreator<JsonSourceType::Struct, wrapper_type_v<T>, std::is_const_v<T>>;
+using FromStruct = JsonValueCreator<JsonSourceType::Struct, wrapper_type_v<T>>;
 
 template<typename T>
-using FromTuple = JsonValueCreator<JsonSourceType::Tuple, wrapper_type_v<T>, std::is_const_v<T>>;
+using FromTuple = JsonValueCreator<JsonSourceType::Tuple, wrapper_type_v<T>>;
 
 template<typename T>
-using FromSequence = JsonValueCreator<JsonSourceType::Sequential, wrapper_type_v<T>, std::is_const_v<T>>;
+using FromSequence = JsonValueCreator<JsonSourceType::Sequential, wrapper_type_v<T>>;
 
 
 template<typename T>
