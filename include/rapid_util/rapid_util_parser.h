@@ -548,6 +548,8 @@ public:
 	}
 
 	void resize(std::size_t newSize) {
+		assert(resizer != nullptr);
+
 		elements = resizer(newSize);
 	}
 

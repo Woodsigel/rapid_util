@@ -452,6 +452,41 @@ TEST(RapidUnmarshalTest, UnserializeNullableHomogeneousArrayHavingOptionalElemsW
 	ASSERT_DOUBLE_EQ((*jobPosting.jobs)[2]->salary, 310000.0);
 }
 
+
+struct JobPostingOptFixed {
+	std::optional<std::array<JobInfo, 2>> jobs;
+};
+
+RAPIDJSON_UTIL_DESCRIBE_MEMBERS(JobPostingOptFixed, (jobs))
+
+TEST(RapidMarshalTest, UnserializeNullableHomogeneousFixedArray) {
+	std::string json(R"({
+		"jobs": [
+		    {
+		        "title": "Python Developer",
+		        "salary": 135000.0
+		    },
+		    {
+		        "title": "Database Administrator",
+		        "salary": 125000.0
+		    }
+		]
+	})");
+
+	JobPostingOptFixed jobPosting;
+
+	ASSERT_EQ(jobPosting.jobs, std::nullopt);
+	rapidjson_util::unmarshal(json, jobPosting);
+
+	ASSERT_NE(jobPosting.jobs, std::nullopt);
+
+	ASSERT_EQ(jobPosting.jobs->at(0).title, "Python Developer");
+	ASSERT_DOUBLE_EQ(jobPosting.jobs->at(0).salary, 135000.0);
+
+	ASSERT_EQ(jobPosting.jobs->at(1).title, "Database Administrator");
+	ASSERT_DOUBLE_EQ(jobPosting.jobs->at(1).salary, 125000.0);
+}
+
 struct EventInfo {
 	std::string event;
 	std::string page;
@@ -602,7 +637,7 @@ TEST(RAPID_UNMARSHAL_TEST, ThrowsMemberDeserializationExceptionWhenTypeMismatche
 
 
 struct SomeFixedArray {
-	std::array<bool, 3> arr;
+	std::optional<std::array<bool, 3>> arr;
 };
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(SomeFixedArray, (arr))
@@ -610,6 +645,7 @@ RAPIDJSON_UTIL_DESCRIBE_MEMBERS(SomeFixedArray, (arr))
 TEST(RAPID_UNMARSHAL_TEST, ThrowWhenJsonArraySizeMismatchesStdFixedArray) {
 	std::string json(R"( { "arr" : [false, true, true, false] } )");
 	SomeFixedArray fixedArray;
+
 	try {
 		rapidjson_util::unmarshal(json, fixedArray);
 		FAIL() << "Expected MemberSerializationFailure";
@@ -631,6 +667,7 @@ TEST(RAPID_UNMARSHAL_TEST, ThrowWhenJsonArraySizeMismatchesTupleSize) {
 							"heteroArray" : [false, {"name" : "Li", "age" : 24}, 1.82] 
                          } )");
 	SomeHeterogeneousArray heteroArray;
+
 	try {
 		rapidjson_util::unmarshal(json, heteroArray);
 		FAIL() << "Expected MemberSerializationFailure";

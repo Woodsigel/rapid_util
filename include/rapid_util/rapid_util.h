@@ -215,7 +215,8 @@ private:
         
         
     template<typename T>
-    static void attachOptionalReinitHandlers(
+    static void 
+    attachOptionalReinitHandlers(
         std::shared_ptr<JsonNullableObject> object, T& optionalStruct) {
         
         auto resetter = [&optionalStruct]() { optionalStruct.reset(); };
@@ -287,16 +288,19 @@ struct JsonValueCreator
 
     template<typename T>
     static std::shared_ptr<JsonNullableArray> 
-    create(T& sequence) {
+    create(T& optionalSeq) {
 
         static_assert(is_std_optional_v<T>);
 
-        auto nullableArray = optionalSeqToNullableArray(sequence);
+        auto nullableArray = optionalSeqToNullableArray(optionalSeq);
 
-        if constexpr (!isConstQualified)
-           attachOptionalReinitHandlers(nullableArray, sequence);
+        if constexpr (!isConstQualified) {
+            if constexpr (is_json_serializable_dynamic_array_v<T>)
+                attachArrayResizer(nullableArray, optionalSeq);
+
+            attachOptionalReinitHandlers(nullableArray, optionalSeq);
+        }
       
-        
         return nullableArray;
     }
 
@@ -304,18 +308,30 @@ struct JsonValueCreator
 private:
     template<typename T>
     static std::shared_ptr<JsonNullableArray>
-    optionalSeqToNullableArray(T& sequence) {
+    optionalSeqToNullableArray(T& optionalSeq) {
 
         bool containOpt = contain_std_optional_elements<T>::value;
-        if (!sequence.has_value())
+        if (!optionalSeq.has_value())
             return std::make_shared<JsonNullableArray>(containOpt);
 
 
         auto elements = std::is_const_v<T> ?
-            seqToJsonArrayElems(std::as_const(sequence.value())) : 
-            seqToJsonArrayElems(sequence.value());
+            seqToJsonArrayElems(std::as_const(optionalSeq.value())) : 
+            seqToJsonArrayElems(optionalSeq.value());
 
         return std::make_shared<JsonNullableArray>(elements, containOpt);
+    }
+
+    template<typename T>
+    static void
+    attachArrayResizer(std::shared_ptr<JsonNullableArray> nullableArray, T& optionalSeq) {
+
+        auto resizer = [&optionalSeq](std::size_t newSize) {
+            optionalSeq->resize(newSize);
+            return seqToJsonArrayElems(optionalSeq.value());
+        };
+
+        nullableArray->setArrayResizer(resizer);
     }
 
     template<typename T>
@@ -326,21 +342,12 @@ private:
         auto reinitializer = [&optionalSeq]() {
             using BaseType = remove_std_optional_t<T>;
             optionalSeq = BaseType{};
-            return std::vector<std::shared_ptr<JsonValue>>{};
-        };
-
-        auto resizer = [&optionalSeq, reinitializer](std::size_t newSize) {
-            if (!optionalSeq.has_value()) {
-                reinitializer();
-            }
-            optionalSeq->resize(newSize);
             return seqToJsonArrayElems(optionalSeq.value());
         };
 
         auto resetter = [&optionalSeq]() { optionalSeq.reset(); };
 
 
-        nullableArray->setArrayResizer(resizer);
         nullableArray->setReferencedValueHandlers(reinitializer, resetter);
     }
 
@@ -406,10 +413,10 @@ private:
     }
 
 
-        template<typename T>
-        static void
-        attachOptionalReinitHandlers(
-        std::shared_ptr<JsonNullableArray> nullableArray, T& optionalSeq) {
+    template<typename T>
+    static void
+    attachOptionalReinitHandlers(
+    std::shared_ptr<JsonNullableArray> nullableArray, T& optionalSeq) {
         
         auto reinitializer = [&optionalSeq]() {
             using BaseType = remove_std_optional_t<T>;
@@ -424,7 +431,7 @@ private:
         auto resetter = [&optionalSeq]() { optionalSeq.reset(); };
         
         nullableArray->setReferencedValueHandlers(reinitializer, resetter);
-   }
+    }
 };
 
 
