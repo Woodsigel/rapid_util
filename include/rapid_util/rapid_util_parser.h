@@ -985,22 +985,21 @@ inline void JsonReader::readArrayElements(JsonArray* array, rapidjson::Value& js
 	if (!array->containOptionalElements())
 		ThrowExceptionUnless(!containNullElements(jsonInput), TypeMismatchException("JSON array contains null elements"));
 
-	auto jsonArray = jsonInput.GetArray();
-	ThrowExceptionUnless(jsonArray.Size() == array->size() || array->isResizable(), 
+	ThrowExceptionUnless(jsonInput.Size() == array->size() || array->isResizable(),
 		                ArrayLengthMismatchException(
-							"Array size mismatch: JSON contains " + std::to_string(jsonArray.Size()) +
+							"Array size mismatch: JSON contains " + std::to_string(jsonInput.Size()) +
 							" elements, but given array has fixed capacity of " + std::to_string(array->size()) +
 							" elements and cannot be resized."));
 
 
-	if (jsonArray.Size() != array->size())
-		array->resize(jsonArray.Size());
+	if (jsonInput.Size() != array->size())
+		array->resize(jsonInput.Size());
 
 
 	auto elements = array->getElements();
 	size_t elemIndex = 0;
 
-	for (auto&& value : jsonArray)
+	for (auto&& value : jsonInput.GetArray())
 		elements[elemIndex++]->accept(*this, value);
 }
 
