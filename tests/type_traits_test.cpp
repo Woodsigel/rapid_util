@@ -32,14 +32,14 @@ TEST(JsonValueTypeTraitTest, RejectUnserializableTypes) {
 
 TEST(JsonValueTypeTraitTest, ValidateTupleSerializableElementTypes) {
 	
-	static_assert(is_json_serializable_tuple_v<std::tuple<int, double, float>>, 
+	static_assert(is_jsonable_tuple_v<std::tuple<int, double, float>>, 
 		         "Tuples with primitive types are serializable");
 
-	static_assert(is_json_serializable_tuple_v<std::tuple<int, double, std::tuple<std::string, std::vector<float>>>>, 
+	static_assert(is_jsonable_tuple_v<std::tuple<int, double, std::tuple<std::string, std::vector<float>>>>, 
 		          "Nested tuples are serializable if all elements are valid");
 
 	using aUnSerialableType = std::stringstream;
-	static_assert(!is_json_serializable_tuple_v < std::tuple<int, double, std::tuple<aUnSerialableType>>>,
+	static_assert(!is_jsonable_tuple_v < std::tuple<int, double, std::tuple<aUnSerialableType>>>,
 		          "Tuples with any non-serializable elements are rejected");
 
 }

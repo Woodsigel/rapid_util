@@ -82,7 +82,7 @@ template<typename Sequence>
 std::vector<std::shared_ptr<JsonValue>> 
 seqToJsonArrayElems(Sequence& sequence) {
 
-    static_assert(is_json_serializable_sequential_container_v<Sequence>);
+    static_assert(is_jsonable_sequential_container_v<Sequence>);
 
     std::vector<std::shared_ptr<JsonValue>> elements;
 
@@ -96,7 +96,7 @@ template<typename Tuple>
 std::vector <std::shared_ptr<JsonValue>> 
 tupleToJsonArrayElems(Tuple& tuple) {
 
-    static_assert(is_json_serializable_tuple_v<Tuple>);
+    static_assert(is_jsonable_tuple_v<Tuple>);
 
     std::vector<std::shared_ptr<JsonValue>> elements;
 
@@ -147,7 +147,7 @@ struct JsonValueCreator
     template<typename T>
     static std::shared_ptr<JsonPrimitiveValue> 
     create(T& value) {
-        static_assert(is_json_serializable_primitive_type_v<T>);
+        static_assert(is_jsonable_primitive_type_v<T>);
 
         return std::make_shared<JsonPrimitiveValue>(&value);
     }
@@ -252,7 +252,7 @@ struct JsonValueCreator
         bool containOptElems = contain_std_optional_elements<T>::value;
         auto jsonArray = std::make_shared<JsonArray>(elements, containOptElems);
 
-        if constexpr (!std::is_const_v<T> && is_json_serializable_dynamic_array_v<T>)
+        if constexpr (!std::is_const_v<T> && is_jsonable_dynamic_array_v<T>)
             attachArrayResizer(jsonArray, sequence);
 
         return jsonArray;
@@ -288,7 +288,7 @@ struct JsonValueCreator
         auto nullableArray = optionalSeqToNullableArray(optionalSeq);
 
         if constexpr (!std::is_const_v<T>) {
-            if constexpr (is_json_serializable_dynamic_array_v<T>)
+            if constexpr (is_jsonable_dynamic_array_v<T>)
                 attachArrayResizer(nullableArray, optionalSeq);
 
             attachOptionalReinitHandlers(nullableArray, optionalSeq);
@@ -443,16 +443,16 @@ template<typename T>
 std::shared_ptr<JsonValue> 
 convertToJsonValue(T& memberRef) {
 
-    if constexpr (is_json_serializable_primitive_type_v<T>)
+    if constexpr (is_jsonable_primitive_type_v<T>)
         return FromPrimitive<T>::create(memberRef);
 
     else if constexpr (is_describable_struct_v<T>)
         return FromStruct<T>::create(memberRef);
 
-    else if constexpr (is_json_serializable_tuple_v<T>)
+    else if constexpr (is_jsonable_tuple_v<T>)
         return FromTuple<T>::create(memberRef);
 
-    else if constexpr (is_json_serializable_sequential_container_v<T>)
+    else if constexpr (is_jsonable_sequential_container_v<T>)
         return FromSequence<T>::create(memberRef);
 
     else 
