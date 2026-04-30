@@ -33,9 +33,9 @@ constexpr auto make_typelist(Types&&...) {
 }
 
 template<typename F,
-    template<typename ...> typename List,
+    template<typename ...> typename TypeList,
     typename ...Descriptors>
-void for_each(const List<Descriptors...>& , F&& f) {
+void for_each(const TypeList<Descriptors...>& , F&& f) {
     ((..., std::invoke(std::forward<F>(f), Descriptors{})));
 }
 
