@@ -221,7 +221,7 @@ public:
 	/**
       * Constructs a JsonPrimitiveValue that maintains a pointer to a struct member.
       * The member can be a regular attribute or a optional wrapper, only std::optional
-	  * members are allowed to be null.
+	  * members are allowed to be none (lack of a value).
       *
       * @template param T The member type (e.g. int, std::optional<int>, const std::string, etc.)
       * @param _value Pointer to the struct member that will be updated
@@ -230,10 +230,10 @@ public:
 	JsonPrimitiveValue(T* _value) : value(_value) {
 		type = getStoredType<T>();
 		ptrOwnershipType = getOwnershipType<T>();
-		isNull = checkIsNull<T>(_value);
+		isNone = checkIsNone<T>(_value);
 		pointToConst = std::is_const_v<T>;
 
-		if (isNull)
+		if (isNone)
 			assert(OwnershipType::StdOptional == ptrOwnershipType);
 	}
 
@@ -260,13 +260,13 @@ public:
 
 
 	/**
-	  * Checks if the struct's member is currently null.
+	  * Checks if the struct's member is currently none (lack of a value).
 	  * @pre ownershipType() must be OwnershipType::StdOptional (pointee must be an std::optional)
 	  */
-	bool isPointeeNull() const {
+	bool isPointeeNone() const {
 		assert(OwnershipType::StdOptional == ptrOwnershipType);
 		
-		return isNull;
+		return isNone;
 	}
 
 	/**
@@ -280,7 +280,7 @@ public:
 		assert(ownershipType() == OwnershipType::StdOptional);
 		assert(!isPointToConst());
 		
-		#define RESET_TO_NULL(storedType, CXXType)										\
+		#define RESET_TO_NONE(storedType, CXXType)										\
 		    case StoredType::storedType: {												\
 				auto value = std::any_cast<std::optional<CXXType>*>(storedValue());		\
 				value->reset();															\
@@ -288,18 +288,18 @@ public:
 			}
 
 		switch (storedType()) {
-			RESET_TO_NULL(IntPtr, int)
-			RESET_TO_NULL(Int64Ptr, int64_t)
-			RESET_TO_NULL(Uint64Ptr, uint64_t)
-			RESET_TO_NULL(FloatPtr, float)
-			RESET_TO_NULL(DoublePtr, double)
-			RESET_TO_NULL(BoolPtr, bool)
-			RESET_TO_NULL(StringPtr, std::string)
+			RESET_TO_NONE(IntPtr, int)
+			RESET_TO_NONE(Int64Ptr, int64_t)
+			RESET_TO_NONE(Uint64Ptr, uint64_t)
+			RESET_TO_NONE(FloatPtr, float)
+			RESET_TO_NONE(DoublePtr, double)
+			RESET_TO_NONE(BoolPtr, bool)
+			RESET_TO_NONE(StringPtr, std::string)
 		}
 
-        #undef RESET_TO_NULL
+        #undef RESET_TO_NONE
 
-		isNull = true;
+		isNone = true;
 	}
 
 	/**
@@ -309,11 +309,11 @@ public:
 	  * @pre isPointToConst() must be false (struct's member must be non-const qualified)
 	  *
 	  */
-	void reinitOptionalPointeeIfNull() {
+	void reinitOptionalPointeeIfNone() {
 		assert(ownershipType() == OwnershipType::StdOptional);
 		assert(!isPointToConst());
 
-		if (!isPointeeNull())
+		if (!isPointeeNone())
 			return;
 
         #define REINITIALIZE(storedType, CXXType)                                        \
@@ -335,19 +335,19 @@ public:
 
         #undef REINITIALIZE
 
-		isNull = false;
+		isNone = false;
 	}
 
 	/**
 	  * @brief Unwrap a const pointer to the underlying data for read-only access.
 	  *
-	  * @pre If ownership type is StdOptional, isPointeeNull() must be false
+	  * @pre If ownership type is StdOptional, isPointeeNone() must be false
 	  * @pre isPointToConst() must be true (member is const-qualified)
 	  *
 	  */
 	template<typename T>
 	const T* unwrapConstPointer() {
-		if(ownershipType() == OwnershipType::StdOptional) assert(!isPointeeNull());
+		if(ownershipType() == OwnershipType::StdOptional) assert(!isPointeeNone());
 		assert(isPointToConst());
 	
 
@@ -361,12 +361,12 @@ public:
 	/**
 	 * @brief Unwraps a pointer to the underlying data for read-write access.
 	 * 
-	 * @pre If ownership type is StdOptional, isPointeeNull() must be false
+	 * @pre If ownership type is StdOptional, isPointeeNone() must be false
 	 * @pre isPointToConst() must be true (member is const-qualified)
 	 */ 
 	template<typename T>
 	T* unwrapPointer() {
-		if (ownershipType() == OwnershipType::StdOptional) assert(!isPointeeNull());
+		if (ownershipType() == OwnershipType::StdOptional) assert(!isPointeeNone());
 		assert(!isPointToConst());
 
 		if(OwnershipType::Raw == ownershipType())
@@ -393,14 +393,14 @@ private:
 	OwnershipType ptrOwnershipType;
 	StoredType type;
 	std::any value;
-	bool isNull;
+	bool isNone;
 
 	std::any storedValue() const {
 		return value;
 	}
 
 	template<typename T>
-	bool checkIsNull(const T* value) {
+	bool checkIsNone(const T* value) {
 		if constexpr (is_std_optional_v<T>)
 			return !value->has_value();  
 		else
@@ -465,9 +465,9 @@ public:
 	using ReferencedValueReinitializer = std::function <std::vector<JsonAttribute>()>;
 	using ReferencedValueResetter = std::function<void()>;
 
-	JsonNullableObject() : isNull(true) {}
+	JsonNullableObject() : isNone(true) {}
 
-	JsonNullableObject(const std::vector<JsonAttribute>& _members) : isNull(false) {
+	JsonNullableObject(const std::vector<JsonAttribute>& _members) : isNone(false) {
 		members = _members;
 	}
 
@@ -498,8 +498,8 @@ public:
 		resetter = _resetter;
 	}
 
-	bool isReferencedValueNull() const {
-		return isNull;
+	bool isReferencedValueNone() const {
+		return isNone;
 	}
 
 	void resetReferencedValue() {
@@ -508,14 +508,14 @@ public:
 		resetter();
 
 		members.clear();
-		isNull = true;
+		isNone = true;
 	}
 
-	void reinitializeReferencedValue() {
+	void reinitReferencedValue() {
 		assert(reinitializer != nullptr);
 
 		members = reinitializer();
-		isNull = false;
+		isNone = false;
 	}
 
 	void accept(JsonVisitor& visitor, rapidjson::Value& rapidjsonValue) override {
@@ -525,7 +525,7 @@ public:
 private:
 	ReferencedValueReinitializer reinitializer;
 	ReferencedValueResetter resetter;
-	bool isNull;
+	bool isNone;
 };
 
 
@@ -583,12 +583,12 @@ public:
 	using ReferencedValueResetter = std::function<void()>;
 	using ReferencedValueReinitializer = std::function<std::vector<std::shared_ptr<JsonValue>>()>;
 
-	JsonNullableArray(bool _containOptionalElems = false) : isNull(true) {
+	JsonNullableArray(bool _containOptionalElems = false) : isNone(true) {
 		containOptionalElems = _containOptionalElems;
 	}
 
 	JsonNullableArray(const std::vector<std::shared_ptr<JsonValue>>& _elements, bool _containOptionalElems = false)
-		: isNull(false) {
+		: isNone(false) {
 		elements = _elements;
 		containOptionalElems = _containOptionalElems;
 	}
@@ -621,8 +621,8 @@ public:
 		resetter = _resetter;
 	}
 
-	bool isReferencedValueNull() const {
-		return isNull;
+	bool isReferencedValueNone() const {
+		return isNone;
 	}
 
 	void resetReferencedValue() {
@@ -631,14 +631,14 @@ public:
 		resetter();
 
 		elements.clear();
-		isNull = true;
+		isNone = true;
 	}
 
-	void reinitializeReferencedValue() {
+	void reinitReferencedValue() {
 		assert(reinitializer != nullptr);
 
 		elements = reinitializer();
-		isNull = false;
+		isNone = false;
 	}
 
 	void accept(JsonVisitor& visitor, rapidjson::Value& rapidjsonValue) override {
@@ -646,7 +646,7 @@ public:
 	}
 
 private:
-	bool isNull;
+	bool isNone;
 	ReferencedValueResetter resetter = nullptr;
 	ReferencedValueReinitializer reinitializer = nullptr;
 };
@@ -668,7 +668,7 @@ inline void JsonWriter::visit(JsonPrimitiveValue* primitiveValue, rapidjson::Val
 	assert(primitiveValue->isPointToConst());
 
 	if (primitiveValue->ownershipType() == JsonPrimitiveValue::StdOptional && 
-		primitiveValue->isPointeeNull()) {
+		primitiveValue->isPointeeNone()) {
 		jsonOutput.SetNull();
 		return;
 	}
@@ -726,7 +726,7 @@ inline void JsonWriter::visit(JsonObject* object, rapidjson::Value& jsonOutput) 
 
 
 inline void JsonWriter::visit(JsonNullableObject* object, rapidjson::Value& jsonOutput) {
-	if (object->isReferencedValueNull()) {
+	if (object->isReferencedValueNone()) {
 		jsonOutput.SetNull();
 		return;
 	}
@@ -754,7 +754,7 @@ inline void JsonWriter::visit(JsonArray* array, rapidjson::Value& jsonOutput) {
 
 
 inline void JsonWriter::visit(JsonNullableArray* array, rapidjson::Value& jsonOutput) {
-	if (array->isReferencedValueNull()) {
+	if (array->isReferencedValueNone()) {
 		jsonOutput.SetNull();
 		return;
 	}
@@ -858,7 +858,7 @@ inline void JsonReader::visit(JsonPrimitiveValue* primitiveValue, rapidjson::Val
 
 
 	if (isStdOptional) 
-		primitiveValue->reinitOptionalPointeeIfNull();
+		primitiveValue->reinitOptionalPointeeIfNone();
 
 	switch (primitiveValue->storedType()) {
 		case JsonPrimitiveValue::StoredType::IntPtr: {
@@ -930,8 +930,8 @@ inline void JsonReader::visit(JsonNullableObject* object, rapidjson::Value& json
 		return object->resetReferencedValue();
 
 
-	if(object->isReferencedValueNull())
-		object->reinitializeReferencedValue();
+	if(object->isReferencedValueNone())
+		object->reinitReferencedValue();
 
 	readObjectMembers(object, jsonInput);
 }
@@ -963,8 +963,8 @@ inline void JsonReader::visit(JsonNullableArray* array, rapidjson::Value& jsonIn
 	if (jsonInput.IsNull())
 		return array->resetReferencedValue();
 
-	if (array->isReferencedValueNull())
-		array->reinitializeReferencedValue();
+	if (array->isReferencedValueNone())
+		array->reinitReferencedValue();
 
 	readArrayElements(array, jsonInput);
 }
