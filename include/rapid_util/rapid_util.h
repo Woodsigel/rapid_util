@@ -81,7 +81,6 @@ convertToJsonValue(T& memberRef);
 template<typename Sequence>
 std::vector<std::shared_ptr<JsonValue>> 
 seqToJsonArrayElems(Sequence& sequence) {
-
     static_assert(is_jsonable_sequential_container_v<Sequence>);
 
     std::vector<std::shared_ptr<JsonValue>> elements;
@@ -95,7 +94,6 @@ seqToJsonArrayElems(Sequence& sequence) {
 template<typename Tuple>
 std::vector <std::shared_ptr<JsonValue>> 
 tupleToJsonArrayElems(Tuple& tuple) {
-
     static_assert(is_jsonable_tuple_v<Tuple>);
 
     std::vector<std::shared_ptr<JsonValue>> elements;
@@ -196,7 +194,6 @@ private:
     template<typename T>
     static std::shared_ptr<JsonNullableObject>
     optionalStructToNullableObject(T& optionalStruct) {
-    
         if (!optionalStruct.has_value())
             return std::make_shared<JsonNullableObject>();
     
@@ -245,7 +242,6 @@ struct JsonValueCreator
     template<typename T>
     static std::shared_ptr<JsonArray> 
     create(T& sequence) {
-
         static_assert(!is_std_optional_v<T>);
 
         auto elements = seqToJsonArrayElems(sequence);
@@ -282,7 +278,6 @@ struct JsonValueCreator
     template<typename T>
     static std::shared_ptr<JsonNullableArray> 
     create(T& optionalSeq) {
-
         static_assert(is_std_optional_v<T>);
 
         auto nullableArray = optionalSeqToNullableArray(optionalSeq);
@@ -318,7 +313,6 @@ private:
     template<typename T>
     static void
     attachArrayResizer(std::shared_ptr<JsonNullableArray> nullableArray, T& optionalSeq) {
-
         auto resizer = [&optionalSeq](std::size_t newSize) {
             optionalSeq->resize(newSize);
             return seqToJsonArrayElems(optionalSeq.value());
@@ -331,7 +325,6 @@ private:
     static void
     attachOptionalReinitHandlers(
     std::shared_ptr<JsonNullableArray> nullableArray, T& optionalSeq) {
-
         auto reinitializer = [&optionalSeq]() {
             using BaseType = remove_std_optional_t<T>;
             optionalSeq = BaseType{};
@@ -376,7 +369,6 @@ struct JsonValueCreator
     template<typename T>
     static std::shared_ptr<JsonNullableArray> 
     create(T& optionalSeq) {
-
         static_assert(is_std_optional_v<T>);
 
         auto nullableArray = optionalTupToNullableArray(optionalSeq); 
@@ -392,9 +384,9 @@ private:
     template<typename T>
     static std::shared_ptr<JsonNullableArray> 
     optionalTupToNullableArray(T& optionalTup) {
-
         if(!optionalTup.has_value())
             return std::make_shared<JsonNullableArray>();
+
 
         auto elements = std::is_const_v<T> ?
             tupleToJsonArrayElems(std::as_const(optionalTup.value())) :
@@ -408,7 +400,6 @@ private:
     static void
     attachOptionalReinitHandlers(
     std::shared_ptr<JsonNullableArray> nullableArray, T& optionalSeq) {
-        
         auto reinitializer = [&optionalSeq]() {
             using BaseType = remove_std_optional_t<T>;
         
@@ -421,6 +412,7 @@ private:
         
         auto resetter = [&optionalSeq]() { optionalSeq.reset(); };
         
+
         nullableArray->setReferencedValueHandlers(reinitializer, resetter);
     }
 };
@@ -442,7 +434,6 @@ using FromSequence = JsonValueCreator<JsonSourceType::Sequential, wrapper_type_v
 template<typename T>
 std::shared_ptr<JsonValue> 
 convertToJsonValue(T& memberRef) {
-
     if constexpr (is_jsonable_primitive_type_v<T>)
         return FromPrimitive<T>::create(memberRef);
 

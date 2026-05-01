@@ -316,6 +316,7 @@ public:
 		if (!isPointeeNone())
 			return;
 
+
         #define REINITIALIZE(storedType, CXXType)                                        \
 		    case JsonPrimitiveValue::StoredType::storedType: {                           \
 				auto value = std::any_cast<std::optional<CXXType>*>(storedValue());      \
@@ -350,9 +351,9 @@ public:
 		if(ownershipType() == OwnershipType::StdOptional) assert(!isPointeeNone());
 		assert(isPointToConst());
 	
-
 		if (OwnershipType::Raw == ownershipType())
 			return std::any_cast<const T*>(storedValue());
+
 
 		const std::optional<T>* opt = std::any_cast<const std::optional<T>*>(storedValue());
 		return const_cast<const T*>(&(opt->value()));
@@ -371,6 +372,7 @@ public:
 
 		if(OwnershipType::Raw == ownershipType())
 			return std::any_cast<T*>(storedValue());
+
 
 		std::optional<T>* opt = std::any_cast<std::optional<T>*>(storedValue());
 		return &(opt->value());
@@ -673,6 +675,7 @@ inline void JsonWriter::visit(JsonPrimitiveValue* primitiveValue, rapidjson::Val
 		return;
 	}
 		
+
 	switch (primitiveValue->storedType()) {
 		case JsonPrimitiveValue::StoredType::IntPtr: {
 			auto value = primitiveValue->unwrapConstPointer<int>();
@@ -731,6 +734,7 @@ inline void JsonWriter::visit(JsonNullableObject* object, rapidjson::Value& json
 		return;
 	}
 
+
 	writeObjectMembers(object, jsonOutput);
 }
 
@@ -758,6 +762,7 @@ inline void JsonWriter::visit(JsonNullableArray* array, rapidjson::Value& jsonOu
 		jsonOutput.SetNull();
 		return;
 	}
+
 
 	writeArrayMembers(array, jsonOutput);
 }
@@ -804,7 +809,6 @@ enum class QueryType {
 
 class RapidjsonValueTypeValidator {
 public:
-
 	static void validate(const rapidjson::Value& value, QueryType type) {
 		#define RAPIDJSON_VALUE_VALIDATE(value, query, expectedType)												\
 		    if(!value. ## query())																					\
@@ -941,7 +945,8 @@ inline void  JsonReader::readObjectMembers(JsonObject* object, rapidjson::Value&
 
 	for (auto&& member : object->getMembers()) {
 		auto name = member.name.c_str();
-		ThrowExceptionUnless(jsonInput.HasMember(name), MemberNotFoundException(name));
+		ThrowExceptionUnless(jsonInput.HasMember(name), 
+			                 MemberNotFoundException(name));
 
 		try {
 			member.value->accept(*this, jsonInput[name]);
@@ -963,6 +968,7 @@ inline void JsonReader::visit(JsonNullableArray* array, rapidjson::Value& jsonIn
 	if (jsonInput.IsNull())
 		return array->resetReferencedValue();
 
+
 	if (array->isReferencedValueNone())
 		array->reinitReferencedValue();
 
@@ -983,18 +989,18 @@ inline void JsonReader::readArrayElements(JsonArray* array, rapidjson::Value& js
 	RapidjsonValueTypeValidator::validate(jsonInput, QueryType::IsArray);
 
 	if (!array->containOptionalElements())
-		ThrowExceptionUnless(!containNullElements(jsonInput), TypeMismatchException("JSON array contains null elements"));
+		ThrowExceptionUnless(!containNullElements(jsonInput), 
+			                 TypeMismatchException("JSON array contains null elements"));
 
 	ThrowExceptionUnless(jsonInput.Size() == array->size() || array->isResizable(),
 		                ArrayLengthMismatchException(
-							"Array size mismatch: JSON contains " + std::to_string(jsonInput.Size()) +
-							" elements, but given array has fixed capacity of " + std::to_string(array->size()) +
-							" elements and cannot be resized."));
+						"Array size mismatch: JSON contains " + std::to_string(jsonInput.Size()) +
+						" elements, but given array has fixed capacity of " + std::to_string(array->size()) +
+						" elements and cannot be resized."));
 
 
 	if (jsonInput.Size() != array->size())
 		array->resize(jsonInput.Size());
-
 
 	auto elements = array->getElements();
 	size_t elemIndex = 0;
