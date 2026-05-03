@@ -227,7 +227,8 @@ private:
             return object->getMembers();
         };
         
-        object->attachReferencedValueHandlers(reinitializer, resetter);
+        object->attachResetter(resetter);
+        object->attachReinitializer(reinitializer);
     }
 };
 
@@ -333,8 +334,8 @@ private:
 
         auto resetter = [&optionalSeq]() { optionalSeq.reset(); };
 
-
-        nullableArray->attachReferencedValueHandlers(reinitializer, resetter);
+        nullableArray->attachResetter(resetter);
+        nullableArray->attachReinitializer(reinitializer);
     }
 
 };
@@ -412,8 +413,8 @@ private:
         
         auto resetter = [&optionalSeq]() { optionalSeq.reset(); };
         
-
-        nullableArray->attachReferencedValueHandlers(reinitializer, resetter);
+        nullableArray->attachResetter(resetter);
+        nullableArray->attachReinitializer(reinitializer);
     }
 };
 

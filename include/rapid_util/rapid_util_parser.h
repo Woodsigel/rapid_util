@@ -469,49 +469,60 @@ public:
 
 	JsonNullableObject() : isNone(true) {}
 
-	JsonNullableObject(const std::vector<JsonAttribute>& _members) : isNone(false) {
+	JsonNullableObject(const std::vector<JsonAttribute>& _members)
+		: isNone(false) {
 		members = _members;
 	}
 
-	/**
-	  * @brief This function assigns the provided function objects to handle reinitialization
-	  *        and resetting of referenced member values (e.g., with std::optional wrappers).
-	  *
-	  * @param _reinitializer Callback used to reinitialize a referenced value.
-	  *                       E.g., For std::optional<myStruct>, after _reinitializer
-	  *                       invocation, the std::optional<myStruct> object will be
-	  *                       initialized from std::null_opt. Its children form a subtree
-	  *                       that maintains its nested member pointers, which will be
-	  *                       updated accordingly, and its children of the subtree will be
-	  *                       returned from the _reinitializer callback handler.
-	  *
-	  * @param _resetter      Callback used to reset a referenced value.
-	  *                       E.g., For std::optional<myStruct>, after _resetter
-	  *                       invocation, the std::optional<myStruct> object will be
-	  *                       set to std::null_opt, and the subtree of member pointers
-	  *                       of this object will be removed accordingly.
-	  *
-	  */
-	void attachReferencedValueHandlers(ReferencedValueReinitializer _reinitializer, 
-		                               ReferencedValueResetter _resetter) {
-		assert(_reinitializer != nullptr);
-		assert(_resetter != nullptr);
 
-		reinitializer = _reinitializer;
-		resetter = _resetter;
+	bool isReinitializerAttached() const {
+		return reinitializer != nullptr;
 	}
 
-	bool isReferencedValueHandlersAttached() const {
-		return (reinitializer != nullptr) &&
-			   (resetter != nullptr);
+	bool isResetterAttached() const {
+		return resetter != nullptr;
 	}
 
 	bool isReferencedValueNone() const {
 		return isNone;
 	}
 
+
+    /**
+	  * @brief This function assigns the provided function objects to handle reinitialization
+	  *        of referenced member values (e.g., with std::optional wrappers).
+	  *
+	  * @param _reinitializer Callback used to reinitialize a referenced value.
+	  *                       E.g., For std::optional<myStruct>, after _reinitializer
+	  *                       invocation, the std::optional<myStruct> object will be
+	  *                       initialized from std::null_opt. Its attributes form a subtree
+	  *                       that maintains its nested member pointers, which will be
+	  *                       updated accordingly, and its attributes of the subtree will be
+	  *                       returned from the _reinitializer callback handler.
+	  */
+	void attachReinitializer(ReferencedValueReinitializer _reinitializer) {
+		assert(_reinitializer != nullptr);
+		reinitializer = _reinitializer;
+	}
+
+	/**
+	  * @brief This function assigns the provided function objects to handle resetting
+	  *        of referenced member values (e.g., with std::optional wrappers).
+	  *
+	  * @param _resetter      Callback used to reset a referenced value.
+	  *                       E.g., For std::optional<myStruct>, after _resetter
+	  *                       invocation, the std::optional<myStruct> object will be
+	  *                       set to std::null_opt, and the subtree of member pointers
+	  *                       of this object will be removed accordingly.
+	  */
+	void attachResetter(ReferencedValueResetter _resetter) {
+		assert(_resetter != nullptr);
+		resetter = _resetter;
+	}
+
+
 	void resetReferencedValue() {
-		assert(isReferencedValueHandlersAttached());
+		assert(isResetterAttached());
 
 		resetter();
 
@@ -520,11 +531,12 @@ public:
 	}
 
 	void reinitReferencedValue() {
-		assert(isReferencedValueHandlersAttached());
+		assert(isReinitializerAttached());
 
 		members = reinitializer();
 		isNone = false;
 	}
+
 
 	void accept(JsonVisitor& visitor, rapidjson::Value& rapidjsonValue) override {
 		visitor.visit(this, rapidjsonValue);
@@ -595,15 +607,29 @@ public:
 		containOptionalElems = _containOptionalElems;
 	}
 
-	JsonNullableArray(const std::vector<std::shared_ptr<JsonValue>>& _elements, bool _containOptionalElems = false)
+	JsonNullableArray(const std::vector<std::shared_ptr<JsonValue>>& _elements, 
+		              bool _containOptionalElems = false) 
 		: isNone(false) {
 		elements = _elements;
 		containOptionalElems = _containOptionalElems;
 	}
 
+
+	bool isReinitializerAttached() const {
+		return reinitializer != nullptr;
+	}
+
+	bool isResetterAttached() const {
+		return resetter != nullptr;
+	}
+
+	bool isReferencedValueNone() const {
+		return isNone;
+	}
+
+
 	/**
-	  * @brief Sets the callback handlers for referenced array value operations. This function
-	  *        assigns the provided function objects to handle reinitialization and resetting of
+	  * @brief This function assigns the provided function objects to handle reinitialization of
 	  *        referenced array-like member values (e.g., with std::optional<std::tuple<...>> or
 	  *        std::optional<std::vector<...>>).
 	  *
@@ -614,33 +640,30 @@ public:
 	  *                       a subtree that maintains nested member pointers. This subtree
 	  *                       will be updated accordingly, and the elements of the updated
 	  *                       subtree will be returned from the _reinitializer callback handler.
-	  *
-	  * @param _resetter      Callback used to reset a referenced value.
-	  *                       E.g., For std::optional<std::vector<int>>, after _resetter
-	  *                       invocation, the std::optional<std::vector<int>> object will be
-	  *                       set to std::null_opt, and the elements of this vector attribute
-	  *                       will be cleaned accordingly.
 	  */
-	void attachReferencedValueHandlers(ReferencedValueReinitializer _reinitializer, 
-		                               ReferencedValueResetter _resetter) {
+	void attachReinitializer(ReferencedValueReinitializer _reinitializer) {
 		assert(_reinitializer != nullptr);
-		assert(_resetter != nullptr);
-
 		reinitializer = _reinitializer;
+	}
+
+	/**
+      * @brief This function assigns the provided function objects to handle resetting of referenced array-like
+	  *        member values (e.g., with std::optional<std::tuple<...>> or std::optional<std::vector<...>>).
+      *
+      * @param _resetter      Callback used to reset a referenced value.
+      *                       E.g., For std::optional<std::vector<int>>, after _resetter
+      *                       invocation, the std::optional<std::vector<int>> object will be
+      *                       set to std::null_opt, and the elements of this vector attribute
+      *                       will be cleaned accordingly.
+      */
+	void attachResetter(ReferencedValueResetter _resetter) {
+		assert(_resetter != nullptr);
 		resetter = _resetter;
 	}
 
-	bool isReferencedValueHandlersAttached() const {
-		return (reinitializer != nullptr) &&
-			    (resetter != nullptr);
-	}
-
-	bool isReferencedValueNone() const {
-		return isNone;
-	}
 
 	void resetReferencedValue() {
-		assert(isReferencedValueHandlersAttached());
+		assert(isResetterAttached());
 
 		resetter();
 
@@ -649,11 +672,12 @@ public:
 	}
 
 	void reinitReferencedValue() {
-		assert(isReferencedValueHandlersAttached());
+		assert(isReinitializerAttached());
 
 		elements = reinitializer();
 		isNone = false;
 	}
+
 
 	void accept(JsonVisitor& visitor, rapidjson::Value& rapidjsonValue) override {
 		visitor.visit(this, rapidjsonValue);
