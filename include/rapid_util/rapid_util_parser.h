@@ -417,7 +417,7 @@ private:
 
 	template<typename T>
 	constexpr StoredType getStoredType() {
-		using BaseType = remove_std_optional_t<std::remove_const_t<T>>;
+		using BaseType = remove_const_and_optional_t<T>;
 
 		if constexpr (std::is_same_v<BaseType, int>)       return StoredType::IntPtr;
 		else if constexpr (std::is_same_v<BaseType, int64_t>)  return StoredType::Int64Ptr;
@@ -492,7 +492,8 @@ public:
 	  *                       of this object will be removed accordingly.
 	  *
 	  */
-	void setReferencedValueHandlers(ReferencedValueReinitializer _reinitializer, ReferencedValueResetter _resetter) {
+	void attachReferencedValueHandlers(ReferencedValueReinitializer _reinitializer, 
+		                               ReferencedValueResetter _resetter) {
 		assert(_reinitializer != nullptr);
 		assert(_resetter != nullptr);
 
@@ -500,12 +501,17 @@ public:
 		resetter = _resetter;
 	}
 
+	bool isReferencedValueHandlersAttached() const {
+		return (reinitializer != nullptr) &&
+			   (resetter != nullptr);
+	}
+
 	bool isReferencedValueNone() const {
 		return isNone;
 	}
 
 	void resetReferencedValue() {
-		assert(resetter != nullptr);
+		assert(isReferencedValueHandlersAttached());
 
 		resetter();
 
@@ -514,7 +520,7 @@ public:
 	}
 
 	void reinitReferencedValue() {
-		assert(reinitializer != nullptr);
+		assert(isReferencedValueHandlersAttached());
 
 		members = reinitializer();
 		isNone = false;
@@ -615,7 +621,8 @@ public:
 	  *                       set to std::null_opt, and the elements of this vector attribute
 	  *                       will be cleaned accordingly.
 	  */
-	void setReferencedValueHandlers(ReferencedValueReinitializer _reinitializer, ReferencedValueResetter _resetter) {
+	void attachReferencedValueHandlers(ReferencedValueReinitializer _reinitializer, 
+		                               ReferencedValueResetter _resetter) {
 		assert(_reinitializer != nullptr);
 		assert(_resetter != nullptr);
 
@@ -623,12 +630,17 @@ public:
 		resetter = _resetter;
 	}
 
+	bool isReferencedValueHandlersAttached() const {
+		return (reinitializer != nullptr) &&
+			    (resetter != nullptr);
+	}
+
 	bool isReferencedValueNone() const {
 		return isNone;
 	}
 
 	void resetReferencedValue() {
-		assert(resetter != nullptr);
+		assert(isReferencedValueHandlersAttached());
 
 		resetter();
 
@@ -637,7 +649,7 @@ public:
 	}
 
 	void reinitReferencedValue() {
-		assert(reinitializer != nullptr);
+		assert(isReferencedValueHandlersAttached());
 
 		elements = reinitializer();
 		isNone = false;

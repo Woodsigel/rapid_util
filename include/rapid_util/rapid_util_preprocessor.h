@@ -114,6 +114,8 @@ public:
 template<typename T>
 using remove_std_optional_t = typename remove_std_optional<T>::type;
 
+template<typename T>
+using remove_const_and_optional_t = std::remove_const_t<remove_std_optional_t<T>>;
 
 template<typename T>
 constexpr bool is_js_primitive_type_v = std::disjunction_v<
@@ -126,11 +128,11 @@ constexpr bool is_js_primitive_type_v = std::disjunction_v<
 
 template<typename T>
 constexpr bool is_jsonable_primitive_type_v =
-    is_js_primitive_type_v<std::remove_const_t<remove_std_optional_t<T>>>;
+    is_js_primitive_type_v<remove_const_and_optional_t<T>>;
 
 template<typename T>
 constexpr bool is_describable_struct_v =
-    Descriptor<std::remove_const_t<remove_std_optional_t<T>>>::is_describable;
+    Descriptor<remove_const_and_optional_t<T>>::is_describable;
 
 
 template<typename T>
@@ -147,7 +149,7 @@ private:
 
 public:
     constexpr static bool value = 
-        inner<std::remove_const_t<remove_std_optional_t<T>>>::value;
+        inner<remove_const_and_optional_t<T>>::value;
 };
 
 template<typename Array>
@@ -169,7 +171,7 @@ private:
 
 public:
     constexpr static bool value = 
-        inner< std::remove_const_t<remove_std_optional_t<T>>>::value;
+        inner<remove_const_and_optional_t<T>>::value;
 };
 
 
@@ -187,14 +189,14 @@ private:
 
 public:
     constexpr static bool value = 
-        inner<std::remove_const_t<remove_std_optional_t<T>>>::value;
+        inner<remove_const_and_optional_t<T>>::value;
 };
  
 
 template<typename Container>
 struct is_jsonable_dynamic_array
     : std::bool_constant<is_jsonable_list<Container>::value || 
-                         is_jsonable_vector<Container>::value > 
+                         is_jsonable_vector<Container>::value> 
 {};
 
 template<typename Container>
@@ -257,7 +259,7 @@ private:
         static constexpr bool value = false;
     };
 
-    template<typename First, typename... Remaining >
+    template<typename First, typename... Remaining>
     struct inner<std::tuple<First, Remaining...>> {
     private:
         static constexpr bool check_first() {
@@ -282,7 +284,7 @@ private:
 
 public:
     static constexpr bool value = 
-        inner<std::remove_const_t<remove_std_optional_t<T>>>::value;
+        inner<remove_const_and_optional_t<T>>::value;
 };
 
 template<typename T>

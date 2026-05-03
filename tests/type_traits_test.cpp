@@ -79,4 +79,9 @@ TEST(OptionalTraitTest, DetectStdOptionalTypes) {
 
 	static_assert(std::is_same_v<remove_std_optional_t<const std::optional<float>>, const float>);
 	static_assert(std::is_same_v<remove_std_optional_t<const std::optional<const float>>, const float>);
+
+	static_assert(std::is_same_v<remove_const_and_optional_t<std::optional<bool>>, bool>);
+	static_assert(std::is_same_v<remove_const_and_optional_t<const std::optional<bool>>, bool>);
+	static_assert(std::is_same_v<remove_const_and_optional_t<const std::optional<const bool>>, bool>);
 }
+
