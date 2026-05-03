@@ -226,15 +226,10 @@ private:
         : std::true_type 
     {};
 
-    template<typename Container>
-    struct inner<std::optional<Container>,
-        std::enable_if_t<inner<Container>::value>>
-        : std::true_type 
-    {};
-
 public:
-    static constexpr bool value = 
-        inner<remove_const_and_reference_t<Container>>::value;
+    static constexpr bool value =
+        inner<std::remove_reference_t<
+        remove_const_and_optional_t<Container>>>::value;
 };
 
 
