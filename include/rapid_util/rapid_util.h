@@ -246,8 +246,8 @@ struct JsonValueCreator
         static_assert(!is_std_optional_v<T>);
 
         auto elements = seqToJsonArrayElems(sequence);
-        bool containNullableElems = contain_std_optional_elements<T>::value;
-        auto jsonArray = std::make_shared<JsonArray>(elements, containNullableElems);
+        bool allowNullableElems = contain_std_optional_elements<T>::value;
+        auto jsonArray = std::make_shared<JsonArray>(elements, allowNullableElems);
 
         if constexpr (!std::is_const_v<T> && is_jsonable_dynamic_array_v<T>)
             attachArrayResizer(jsonArray, sequence);
@@ -299,16 +299,16 @@ private:
     static std::shared_ptr<JsonNullableArray>
     optionalSeqToNullableArray(T& optionalSeq) {
 
-        bool containOpt = contain_std_optional_elements<T>::value;
+        bool allowNullableElems = contain_std_optional_elements<T>::value;
         if (!optionalSeq.has_value())
-            return std::make_shared<JsonNullableArray>(containOpt);
+            return std::make_shared<JsonNullableArray>(allowNullableElems);
 
 
         auto elements = std::is_const_v<T> ?
             seqToJsonArrayElems(std::as_const(optionalSeq.value())) : 
             seqToJsonArrayElems(optionalSeq.value());
 
-        return std::make_shared<JsonNullableArray>(elements, containOpt);
+        return std::make_shared<JsonNullableArray>(elements, allowNullableElems);
     }
 
     template<typename T>

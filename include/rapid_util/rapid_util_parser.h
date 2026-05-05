@@ -554,9 +554,9 @@ public:
 	using ArrayResizer = std::function<std::vector<std::shared_ptr<JsonValue>>(std::size_t)>;
 
 	JsonArray(const std::vector<std::shared_ptr<JsonValue>>& _elements = {}, 
-		      bool _containNullableElems = false) :
+		      bool _allowNullableElems = false) :
 		elements(_elements), 
-		containNullableElems(_containNullableElems) {
+		allowNullableElems(_allowNullableElems) {
 	}
 
 	void setArrayResizer(ArrayResizer _resizer) {
@@ -585,8 +585,8 @@ public:
       * @return true  - The array's elements may be none (lack of a value).
       * @return false - The array's elements always have a valid value.
       */
-	bool containNullableElements() const {
-		return containNullableElems;
+	bool allowNullElements() const {
+		return allowNullableElems;
 	}
 
 	std::vector<std::shared_ptr<JsonValue>> getElements() const {
@@ -602,7 +602,7 @@ public:
 protected:
 	std::vector<std::shared_ptr<JsonValue>> elements;
 	ArrayResizer resizer = nullptr;
-	bool containNullableElems;
+	bool allowNullableElems;
 };
 
 
@@ -611,15 +611,15 @@ public:
 	using ReferencedValueResetter = std::function<void()>;
 	using ReferencedValueReinitializer = std::function<std::vector<std::shared_ptr<JsonValue>>()>;
 
-	JsonNullableArray(bool _containOptionalElems = false) : isNone(true) {
-		containNullableElems = _containOptionalElems;
+	JsonNullableArray(bool _allowNullableElems = false) : isNone(true) {
+		allowNullableElems = _allowNullableElems;
 	}
 
 	JsonNullableArray(const std::vector<std::shared_ptr<JsonValue>>& _elements, 
-		              bool _containOptionalElems = false) 
+		              bool _allowNullableElems = false) 
 		: isNone(false) {
 		elements = _elements;
-		containNullableElems = _containOptionalElems;
+		allowNullableElems = _allowNullableElems;
 	}
 
 
@@ -1032,15 +1032,16 @@ inline bool containNullElements(const rapidjson::Value& value) {
 inline void JsonReader::readArrayElements(JsonArray* array, rapidjson::Value& jsonInput) {
 	RapidjsonValueTypeValidator::validate(jsonInput, QueryType::IsArray);
 
-	if (!array->containNullableElements())
-		ThrowExceptionUnless(!containNullElements(jsonInput), 
+	if (containNullElements(jsonInput))
+		ThrowExceptionUnless(array->allowNullElements(),
 			                 TypeMismatchException("JSON array contains null elements"));
 
 	ThrowExceptionUnless(jsonInput.Size() == array->size() || array->isResizable(),
-		                ArrayLengthMismatchException(
-						"Array size mismatch: JSON contains " + std::to_string(jsonInput.Size()) +
-						" elements, but given array has fixed capacity of " + std::to_string(array->size()) +
-						" elements and cannot be resized."));
+		                 ArrayLengthMismatchException(
+						 "Array size mismatch: JSON contains " + std::to_string(jsonInput.Size()) +
+						 " elements, but given array has fixed capacity of " + std::to_string(array->size()) +
+						 " elements and cannot be resized."));
+
 
 
 	if (jsonInput.Size() != array->size())
