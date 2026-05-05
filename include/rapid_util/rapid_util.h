@@ -246,8 +246,8 @@ struct JsonValueCreator
         static_assert(!is_std_optional_v<T>);
 
         auto elements = seqToJsonArrayElems(sequence);
-        bool containOptElems = contain_std_optional_elements<T>::value;
-        auto jsonArray = std::make_shared<JsonArray>(elements, containOptElems);
+        bool containNullableElems = contain_std_optional_elements<T>::value;
+        auto jsonArray = std::make_shared<JsonArray>(elements, containNullableElems);
 
         if constexpr (!std::is_const_v<T> && is_jsonable_dynamic_array_v<T>)
             attachArrayResizer(jsonArray, sequence);

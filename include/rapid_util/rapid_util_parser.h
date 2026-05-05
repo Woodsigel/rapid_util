@@ -28,7 +28,7 @@ namespace rapidjson_util {
 /**
  * @brief Exception thrown when a JSON object member fails to deserialize
  */
-class MemberSerializationFailure : public std::logic_error {
+class MemberSerializationFailure : public std::runtime_error {
 public:
 	MemberSerializationFailure(std::string_view what);
 };
@@ -37,7 +37,7 @@ public:
 /**
  * @brief Exception thrown when required JSON member is missing
  */
-class MemberNotFoundException : public std::logic_error {
+class MemberNotFoundException : public MemberSerializationFailure {
 public:
 	MemberNotFoundException(std::string_view member);
 };
@@ -46,7 +46,7 @@ public:
 /**
  * @brief Exception thrown when JSON value type doesn't match the expected type of structs
  */
-class TypeMismatchException : public std::logic_error {
+class TypeMismatchException : public MemberSerializationFailure {
 public:
 	TypeMismatchException(std::string_view what);
 };
@@ -55,7 +55,7 @@ public:
 /**
  * @brief Exception thrown when JSON array size doesn't match the array size of structs
  */
-class ArrayLengthMismatchException : public std::logic_error {
+class ArrayLengthMismatchException : public MemberSerializationFailure {
 public:
 	ArrayLengthMismatchException(std::string_view what);
 };
@@ -553,8 +553,10 @@ class JsonArray : public JsonValue {
 public:
 	using ArrayResizer = std::function<std::vector<std::shared_ptr<JsonValue>>(std::size_t)>;
 
-	JsonArray(const std::vector<std::shared_ptr<JsonValue>>& _elements = {}, bool _containOptionalElems = false) :
-		elements(_elements), containOptionalElems(_containOptionalElems) {
+	JsonArray(const std::vector<std::shared_ptr<JsonValue>>& _elements = {}, 
+		      bool _containNullableElems = false) :
+		elements(_elements), 
+		containNullableElems(_containNullableElems) {
 	}
 
 	void setArrayResizer(ArrayResizer _resizer) {
@@ -577,8 +579,14 @@ public:
 		return elements.size();
 	}
 
-	bool containOptionalElements() const {
-		return containOptionalElems;
+	/**
+      * @brief Checks whether the array's elements are permitted to lack a value
+      *
+      * @return true  - The array's elements may be none (lack of a value).
+      * @return false - The array's elements always have a valid value.
+      */
+	bool containNullableElements() const {
+		return containNullableElems;
 	}
 
 	std::vector<std::shared_ptr<JsonValue>> getElements() const {
@@ -594,7 +602,7 @@ public:
 protected:
 	std::vector<std::shared_ptr<JsonValue>> elements;
 	ArrayResizer resizer = nullptr;
-	bool containOptionalElems;
+	bool containNullableElems;
 };
 
 
@@ -604,14 +612,14 @@ public:
 	using ReferencedValueReinitializer = std::function<std::vector<std::shared_ptr<JsonValue>>()>;
 
 	JsonNullableArray(bool _containOptionalElems = false) : isNone(true) {
-		containOptionalElems = _containOptionalElems;
+		containNullableElems = _containOptionalElems;
 	}
 
 	JsonNullableArray(const std::vector<std::shared_ptr<JsonValue>>& _elements, 
 		              bool _containOptionalElems = false) 
 		: isNone(false) {
 		elements = _elements;
-		containOptionalElems = _containOptionalElems;
+		containNullableElems = _containOptionalElems;
 	}
 
 
@@ -987,7 +995,7 @@ inline void  JsonReader::readObjectMembers(JsonObject* object, rapidjson::Value&
 		try {
 			member.value->accept(*this, jsonInput[name]);
 		}
-		catch (std::logic_error& e) {
+		catch (MemberSerializationFailure& e) {
 			throw MemberSerializationFailure(std::string("Deserialization of member \"") +
 				name + "\" failed: " + e.what());
 		}
@@ -1024,7 +1032,7 @@ inline bool containNullElements(const rapidjson::Value& value) {
 inline void JsonReader::readArrayElements(JsonArray* array, rapidjson::Value& jsonInput) {
 	RapidjsonValueTypeValidator::validate(jsonInput, QueryType::IsArray);
 
-	if (!array->containOptionalElements())
+	if (!array->containNullableElements())
 		ThrowExceptionUnless(!containNullElements(jsonInput), 
 			                 TypeMismatchException("JSON array contains null elements"));
 
@@ -1048,22 +1056,22 @@ inline void JsonReader::readArrayElements(JsonArray* array, rapidjson::Value& js
 }  // namespace detail
 
 inline MemberSerializationFailure::MemberSerializationFailure(std::string_view what):
-	std::logic_error(what.data())
+	std::runtime_error(what.data())
 {
 }
 
 inline MemberNotFoundException::MemberNotFoundException(std::string_view member) :
-	std::logic_error(std::string("JSON doesn't match the struct: required field \"").append(member).append("\" not found"))
+	MemberSerializationFailure(std::string("JSON doesn't match the struct -- required field \"").append(member).append("\" not found"))
 {
 }
 
 inline TypeMismatchException::TypeMismatchException(std::string_view what) :
-	std::logic_error(what.data())
+	MemberSerializationFailure(what.data())
 {
 }
 
 inline ArrayLengthMismatchException::ArrayLengthMismatchException(std::string_view what) :
-	std::logic_error(what.data())
+	MemberSerializationFailure(what.data())
 {
 }
 

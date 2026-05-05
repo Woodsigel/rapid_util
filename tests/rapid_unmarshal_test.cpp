@@ -617,8 +617,8 @@ TEST(RAPID_UNMARSHAL_TEST, ThrowsWhenRequiredMemberMissing){
 		rapidjson_util::unmarshal(json, p);
 		FAIL() << "Expected MemberNotFoundException";
 	}
-	catch (rapidjson_util::MemberNotFoundException& e) {
-		EXPECT_STREQ(e.what(), "JSON doesn't match the struct: required field \"age\" not found");
+	catch (rapidjson_util::MemberSerializationFailure& e) {
+		EXPECT_STREQ(e.what(), "JSON doesn't match the struct -- required field \"age\" not found");
 	}
 }
 
