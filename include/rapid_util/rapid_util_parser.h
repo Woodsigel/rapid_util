@@ -132,7 +132,7 @@ public:
 	  *             C++ structs tagged by the RAPIDJSON_UTIL_DESCRIBE_MEMBERS macro.
       * @return JSON string representation
       */
-	std::string witeToJson(JsonObject* root);
+	std::string writeToJson(JsonObject* root);
 
 	void visit(JsonPrimitiveValue* primitiveValue, rapidjson::Value& jsonOutput) override;
 	void visit(JsonObject* object, rapidjson::Value& jsonOutput) override;
@@ -363,7 +363,7 @@ public:
 	 * @brief Unwraps a pointer to the underlying data for read-write access.
 	 * 
 	 * @pre If ownership type is StdOptional, isPointeeNone() must be false
-	 * @pre isPointToConst() must be true (member is const-qualified)
+	 * @pre isPointToConst() must be false (member is not const-qualified)
 	 */ 
 	template<typename T>
 	T* unwrapPointer() {
@@ -698,7 +698,7 @@ private:
 };
 
 
-inline std::string JsonWriter::witeToJson(JsonObject* root) {
+inline std::string JsonWriter::writeToJson(JsonObject* root) {
 	root->accept(*this, rapidjsonDocument);
 
 	rapidjson::StringBuffer buffer;

@@ -488,7 +488,7 @@ std::string marshalImpl(const Struct& s) {
     JsonObject root(buildJsonTreeFrom(s));
 
     JsonWriter writer;
-    return writer.witeToJson(&root);
+    return writer.writeToJson(&root);
 }
 
 template<typename Struct>
