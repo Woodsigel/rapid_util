@@ -12,7 +12,6 @@
 #ifndef __SIMPLE_RAPID_JSON_UTIL_H__
 #define __SIMPLE_RAPID_JSON_UTIL_H__
 
-#include <type_traits>
 #include "rapid_util_preprocessor.h"
 #include "rapid_util_parser.h"
 

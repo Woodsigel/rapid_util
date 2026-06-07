@@ -1,7 +1,5 @@
 #include "gmock/gmock.h"
 #include "rapid_util/rapid_util_preprocessor.h"
-#include <cstdint>
-#include <tuple>
 
 using namespace rapidjson_util::detail;
 
