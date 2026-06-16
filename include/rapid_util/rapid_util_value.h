@@ -9,6 +9,7 @@
 // warranty. In no event will the authors be held liable for any damages
 // arising from the use of this software.
 
+
 #ifndef __RAPID_UTIL_VALUE_H__
 #define __RAPID_UTIL_VALUE_H__
 
@@ -199,10 +200,10 @@ template<bool, typename> class Array;
 class Value {
 public:
 	struct Member;
-	using MemberIterator = std::list<Member>::iterator;
-	using ConstMemberIterator = std::list<Member>::const_iterator;
-	using ArrayIterator = std::list<Value>::iterator;
-	using ConstArrayIterator = std::list<Value>::const_iterator;
+	using MemberIterator = std::vector<Member>::iterator;
+	using ConstMemberIterator = std::vector<Member>::const_iterator;
+	using ArrayIterator = std::vector<Value>::iterator;
+	using ConstArrayIterator = std::vector<Value>::const_iterator;
 	using PrimitiveType = Primitive<false, Value>;
 	using ConstPrimitiveType = Primitive<true, Value>;
 	using ObjectType = Object<false, Value>;
@@ -222,14 +223,17 @@ public:
 	template<typename Type>
 	Value(Type* ptr);
 
+
+	/**
+	  * @brief Checks if the underlying value is modifiable, if Type in Value constructor is a const pointer,
+	  *        then it return false otherwise true
+	  */
+	bool isModifiable() const { return valuePtr()->isModifiable(); }
+
+
 	bool isPrimitive() const { return std::holds_alternative<PrimHolderPtr>(held); }
 	bool isObject()    const { return std::holds_alternative<ObjectHolderPtr>(held); }
 	bool isArray()     const { return std::holds_alternative<ArrayHolderPtr>(held); }
-
-	/**
-      * @brief Checks if the underlying value is modifiable
-      */
-	bool isModifiable() const { return valuePtr()->isModifiable(); }
 
 	PrimitiveType asPrimitive();
 	ArrayType     asArray();
@@ -292,17 +296,14 @@ public:
        * @return  true if elements can be null (e.g., std::vector<std::optional<...>>,
        *                                              std::list<std::shared_ptr<...>>)
        */
-	bool canHoldNullElem() const {
-		assert(isModifiable() && isArray());
-		return arrayPtr()->canHoldNullElem();
-	 }
+	bool canHoldNullElem() const { return isArray() && arrayPtr()->canHoldNullElem(); }
 
 	 /**
 	  * @brief Checks if the array can be resized (dynamic size)
 	  * @return true if the array supports resize operations (e.g., std::vector, std::list),
 	  *         false for fixed-size arrays (e.g., std::array, std::tuple)
 	  */
-	bool isResizable() const { assert(isArray()); return arrayPtr()->isResizable(); }
+	bool isResizable() const { return isArray() && arrayPtr()->isResizable(); }
 
 	/**
 	 * @brief Returns the current number of elements in the array
@@ -490,7 +491,7 @@ private:
 	template<typename Type>
 	class ObjectHolderImpl : public ObjectHolder, public ValueHolderImpl<Type> {
 	public:
-		ObjectHolderImpl(Type* ptr, std::list<Member> m)
+		ObjectHolderImpl(Type* ptr, std::vector<Member> m)
 			: ValueHolderImpl<Type>(ptr), members(std::move(m)) {}
 
 		void reinit() override {
@@ -509,7 +510,7 @@ private:
 		ConstMemberIterator memberEnd()   const override { return members.cend(); }
 
 	private:
-		std::list<Member> members;
+		std::vector<Member> members;
 	};
 
 	class ArrayHolder : public virtual ValueHolder {
@@ -526,12 +527,12 @@ private:
 		virtual ConstArrayIterator arrayEnd()   const = 0;
 	};
 
-	using ArrayResizer = std::function<std::list<Value>(std::size_t)>;
+	using ArrayResizer = std::function<std::vector<Value>(std::size_t)>;
 
 	template<typename Type>
 	class ArrayHolderImpl : public ArrayHolder, public ValueHolderImpl<Type> {
 	public:
-		ArrayHolderImpl(Type* arrayMemPtr, std::list<Value> elements, Value::ArrayResizer r) 
+		ArrayHolderImpl(Type* arrayMemPtr, std::vector<Value> elements, Value::ArrayResizer r)
 			: ValueHolderImpl<Type>(arrayMemPtr), elems(std::move(elements)), resizer(r) {}
 
 		void reinit() override {
@@ -556,7 +557,7 @@ private:
 		ConstArrayIterator arrayEnd()   const override { return elems.end(); }
 	
 	private:
-		std::list<Value> elems;
+		std::vector<Value> elems;
 		ArrayResizer resizer = nullptr;
 	};
 
@@ -685,7 +686,6 @@ public:
 
 	operator ValueType& () const { return value; }
 
-	bool isModifiable() const { return value.isModifiable(); }
 	bool canBeNull()    const { return value.canBeNull(); }
 	bool isNull()       const { return value.isNull(); }
 	void setNull() { value.setNull(); }
@@ -712,7 +712,6 @@ public:
 
 	operator ValueType& () const { return value; }
 
-	bool isModifiable() const { return value.isModifiable(); }
 	bool canBeNull()    const { return value.canBeNull(); }
 	bool isNull()       const { return value.isNull(); }
 	void setNull() { value.setNull(); }
@@ -783,7 +782,8 @@ Value::Value(Type* tuplePtr, TupleTag) {
 		"Type should be JSON-serializable tuple");
 
 	held = std::make_shared<ArrayHolderImpl<Type>>(tuplePtr,
-		tupleToValues(*tuplePtr), nullptr);
+		                                           tupleToValues(*tuplePtr), 
+		                                           nullptr);
 }
 
 
@@ -797,10 +797,10 @@ inline Value::ConstArrayType Value::asConstArray()         const { assert(isArra
 
 
 template<typename Container>
-auto createResizerFrom(Container& sequence) -> std::function<std::list<Value>(std::size_t)> {
+auto createResizerFrom(Container& sequence) -> std::function<std::vector<Value>(std::size_t)> {
 	static_assert(is_jsonable_dynamic_array_v<Container>);
 
-	auto resizer = [&sequence](std::size_t newSize) -> std::list<Value> {
+	auto resizer = [&sequence](std::size_t newSize) -> std::vector<Value> {
 		AccessPolicy<Container> acc(&sequence); 
 		acc.value().resize(newSize);
 
@@ -812,7 +812,7 @@ auto createResizerFrom(Container& sequence) -> std::function<std::list<Value>(st
 
 
 template<typename Array>
-std::list<Value> arrayToValues(Array& array) {
+std::vector<Value> arrayToValues(Array& array) {
 	static_assert(is_jsonable_sequential_container_v<Array> ||
 		          is_jsonable_tuple_v<Array>);
 
@@ -824,7 +824,7 @@ std::list<Value> arrayToValues(Array& array) {
 
 
 template<typename Container>
-std::list<Value> seqToValues(Container& sequence) {
+std::vector<Value> seqToValues(Container& sequence) {
 	static_assert(is_jsonable_sequential_container_v<Container>);
 
 	AccessPolicy<Container> acc(&sequence);
@@ -832,7 +832,7 @@ std::list<Value> seqToValues(Container& sequence) {
 		return {};
 
 
-	std::list<Value> values;
+	std::vector<Value> values;
 	for (auto&& item : acc.value())
 		values.emplace_back(Value(&item));
 
@@ -841,14 +841,15 @@ std::list<Value> seqToValues(Container& sequence) {
 
 
 template<typename Tuple>
-std::list<Value> tupleToValues(Tuple& tuple) {
+std::vector<Value> tupleToValues(Tuple& tuple) {
 	static_assert(is_jsonable_tuple_v<Tuple>);
 
 	AccessPolicy<Tuple> acc(&tuple);
 	if (acc.isNull())
 		return {};
 
-	std::list<Value> elements;
+
+	std::vector<Value> elements;
 	std::apply([&elements](auto&&... tupleArgs)
 		{
 			(..., (elements.emplace_back(Value(&tupleArgs))));
@@ -860,7 +861,7 @@ std::list<Value> tupleToValues(Tuple& tuple) {
 
 
 template<typename Struct>
-std::list<Value::Member> buildJsonTreeFrom(Struct& s) {
+std::vector<Value::Member> buildJsonTreeFrom(Struct& s) {
 	static_assert(is_jsonable_struct_v<Struct>, "Use the RAPIDJSON_UTIL_DESCRIBE_MEMBERS macro to declare serializable struct members");
 
 	AccessPolicy<Struct> acc(&s);
@@ -868,7 +869,7 @@ std::list<Value::Member> buildJsonTreeFrom(Struct& s) {
 		return {};
 
 
-	std::list<Value::Member> members;
+	std::vector<Value::Member> members;
 
 	auto descriptors = Descriptor<std::remove_cv_t<remove_shared_optional_t<Struct>>>::member_descriptors;
 	for_each(descriptors, [&acc, &members](auto desc) {
