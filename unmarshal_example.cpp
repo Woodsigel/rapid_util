@@ -5,7 +5,7 @@ struct Person {
     std::string name;
     int age;
     bool isStudent;
-    std::optional<std::string> email;
+    std::shared_ptr<std::string> email;
 };
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Person, (name, age, isStudent, email))
@@ -27,7 +27,7 @@ void unmarshal_basic_usage() {
     std::cout << "  Name: " << person.name << std::endl;
     std::cout << "  Age: " << person.age << std::endl;
     std::cout << "  Is Student: " << (person.isStudent ? "Yes" : "No")  << std::endl;
-    std::cout << "  Email: " << (person.email ? person.email.value() : "null") << "\n" << std::endl;
+    std::cout << "  Email: " << (person.email ? *person.email : "null") << "\n" << std::endl;
 }
 
 struct Address {

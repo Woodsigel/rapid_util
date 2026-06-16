@@ -8,7 +8,7 @@ A simple C++17 JSON utility built on [RapidJSON](https://rapidjson.org/) that au
 - **Nested Structures**: Support for complex object hierarchies
 - **Homogeneous Arrays**: Support for JSON homogeneous array serialization using `std::vector`, `std::list`, and `std::array`
 - **Heterogeneous Arrays**: Support for JSON heterogeneous array serialization using `std::tuple`
-- **JSON Null Values**: Support for JSON null values using `std::optional`
+- **JSON Null Values**: Support for JSON null values using `std::optional` or `std::shared_ptr`
 
 ## Usage
 

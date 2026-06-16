@@ -1,8 +1,10 @@
 #include "gmock/gmock.h"
 #include "rapid_util/rapid_util.h"
 
+
 struct PrimitiveFields {
 	int IntNumber;
+	unsigned UintNumber;
 	int64_t Int64Number;
 	uint64_t Uint64Number;
 	bool BoolValue;
@@ -11,11 +13,12 @@ struct PrimitiveFields {
 	std::string Str;
 };
 
-RAPIDJSON_UTIL_DESCRIBE_MEMBERS(PrimitiveFields, (IntNumber, Int64Number, Uint64Number, BoolValue, FloatNumber, DoubleNumber, Str))
+RAPIDJSON_UTIL_DESCRIBE_MEMBERS(PrimitiveFields, (IntNumber, UintNumber, Int64Number, Uint64Number, BoolValue, FloatNumber, DoubleNumber, Str))
 
-TEST(RapidUnmarshalTest, UnserializePrimitiveTypes) {
+TEST(RapidUnmarshalTest, DeserializePrimitiveTypes) {
 	std::string json(R"( {
 							"IntNumber"    : 32,
+	                        "UintNumber"   : 2791883642,
 							"Int64Number"  : -9223372036854775808,
 							"Uint64Number" : 18446744073709551615,
 							"BoolValue"    : true,
@@ -28,6 +31,7 @@ TEST(RapidUnmarshalTest, UnserializePrimitiveTypes) {
 	rapidjson_util::unmarshal(json, blob);
 
 	ASSERT_EQ(blob.IntNumber, 32);
+	ASSERT_EQ(blob.UintNumber, 2791883642);
 	ASSERT_EQ(blob.Int64Number, -9223372036854775808LL);
 	ASSERT_EQ(blob.Uint64Number, 18446744073709551615ULL); 
 	ASSERT_EQ(blob.BoolValue, true);
@@ -49,9 +53,9 @@ TEST(RAPID_UNMARSHAL_TEST, ThrowsForPrimitiveTypesWithoutOptionalWhenNull) {
 
 	try {
 		rapidjson_util::unmarshal(json, s);
-		FAIL() << "Expected MemberSerializationFailure";
+		FAIL() << "Expected SerializationError";
 	}
-	catch (rapidjson_util::MemberSerializationFailure& e) {
+	catch (rapidjson_util::SerializationError& e) {
 		EXPECT_STREQ(e.what(), "Deserialization of member \"IntNumber\" failed: Expected Int, got Null");
 	}
 }
@@ -59,56 +63,61 @@ TEST(RAPID_UNMARSHAL_TEST, ThrowsForPrimitiveTypesWithoutOptionalWhenNull) {
 
 struct OptionalPrimitiveFields {
 	std::optional<int> IntNumber;
+	std::optional<unsigned> UintNumber;
 	std::optional<int64_t> Int64Number;
 	std::optional<uint64_t> Uint64Number;
 	std::optional<bool> Bool;
 	std::optional<float> FloatNumber;
 	std::optional<double> DoubleNumber;
-	std::optional<std::string> Str;
+	std::shared_ptr<std::string> String;
 };
 
-RAPIDJSON_UTIL_DESCRIBE_MEMBERS(OptionalPrimitiveFields, (IntNumber, Int64Number, Uint64Number, Bool, FloatNumber, DoubleNumber, Str))
+RAPIDJSON_UTIL_DESCRIBE_MEMBERS(OptionalPrimitiveFields, (IntNumber, UintNumber, Int64Number, Uint64Number, Bool, FloatNumber, DoubleNumber, String))
 
-TEST(RapidUnmarshalTest, UnserializeNullablePrimitiveTypesWithOptionalWhenNull) {
+TEST(RapidUnmarshalTest, DeserializeNullablePrimitiveTypesWithOptionalWhenNull) {
 	OptionalPrimitiveFields f;
 	f.IntNumber = 53;
+	f.UintNumber = 32546;
 	f.Int64Number = 9132101254LL;
 	f.Uint64Number = 1243744404370511615ULL;
 	f.Bool = true;
 	f.FloatNumber = 22.485f;
 	f.DoubleNumber = 00.231;
-	f.Str = "Str";
+	f.String = std::make_shared<std::string>("I am a string");
 
 	std::string json(R"( {
 							"IntNumber"    : null,
 							"Int64Number"  : null,
+							"UintNumber"   : null,
 							"Uint64Number" : null,
-							"Bool"   : null,
+							"Bool"         : null,
 							"FloatNumber"  : null,
 							"DoubleNumber" : null,
-							"Str"    : null
+							"String"       : null
 						   } )");
 
 	rapidjson_util::unmarshal(json, f);
 
 	ASSERT_EQ(f.IntNumber, std::nullopt);
+	ASSERT_EQ(f.UintNumber, std::nullopt);
 	ASSERT_EQ(f.Int64Number, std::nullopt);
 	ASSERT_EQ(f.Uint64Number, std::nullopt);
 	ASSERT_EQ(f.Bool, std::nullopt);
 	ASSERT_EQ(f.FloatNumber, std::nullopt);
 	ASSERT_EQ(f.DoubleNumber, std::nullopt);
-	ASSERT_EQ(f.Str, std::nullopt);
+	ASSERT_EQ(f.String, nullptr);
 }
 
-TEST(RapidUnmarshalTest, UnserializeNullablePrimitiveTypesWithOptionalWhenPopulated) {
+TEST(RapidUnmarshalTest, DeserializeNullablePrimitiveTypesWithOptionalWhenPopulated) {
 	std::string json(R"( {
 							"IntNumber"    : 315,
+                            "UintNumber"   : 32546,
 							"Int64Number"  : 5132101254,
 							"Uint64Number" : 6143744404370511615,
-							"Bool"   : true,
+							"Bool"         : true,
 							"FloatNumber"  : 78.4859,
 							"DoubleNumber" : 31.231,
-							"Str"    : "World"
+							"String"       : "World"
 						   } )");
 
 	OptionalPrimitiveFields f;
@@ -116,12 +125,13 @@ TEST(RapidUnmarshalTest, UnserializeNullablePrimitiveTypesWithOptionalWhenPopula
 
 
 	ASSERT_EQ(f.IntNumber.value(), 315);
+	ASSERT_EQ(f.UintNumber.value(), 32546);
 	ASSERT_EQ(f.Int64Number.value(), 5132101254LL);
 	ASSERT_EQ(f.Uint64Number.value(), 6143744404370511615ULL);
 	ASSERT_EQ(f.Bool.value(), true);
 	ASSERT_FLOAT_EQ(f.FloatNumber.value(), 78.4859);
 	ASSERT_DOUBLE_EQ(f.DoubleNumber.value(), 31.231);
-	ASSERT_EQ(f.Str.value(), "World");
+	ASSERT_EQ(*f.String, "World");
 }
 
 
@@ -139,7 +149,7 @@ struct Application {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Application, (version, credential))
 
-TEST(RapidUnmarshalTest, UnserializeNestedStruct) {
+TEST(RapidUnmarshalTest, DeserializeNestedStruct) {
 	Application app;
 
 	auto json = R"({
@@ -167,12 +177,13 @@ TEST(RapidUnmarshalTest, ThrowForNestedStructWithoutOptionalWhenRequiredObjectMe
 
 	try {
 		rapidjson_util::unmarshal(json, app);
-		FAIL() << "Expected MemberSerializationFailure";
+		FAIL() << "Expected SerializationError";
 	}
-	catch (rapidjson_util::MemberSerializationFailure& e) {
+	catch (rapidjson_util::SerializationError& e) {
 		EXPECT_STREQ(e.what(), "Deserialization of member \"credential\" failed: Expected Object, got Null");
 	}
 }
+
 
 struct DatabaseConfig {
 	std::string host;
@@ -182,7 +193,7 @@ struct DatabaseConfig {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(DatabaseConfig, (host, port, credential))
 
-TEST(RapidUnmarshalTest, UnerializeNestedStructWithOptionalWhenNull) {
+TEST(RapidUnmarshalTest, DerializeNestedStructWithOptionalWhenNull) {
 	auto json = R"( {
 					"host": "localhost",
 					"port": 4212,
@@ -197,7 +208,7 @@ TEST(RapidUnmarshalTest, UnerializeNestedStructWithOptionalWhenNull) {
 	ASSERT_EQ(config.credential, std::nullopt);
 }
 
-TEST(RapidUnmarshalTest, UnerializeNestedStructWithOptionalWhenPopulated) {
+TEST(RapidUnmarshalTest, DerializeNestedStructWithOptionalWhenPopulated) {
 	auto json = R"( {
 					"host": "127.0.0.1",
 					"port": 65432,
@@ -231,7 +242,7 @@ struct JobPosting {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(JobPosting, (jobs))
 
-TEST(RapidUnmarshalTest, UnserializeHomogeneousArray) {
+TEST(RapidUnmarshalTest, DeserializeHomogeneousArray) {
 	std::string json(R"({
 							"jobs" : 
 							    [{
@@ -263,7 +274,7 @@ TEST(RapidUnmarshalTest, UnserializeHomogeneousArray) {
 	ASSERT_DOUBLE_EQ(jobPosting.jobs[2].salary, 92000.0);
 }
 
-TEST(RapidUnmarshalTest, UnserializeHomogeneousArrayWhenEmpty) {
+TEST(RapidUnmarshalTest, DeserializeHomogeneousArrayWhenEmpty) {
 	JobPosting jobPosting;
 	jobPosting.jobs.emplace_back(JobInfo{ "Accountant", 90000 });
 	jobPosting.jobs.emplace_back(JobInfo{ "HR", 50000 });
@@ -276,13 +287,14 @@ TEST(RapidUnmarshalTest, UnserializeHomogeneousArrayWhenEmpty) {
 	ASSERT_TRUE(jobPosting.jobs.empty());
 }
 
+
 struct JobPostingWithOptionalDetails {
 	std::optional<std::vector<JobInfo>> jobs;
 };
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(JobPostingWithOptionalDetails, (jobs))
 
-TEST(RapidUnmarshalTest, UnserializeNullableHomogeneousArrayWithOptionalWhenNull) {
+TEST(RapidUnmarshalTest, DeserializeNullableHomogeneousArrayWithOptionalWhenNull) {
 	JobPostingWithOptionalDetails jobPosting;
 	jobPosting.jobs = std::vector<JobInfo>{};
 	jobPosting.jobs->emplace_back(JobInfo{"Business Manager", 20000});
@@ -300,14 +312,14 @@ TEST(RapidUnmarshalTest, ThrowForHomogeneousArrayWithoutOptionalWhenRequiredArra
 	try {
 		JobPosting jobPosting;
 		rapidjson_util::unmarshal(json, jobPosting);
-		FAIL() << "Expected MemberSerializationFailure";
+		FAIL() << "Expected SerializationError";
 	}
-	catch (rapidjson_util::MemberSerializationFailure& e) {
+	catch (rapidjson_util::SerializationError& e) {
 		EXPECT_STREQ(e.what(), "Deserialization of member \"jobs\" failed: Expected Array, got Null");
 	}
 }
 
-TEST(RapidUnmarshalTest, UnserializeNullableHomogeneousArrayWithOptionalWhenEmpty) {
+TEST(RapidUnmarshalTest, DeserializeNullableHomogeneousArrayWithOptionalWhenEmpty) {
 	JobPostingWithOptionalDetails jobPosting;
 	jobPosting.jobs = std::nullopt;
 
@@ -319,7 +331,7 @@ TEST(RapidUnmarshalTest, UnserializeNullableHomogeneousArrayWithOptionalWhenEmpt
 	ASSERT_TRUE(jobPosting.jobs->empty());
 }
 
-TEST(RapidUnmarshalTest, UnserializeNullableHomogeneousArrayWithOptionalWhenPopulated) {
+TEST(RapidUnmarshalTest, DeserializeNullableHomogeneousArrayWithOptionalWhenPopulated) {
 	std::string json(R"({
         "jobs": [
             {
@@ -352,7 +364,6 @@ TEST(RapidUnmarshalTest, UnserializeNullableHomogeneousArrayWithOptionalWhenPopu
 	ASSERT_DOUBLE_EQ((*jobPosting.jobs)[2].salary, 95000.0);
 }
 
-
 TEST(RapidUnmarshalTest, ThrowForHomogeneousArrayWithoutOptionalElemsWhenRequiredArrayContainsNullElements) {
 	std::string json(R"({
 					    "jobs": [
@@ -372,12 +383,13 @@ TEST(RapidUnmarshalTest, ThrowForHomogeneousArrayWithoutOptionalElemsWhenRequire
 	try {
 		JobPosting jobPosting;
 		rapidjson_util::unmarshal(json, jobPosting);
-		FAIL() << "Expected MemberSerializationFailure";
+		FAIL() << "Expected SerializationError";
 	}
-	catch (rapidjson_util::MemberSerializationFailure& e) {
+	catch (rapidjson_util::SerializationError& e) {
 		ASSERT_STREQ(e.what(), "Deserialization of member \"jobs\" failed: JSON array contains null elements");
 	}
 }
+
 
 struct JobPostingWithOptionalJobInfo {
 	std::vector<std::optional<JobInfo>> jobs;
@@ -385,7 +397,7 @@ struct JobPostingWithOptionalJobInfo {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(JobPostingWithOptionalJobInfo, (jobs))
 
-TEST(RapidUnmarshalTest, UnserializeHomogeneousArrayHavinghOptionalElemsWhenContainNulls) {
+TEST(RapidUnmarshalTest, DeserializeHomogeneousArrayHavinghOptionalElemsWhenContainNulls) {
 	std::string json(R"({
         "jobs": [
 					 {
@@ -417,13 +429,14 @@ TEST(RapidUnmarshalTest, UnserializeHomogeneousArrayHavinghOptionalElemsWhenCont
 	ASSERT_DOUBLE_EQ(jobPosting.jobs[3]->salary, 110000.0);
 }
 
+
 struct OptionalJobPostingWithOptionalJobInfo {
 	std::optional<std::vector<std::optional<JobInfo>>> jobs;
 };
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(OptionalJobPostingWithOptionalJobInfo, (jobs))
 
-TEST(RapidUnmarshalTest, UnserializeNullableHomogeneousArrayHavingOptionalElemsWhenContainNulls) {
+TEST(RapidUnmarshalTest, DeserializeNullableHomogeneousArrayHavingOptionalElemsWhenContainNulls) {
 	std::string json(R"({
         "jobs": [
             {
@@ -459,7 +472,7 @@ struct JobPostingOptFixed {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(JobPostingOptFixed, (jobs))
 
-TEST(RapidMarshalTest, UnserializeNullableHomogeneousFixedArray) {
+TEST(RapidMarshalTest, DeserializeNullableHomogeneousFixedArray) {
 	std::string json(R"({
 		"jobs": [
 		    {
@@ -487,6 +500,7 @@ TEST(RapidMarshalTest, UnserializeNullableHomogeneousFixedArray) {
 	ASSERT_DOUBLE_EQ(jobPosting.jobs->at(1).salary, 125000.0);
 }
 
+
 struct EventInfo {
 	std::string event;
 	std::string page;
@@ -501,7 +515,7 @@ struct ApiResponse {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(ApiResponse, (response))
 
-TEST(RapidUnmarshalTest, UnserializeHeterogeneousArray) {
+TEST(RapidUnmarshalTest, DeserializeHeterogeneousArray) {
 	std::string json(R"({
 						"response": [
 						    {
@@ -530,12 +544,13 @@ TEST(RapidUnmarshalTest, ThrowForHeterogeneousArrayWithoutOptionalWhenRequiredTu
 	try {
 		ApiResponse apiRes;
 		rapidjson_util::unmarshal(json, apiRes);
-		FAIL() << "Expected MemberSerializationFailure";
+		FAIL() << "Expected SerializationError";
 	}
-	catch (rapidjson_util::MemberSerializationFailure& e) {
+	catch (rapidjson_util::SerializationError& e) {
 		EXPECT_STREQ(e.what(), "Deserialization of member \"response\" failed: Expected Array, got Null");
 	}
 }
+
 
 struct OptionalApiResponse {
 	std::optional<std::tuple<EventInfo, uint64_t, std::string>> response;
@@ -543,7 +558,7 @@ struct OptionalApiResponse {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(OptionalApiResponse, (response))
 
-TEST(RapidUnmarshalTest, UnserializeNullableHeterogeneousArrayWithOptionalWhenNull) {
+TEST(RapidUnmarshalTest, DeserializeNullableHeterogeneousArrayWithOptionalWhenNull) {
 	std::string json(R"({
 						"response": null
 						})");
@@ -559,7 +574,7 @@ TEST(RapidUnmarshalTest, UnserializeNullableHeterogeneousArrayWithOptionalWhenNu
 	ASSERT_EQ(apiRes.response, std::nullopt);
 }
 
-TEST(RapidUnmarshalTest, UnserializeNullableHeterogeneousArrayWithOptionalWhenPopulated) {
+TEST(RapidUnmarshalTest, DeserializeNullableHeterogeneousArrayWithOptionalWhenPopulated) {
 	std::string json(R"({
 						    "response": [
 						        {
@@ -583,6 +598,7 @@ TEST(RapidUnmarshalTest, UnserializeNullableHeterogeneousArrayWithOptionalWhenPo
 	ASSERT_EQ(sessionId, "session_67890");
 }
 
+
 struct SomeStruct {
 	int someAttr;
 };
@@ -592,14 +608,15 @@ RAPIDJSON_UTIL_DESCRIBE_MEMBERS(SomeStruct, (someAttr))
 TEST(RAPID_UNMARSHAL_TEST, ThrowsOnEmptyJsonString) {
 	std::string emptyString("");
 	SomeStruct s;
-	ASSERT_THROW(rapidjson_util::unmarshal(emptyString, s), rapidjson_util::EmptyJsonStringException);
+	ASSERT_THROW(rapidjson_util::unmarshal(emptyString, s), rapidjson_util::EmptyJsonStringError);
 }
 
 TEST(RAPID_UNMARSHAL_TEST, ThrowsOnInvalidJsonString) {
 	std::string invalidJSON(R"( { name : "Zhao", } )");
 	SomeStruct s;
-	ASSERT_THROW(rapidjson_util::unmarshal(invalidJSON, s), rapidjson_util::InvalidJsonException);
+	ASSERT_THROW(rapidjson_util::unmarshal(invalidJSON, s), rapidjson_util::InvalidJsonError);
 }
+
 
 struct Employee {
 	std::string name;
@@ -615,9 +632,9 @@ TEST(RAPID_UNMARSHAL_TEST, ThrowsWhenRequiredMemberMissing){
 
 	try {
 		rapidjson_util::unmarshal(json, p);
-		FAIL() << "Expected MemberNotFoundException";
+		FAIL() << "Expected MemberNotFoundError";
 	}
-	catch (rapidjson_util::MemberSerializationFailure& e) {
+	catch (rapidjson_util::SerializationError& e) {
 		EXPECT_STREQ(e.what(), "JSON doesn't match the struct -- required field \"age\" not found");
 	}
 }
@@ -628,9 +645,9 @@ TEST(RAPID_UNMARSHAL_TEST, ThrowsMemberDeserializationExceptionWhenTypeMismatche
 
 	try {
 		rapidjson_util::unmarshal(json, p);
-		FAIL() << "Expected MemberSerializationFailure";
+		FAIL() << "Expected SerializationError";
 	}
-	catch (rapidjson_util::MemberSerializationFailure& e) {
+	catch (rapidjson_util::SerializationError& e) {
 		EXPECT_STREQ(e.what(), "Deserialization of member \"age\" failed: Expected Int, got String");
 	}
 }
@@ -648,13 +665,14 @@ TEST(RAPID_UNMARSHAL_TEST, ThrowWhenJsonArraySizeMismatchesStdFixedArray) {
 
 	try {
 		rapidjson_util::unmarshal(json, fixedArray);
-		FAIL() << "Expected MemberSerializationFailure";
+		FAIL() << "Expected SerializationError";
 	}
-	catch (rapidjson_util::MemberSerializationFailure& e) {
+	catch (rapidjson_util::SerializationError& e) {
 		EXPECT_STREQ(e.what(), "Deserialization of member \"arr\" failed: Array size mismatch: JSON contains 4 elements,"
 			                   " but given array has fixed capacity of 3 elements and cannot be resized.");
 	}
 }
+
 
 struct SomeHeterogeneousArray {
 	std::tuple<bool, Employee> heteroArray;
@@ -670,11 +688,10 @@ TEST(RAPID_UNMARSHAL_TEST, ThrowWhenJsonArraySizeMismatchesTupleSize) {
 
 	try {
 		rapidjson_util::unmarshal(json, heteroArray);
-		FAIL() << "Expected MemberSerializationFailure";
+		FAIL() << "Expected SerializationError";
 	}
-	catch (rapidjson_util::MemberSerializationFailure& e) {
+	catch (rapidjson_util::SerializationError& e) {
 		EXPECT_STREQ(e.what(), "Deserialization of member \"heteroArray\" failed: Array size mismatch: JSON contains 3 elements,"
 			                   " but given array has fixed capacity of 2 elements and cannot be resized.");
 	}
 }
-

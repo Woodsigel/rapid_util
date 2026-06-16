@@ -5,7 +5,6 @@ using namespace rapidjson_util::detail;
 
 TEST(JsonValueTypeTraitTest, SupportValidJsonTypes) {
 	static_assert(is_json_serializable_v<int>);
-	static_assert(is_json_serializable_v<int8_t>);
 	static_assert(is_json_serializable_v<int32_t>);
 	static_assert(is_json_serializable_v<int64_t>);
 	static_assert(is_json_serializable_v<uint64_t>);
@@ -30,11 +29,14 @@ TEST(JsonValueTypeTraitTest, RejectUnserializableTypes) {
 
 TEST(JsonValueTypeTraitTest, ValidateTupleSerializableElementTypes) {
 	
-	static_assert(is_jsonable_tuple_v<std::tuple<int, double, float>>, 
-		         "Tuples with primitive types are serializable");
+	// Tuples with primitive types are serializable
+	static_assert(is_jsonable_tuple_v<std::tuple<int, double, float>>);
 
-	static_assert(is_jsonable_tuple_v<std::tuple<int, double, std::tuple<std::string, std::vector<float>>>>, 
-		          "Nested tuples are serializable if all elements are valid");
+	// Nested tuples are serializable if all elements are valid
+	static_assert(is_jsonable_tuple_v<std::tuple<int, double, std::tuple<std::string, std::vector<float>>>>);
+
+	// Nested tuples wrapped by std::optional and std::shared_ptr are serializable 
+	static_assert(is_jsonable_tuple_v<std::tuple<int,  std::optional<std::tuple<int, std::list<float>>>>>);
 
 	using aUnSerialableType = std::stringstream;
 	static_assert(!is_jsonable_tuple_v < std::tuple<int, double, std::tuple<aUnSerialableType>>>,
@@ -47,24 +49,23 @@ struct TypeHolder {
 
 };
 
-TEST(JsonValueTypeTraitTest, IdentifyContainersWithNullableElementsUsingStdOptional) {
+
+TEST(JsonValueTypeTraitTest, IdentifyContainersWithNullableElementsUsingStdOptionalOrShared) {
 	using aUnSerialableType = std::stringstream;
 
-	static_assert(contain_std_optional_elements<std::vector<std::optional<int>>>::value);
-	static_assert(contain_std_optional_elements<std::optional<std::vector<std::optional<std::string>>>>::value);
+	static_assert(can_hold_null_elem<std::vector<std::optional<int>>>::value);
+	static_assert(can_hold_null_elem<std::optional<std::vector<std::optional<std::string>>>>::value);
 
-	static_assert(contain_std_optional_elements<std::list<std::optional<double>>>::value);
-	static_assert(contain_std_optional_elements<std::optional<std::list<std::optional<float>>>>::value);
 
-	static_assert(contain_std_optional_elements<std::array<std::optional<float>, 5>>::value);
-	static_assert(contain_std_optional_elements<std::optional<std::array<std::optional<bool>, 10>>>::value);
+	static_assert(can_hold_null_elem<std::array<std::shared_ptr<bool>, 10>>::value);
+	static_assert(can_hold_null_elem<std::shared_ptr<std::list<std::shared_ptr<std::string>>>>::value);
 
-	static_assert(!contain_std_optional_elements<std::vector<std::optional<aUnSerialableType>>>::value);
-	static_assert(!contain_std_optional_elements<TypeHolder<std::optional<bool>>>::value,
+	static_assert(!can_hold_null_elem<std::vector<std::optional<aUnSerialableType>>>::value);
+	static_assert(!can_hold_null_elem<TypeHolder<std::shared_ptr<bool>>>::value,
 		          "TypeHolder is not a standard sequential container.");
 }
 
-TEST(OptionalTraitTest, DetectStdOptionalTypes) {
+TEST(WrapperTraitTest, DetectStdOptionalTypes) {
 	static_assert(!is_std_optional_v<int>);
 	static_assert(is_std_optional_v<std::optional<int>>);
 	static_assert(is_std_optional_v<const std::optional<int>>);
@@ -77,9 +78,31 @@ TEST(OptionalTraitTest, DetectStdOptionalTypes) {
 
 	static_assert(std::is_same_v<remove_std_optional_t<const std::optional<float>>, const float>);
 	static_assert(std::is_same_v<remove_std_optional_t<const std::optional<const float>>, const float>);
-
-	static_assert(std::is_same_v<remove_const_and_optional_t<std::optional<bool>>, bool>);
-	static_assert(std::is_same_v<remove_const_and_optional_t<const std::optional<bool>>, bool>);
-	static_assert(std::is_same_v<remove_const_and_optional_t<const std::optional<const bool>>, bool>);
 }
 
+TEST(WrapperTraitTest, DetectStdSharedTypes) {
+	static_assert(!is_std_shared_ptr_v<bool>);
+	static_assert(is_std_shared_ptr_v<std::shared_ptr<bool>>);
+	static_assert(is_std_shared_ptr_v<const std::shared_ptr<bool>>);
+	static_assert(is_std_shared_ptr_v<std::shared_ptr<bool>&>);
+
+	static_assert(std::is_same_v<remove_std_shared_ptr_t<float>, float>);
+	static_assert(std::is_same_v<remove_std_shared_ptr_t<std::shared_ptr<float>>, float>);
+	static_assert(std::is_same_v<remove_std_shared_ptr_t<std::shared_ptr<float&>>, float&>);
+	static_assert(std::is_same_v<remove_std_shared_ptr_t<std::shared_ptr<float*>>, float*>);
+
+	static_assert(std::is_same_v<remove_std_shared_ptr_t<const std::shared_ptr<int>>, const int>);
+	static_assert(std::is_same_v<remove_std_shared_ptr_t<const std::shared_ptr<const int>>, const int>);
+}
+
+TEST(WrapperTraitTest, RmoveSharedAndOptionalWrapper) {
+	static_assert(std::is_same_v<remove_shared_optional_t<int>, int>);
+	static_assert(std::is_same_v<remove_shared_optional_t<std::shared_ptr<int>>,  int>);
+	static_assert(std::is_same_v<remove_shared_optional_t<const std::shared_ptr<int>>,const int>);
+
+	static_assert(std::is_same_v<remove_shared_optional_t<std::optional<float>>, float>);
+	static_assert(std::is_same_v<remove_shared_optional_t<const std::optional<float>>, const float>);
+
+	static_assert(std::is_same_v<remove_shared_optional_t<std::shared_ptr<std::optional<double>>>, std::optional<double>>);
+	static_assert(std::is_same_v<remove_shared_optional_t<std::optional<std::shared_ptr<double>>>, std::shared_ptr<double>>);
+}

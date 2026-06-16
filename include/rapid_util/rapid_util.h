@@ -5,16 +5,22 @@
 //
 // http://opensource.org/licenses/Zlib
 //
-// This software is provided ¡®as-is¡¯, without any express or implied
+// This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
 // arising from the use of this software.
+
 
 #ifndef __SIMPLE_RAPID_JSON_UTIL_H__
 #define __SIMPLE_RAPID_JSON_UTIL_H__
 
+#include <rapidjson/writer.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/document.h>
+#include <stack>
+#include <stdexcept>
+#include <string_view>
 #include "rapid_util_preprocessor.h"
-#include "rapid_util_parser.h"
-
+#include "rapid_util_value.h"
 
 namespace rapidjson_util {
 
@@ -70,436 +76,368 @@ void unmarshal(std::string_view json, Struct& s) {
     return detail::unmarshalImpl(json, s);
 }
 
+
+/**
+ * @brief Exception thrown when a JSON object member fails to deserialize
+ */
+class SerializationError : public std::runtime_error {
+public:
+    SerializationError(std::string_view what) 
+        : runtime_error(std::string(what)) { }
+};
+
+
+/**
+ * @brief Exception thrown when required JSON member is missing
+ */
+class MemberNotFoundError : public SerializationError {
+public:
+    MemberNotFoundError(std::string_view member)
+        : SerializationError(
+            std::string("JSON doesn't match the struct -- required field \"")
+            .append(member)
+            .append("\" not found")) { }
+};
+
+
+/**
+ * @brief Exception thrown when JSON value type doesn't match the expected type of structs
+ */
+class TypeMismatchError : public SerializationError {
+public:
+    TypeMismatchError(std::string_view what)
+        : SerializationError(what.data()) { }
+};
+
+
+/**
+ * @brief Exception thrown when JSON array size doesn't match the array size of structs
+ */
+class ArrayLengthMismatchError : public SerializationError {
+public:
+    ArrayLengthMismatchError(std::string_view what)
+        : SerializationError(what.data()) { }
+};
+
+
+/**
+ * @brief Exception thrown when the JSON input has invalid syntax
+ */
+class InvalidJsonError : public std::logic_error {
+public:
+    InvalidJsonError(std::string_view what) 
+        : std::logic_error(std::string(what)) { }
+};
+
+
+/**
+ * @brief Exception thrown when attempting to parse an empty JSON string
+ */
+class EmptyJsonStringError : public std::logic_error {
+public:
+    EmptyJsonStringError() 
+        : std::logic_error("The JSON string to be parsed is empty") { }
+};
+
+
 namespace detail {
 
 
-template<typename T>
-std::shared_ptr<JsonValue> 
-convertToJsonValue(T& memberRef);
-
-template<typename Sequence>
-std::vector<std::shared_ptr<JsonValue>> 
-seqToJsonArrayElems(Sequence& sequence) {
-    static_assert(is_jsonable_sequential_container_v<Sequence>);
-
-    std::vector<std::shared_ptr<JsonValue>> elements;
-
-    for (auto&& item : sequence)
-        elements.push_back(convertToJsonValue(item));
-        
-    return elements;
-}
-
-template<typename Tuple>
-std::vector <std::shared_ptr<JsonValue>> 
-tupleToJsonArrayElems(Tuple& tuple) {
-    static_assert(is_jsonable_tuple_v<Tuple>);
-
-    std::vector<std::shared_ptr<JsonValue>> elements;
-
-    std::apply([&elements](auto&&... tupleArgs) 
-        {
-            (..., (elements.push_back(convertToJsonValue(tupleArgs))));
-        }, 
-        tuple);
-
-    return elements;
+template<typename Exception>
+void THROW_EXCEPTION_IF(bool condition, Exception&& exception) {
+    if (condition)
+        throw std::forward<Exception>(exception);
 }
 
 
-enum WrapperType {
-    None,
-    StdOptional
-};
-
-enum JsonSourceType {
-    Struct,      // C++ struct/class
-    Primitive,   // Basic C++ types
-    Sequential,  // Containers (vector, list, array)
-    Tuple        // std::tuple
-};
-
-template<typename T>
-constexpr WrapperType 
-wrapper_type_v = is_std_optional_v<T> ? WrapperType::StdOptional : 
-                                        WrapperType::None;
-
-template
-<
-    size_t JsonSourceType, 
-    size_t WrapperType
->
-struct JsonValueCreator;
-
-template
-<
-    size_t UnusedWrapperType
->
-struct JsonValueCreator
-    <
-     JsonSourceType::Primitive,
-     UnusedWrapperType
-    > {
-    
-    template<typename T>
-    static std::shared_ptr<JsonPrimitiveValue> 
-    create(T& value) {
-        static_assert(is_jsonable_primitive_type_v<T>);
-
-        return std::make_shared<JsonPrimitiveValue>(&value);
-    }
+enum class QueryType {
+    IsInt,
+    IsUint,
+    IsInt64,
+    IsUint64,
+    IsFloat,
+    IsDouble,
+    IsBool,
+    IsString,
+    IsObject,
+    IsArray
 };
 
 
-template<>
-struct JsonValueCreator
-    <
-    JsonSourceType::Struct, 
-    WrapperType::None
-    > {
+class TypeValidator {
+public:
+    static void validate(const rapidjson::Value& value, QueryType type) {
+#define RAPIDJSON_VALUE_VALIDATE(value, query, expectedType)												        \
+		    if(!value. ## query())																					\
+			    throw TypeMismatchError(std::string("Expected ") + expectedType + ", got " + getTypeFrom(value));
 
-    template<typename T>
-    static std::shared_ptr<JsonObject> 
-    create(T& value) {
-        static_assert(!is_std_optional_v<T>);
-
-        return std::make_shared<JsonObject>(buildJsonTreeFrom(value));
-    }
-};
-
-
-template<>
-struct JsonValueCreator
-    <
-    JsonSourceType::Struct, 
-    WrapperType::StdOptional
-    > {
-
-    template<typename T>
-    static std::shared_ptr<JsonNullableObject> 
-    create(T& optionalStruct) {
-        static_assert(is_std_optional_v<T>);
-
-        auto object = optionalStructToNullableObject(optionalStruct);
-            
-        if constexpr (!std::is_const_v<T>)
-            attachOptionalReinitHandlers(object, optionalStruct);
-
-        return object;
-    }
-
-
-private:
-    template<typename T>
-    static std::shared_ptr<JsonNullableObject>
-    optionalStructToNullableObject(T& optionalStruct) {
-        if (!optionalStruct.has_value())
-            return std::make_shared<JsonNullableObject>();
-    
-    
-        auto attributes = std::is_const_v<T> ?
-            buildJsonTreeFrom(std::as_const(optionalStruct.value())) :
-            buildJsonTreeFrom(optionalStruct.value());
-    
-        return std::make_shared<JsonNullableObject>(attributes);
-    }
-        
-        
-    template<typename T>
-    static void 
-    attachOptionalReinitHandlers(
-        std::shared_ptr<JsonNullableObject> object, T& optionalStruct) {
-        
-        auto resetter = [&optionalStruct]() { optionalStruct.reset(); };
-        auto reinitializer = [&optionalStruct]() {
-            using BaseType = remove_std_optional_t<T>;
-        
-            // Initialize the std::optional<Struct> variable from std::null_opt
-            optionalStruct = BaseType{};
-        
-            // After initialization, update the subtree of its nested member pointers recursively
-            auto object = JsonValueCreator<
-                JsonSourceType::Struct,
-                WrapperType::StdOptional
-            >::create(optionalStruct);
-        
-            return object->getMembers();
-        };
-        
-        object->attachResetter(resetter);
-        object->attachReinitializer(reinitializer);
-    }
-};
-
-
-template<>
-struct JsonValueCreator
-    <
-    JsonSourceType::Sequential, 
-    WrapperType::None
-    > {
-
-    template<typename T>
-    static std::shared_ptr<JsonArray> 
-    create(T& sequence) {
-        static_assert(!is_std_optional_v<T>);
-
-        auto elements = seqToJsonArrayElems(sequence);
-        bool allowNullableElems = contain_std_optional_elements<T>::value;
-        auto jsonArray = std::make_shared<JsonArray>(elements, allowNullableElems);
-
-        if constexpr (!std::is_const_v<T> && is_jsonable_dynamic_array_v<T>)
-            attachArrayResizer(jsonArray, sequence);
-
-        return jsonArray;
-    }
-
-private:
-    template<typename T>
-    static void
-    attachArrayResizer(std::shared_ptr<JsonArray> jsonArray, T& sequence) {
-        auto resizer = [&sequence](std::size_t newSize) {
-            sequence.resize(newSize);
-            return seqToJsonArrayElems(sequence);
-        };
-
-        jsonArray->setArrayResizer(resizer);
-    }
-};
-
-
-template<>
-struct JsonValueCreator
-    <
-    JsonSourceType::Sequential, 
-    WrapperType::StdOptional
-    > {
-
-    template<typename T>
-    static std::shared_ptr<JsonNullableArray> 
-    create(T& optionalSeq) {
-        static_assert(is_std_optional_v<T>);
-
-        auto nullableArray = optionalSeqToNullableArray(optionalSeq);
-
-        if constexpr (!std::is_const_v<T>) {
-            if constexpr (is_jsonable_dynamic_array_v<T>)
-                attachArrayResizer(nullableArray, optionalSeq);
-
-            attachOptionalReinitHandlers(nullableArray, optionalSeq);
+        switch (type) {
+        case QueryType::IsInt:    RAPIDJSON_VALUE_VALIDATE(value, IsInt,    "Int");    break;
+        case QueryType::IsUint:   RAPIDJSON_VALUE_VALIDATE(value, IsUint,   "Uint");   break;
+        case QueryType::IsInt64:  RAPIDJSON_VALUE_VALIDATE(value, IsInt64,  "Int64");  break;
+        case QueryType::IsUint64: RAPIDJSON_VALUE_VALIDATE(value, IsUint64, "Uint64"); break;
+        case QueryType::IsFloat:  RAPIDJSON_VALUE_VALIDATE(value, IsFloat,  "Float");  break;
+        case QueryType::IsDouble: RAPIDJSON_VALUE_VALIDATE(value, IsDouble, "Double"); break;
+        case QueryType::IsBool:   RAPIDJSON_VALUE_VALIDATE(value, IsBool,   "Bool");   break;
+        case QueryType::IsString: RAPIDJSON_VALUE_VALIDATE(value, IsString, "String"); break;
+        case QueryType::IsArray:  RAPIDJSON_VALUE_VALIDATE(value, IsArray,  "Array");  break;
+        case QueryType::IsObject: RAPIDJSON_VALUE_VALIDATE(value, IsObject, "Object"); break;
         }
-      
-        return nullableArray;
-    }
 
+#undef RAPIDJSON_VALUE_VALIDATE
+    }
 
 private:
-    template<typename T>
-    static std::shared_ptr<JsonNullableArray>
-    optionalSeqToNullableArray(T& optionalSeq) {
+    static std::string getTypeFrom(const rapidjson::Value& value) {
+        if (value.IsNumber()) {
+            if (value.IsInt())    return "Int";
+            if (value.IsUint())   return "Uint";
+            if (value.IsInt64())  return "Int64";
+            if (value.IsUint64()) return "Uint64";
+            if (value.IsDouble()) return "Double";
+            if (value.IsFloat())  return "Float";
+            return "Number";
+        }
 
-        bool allowNullableElems = contain_std_optional_elements<T>::value;
-        if (!optionalSeq.has_value())
-            return std::make_shared<JsonNullableArray>(allowNullableElems);
-
-
-        auto elements = std::is_const_v<T> ?
-            seqToJsonArrayElems(std::as_const(optionalSeq.value())) : 
-            seqToJsonArrayElems(optionalSeq.value());
-
-        return std::make_shared<JsonNullableArray>(elements, allowNullableElems);
-    }
-
-    template<typename T>
-    static void
-    attachArrayResizer(std::shared_ptr<JsonNullableArray> nullableArray, T& optionalSeq) {
-        auto resizer = [&optionalSeq](std::size_t newSize) {
-            optionalSeq->resize(newSize);
-            return seqToJsonArrayElems(optionalSeq.value());
-        };
-
-        nullableArray->setArrayResizer(resizer);
-    }
-
-    template<typename T>
-    static void
-    attachOptionalReinitHandlers(
-    std::shared_ptr<JsonNullableArray> nullableArray, T& optionalSeq) {
-        auto reinitializer = [&optionalSeq]() {
-            using BaseType = remove_std_optional_t<T>;
-            optionalSeq = BaseType{};
-            return seqToJsonArrayElems(optionalSeq.value());
-        };
-
-        auto resetter = [&optionalSeq]() { optionalSeq.reset(); };
-
-        nullableArray->attachResetter(resetter);
-        nullableArray->attachReinitializer(reinitializer);
-    }
-
-};
-
-
-template<>
-struct JsonValueCreator
-    <
-    JsonSourceType::Tuple, 
-    WrapperType::None
-    > {
-
-    template<typename T>
-    static std::shared_ptr<JsonArray> 
-    create(T& tuple) {
-        static_assert(!is_std_optional_v<T>);
-
-        auto elements = tupleToJsonArrayElems(tuple);
-
-        return  std::make_shared<JsonArray>(elements);
+        if (value.IsNull())    return "Null";
+        if (value.IsBool())    return "Boolean";
+        if (value.IsObject())  return "Object";
+        if (value.IsArray())   return "Array";
+        if (value.IsString())  return "String";
+        return "Unknown";
     }
 };
 
 
-template<>
-struct JsonValueCreator
-    <
-    JsonSourceType::Tuple, 
-    WrapperType::StdOptional
-    > {
+using SizeType = unsigned;
 
-    template<typename T>
-    static std::shared_ptr<JsonNullableArray> 
-    create(T& optionalSeq) {
-        static_assert(is_std_optional_v<T>);
+class JsonReader {
+public:
+    /**
+      * @brief Construct a JsonReader with JSON input for parsing
+      *
+      * @param jsonInput JSON string to parse and deserialize
+      */
+    JsonReader(std::string_view jsonInput) {
+        if (jsonInput.empty())
+            throw EmptyJsonStringError{};
 
-        auto nullableArray = optionalTupToNullableArray(optionalSeq); 
-
-        if constexpr (!std::is_const_v<T>) 
-            attachOptionalReinitHandlers(nullableArray, optionalSeq);
-
-        return nullableArray;
+        if (doc.Parse(jsonInput.data()).HasParseError())
+            throw InvalidJsonError("The provided JSON text has invalid syntax");
     }
 
+    void readFromJson(Value& root) {
+        assert(root.isObject() && root.isModifiable());
+
+        read(root, doc);
+    }
 
 private:
-    template<typename T>
-    static std::shared_ptr<JsonNullableArray> 
-    optionalTupToNullableArray(T& optionalTup) {
-        if(!optionalTup.has_value())
-            return std::make_shared<JsonNullableArray>();
-
-
-        auto elements = std::is_const_v<T> ?
-            tupleToJsonArrayElems(std::as_const(optionalTup.value())) :
-            tupleToJsonArrayElems(optionalTup.value());
-
-        return std::make_shared<JsonNullableArray>(elements);
+    void read(Value& v, const rapidjson::Value& json) {
+        if (v.canBeNull() && json.IsNull()) 
+            return v.setNull();
+  
+  
+        if (v.isPrimitive()) {
+            auto p = v.asPrimitive();
+            read(p, json);
+        }
+        else if (v.isObject()) {
+            auto o = v.asObject();
+            read(o, json);
+        }
+        else if (v.isArray()) {
+            auto a = v.asArray();
+            read(a, json);
+        }
+        else
+            assert(false);
     }
 
-
-    template<typename T>
-    static void
-    attachOptionalReinitHandlers(
-    std::shared_ptr<JsonNullableArray> nullableArray, T& optionalSeq) {
-        auto reinitializer = [&optionalSeq]() {
-            using BaseType = remove_std_optional_t<T>;
-        
-            // Initialize the std::optional<std::tuple<...>> variable from std::null_opt
-            optionalSeq = BaseType{};
-        
-            // After initialization, update the subtree of its nested member pointers recursively
-            return tupleToJsonArrayElems(optionalSeq.value());
-        };
-        
-        auto resetter = [&optionalSeq]() { optionalSeq.reset(); };
-        
-        nullableArray->attachResetter(resetter);
-        nullableArray->attachReinitializer(reinitializer);
+    void read(Value::PrimitiveType& p, const rapidjson::Value& json) {
+        if (p.isBool())        { validateAndPrepare(json, QueryType::IsBool,   p); p.setBool(json.GetBool()); }
+        else if (p.isInt())    { validateAndPrepare(json, QueryType::IsInt,    p); p.setInt(json.GetInt()); }
+        else if (p.isUint())   { validateAndPrepare(json, QueryType::IsUint,   p); p.setUint(json.GetUint()); }
+        else if (p.isInt64())  { validateAndPrepare(json, QueryType::IsInt64,  p); p.setInt64(json.GetInt64()); }
+        else if (p.isUint64()) { validateAndPrepare(json, QueryType::IsUint64, p); p.setUint64(json.GetUint64()); }
+        else if (p.isFloat())  { validateAndPrepare(json, QueryType::IsFloat,  p); p.setFloat(json.GetFloat()); }
+        else if (p.isDouble()) { validateAndPrepare(json, QueryType::IsDouble, p); p.setDouble(json.GetDouble()); }
+        else if (p.isString()) { validateAndPrepare(json, QueryType::IsString, p); p.setString(json.GetString()); }
+        else assert(false);
     }
+
+    void read(Value::ObjectType& object, const rapidjson::Value& json) {
+        validateAndPrepare(json, QueryType::IsObject, object);
+
+        for (auto& member : object) {
+            const auto name = member.name().c_str();
+            auto& value = member.value();
+
+            THROW_EXCEPTION_IF(!json.HasMember(name),
+                                MemberNotFoundError(name));
+
+            try {
+                read(value, json[name]);
+            }
+            catch (SerializationError& e) {
+                throw SerializationError(std::string("Deserialization of member \"") +
+                    name + "\" failed: " + e.what());
+            }
+        }
+    }
+
+    void read(Value::ArrayType& array, const rapidjson::Value& json) {
+        validateAndPrepare(json, QueryType::IsArray, array);
+
+        if (containNullElements(json))
+            THROW_EXCEPTION_IF(!array.canHoldNullElem(),
+                               TypeMismatchError("JSON array contains null elements"));
+
+        THROW_EXCEPTION_IF(json.Size() != array.size() && !array.isResizable(),
+                               ArrayLengthMismatchError(
+                                   "Array size mismatch: JSON contains " + std::to_string(json.Size()) +
+                                   " elements, but given array has fixed capacity of " + std::to_string(array.size()) +
+                                   " elements and cannot be resized."));
+
+
+        if (json.Size() != array.size())
+            array.resize(json.Size());
+
+        SizeType i = 0;
+        for (auto& elem : array) 
+            read(elem, json[i++]);
+    }
+
+    void validateAndPrepare(const rapidjson::Value& json, QueryType type, Value& v) {
+        TypeValidator::validate(json, type);
+
+        if (v.isNull())
+            v.reinit();
+    }
+
+    bool containNullElements(const rapidjson::Value& value) {
+        assert(value.IsArray());
+
+        for (auto&& elem : value.GetArray())
+            if (elem.IsNull())
+                return true;
+
+        return false;
+    }
+
+    rapidjson::Document doc;
 };
 
 
-template<typename T>
-using FromPrimitive = JsonValueCreator<JsonSourceType::Primitive, wrapper_type_v<T>>;
+template<typename Handler>
+class JsonWriter : private Handler {
+public:
+    using Handler::Handler;
 
-template<typename T>
-using FromStruct = JsonValueCreator<JsonSourceType::Struct, wrapper_type_v<T>>;
+    void writeToJson(const Value& root) {
+        assert(root.isObject());
 
-template<typename T>
-using FromTuple = JsonValueCreator<JsonSourceType::Tuple, wrapper_type_v<T>>;
+        auto obj = root.asConstObject();
+        write(obj);
+    }
 
-template<typename T>
-using FromSequence = JsonValueCreator<JsonSourceType::Sequential, wrapper_type_v<T>>;
+private:
+    bool Float(float f) {
+        return Double(static_cast<double>(f));
+    }
 
+    bool String(std::string_view str) {
+        auto size = static_cast<SizeType>(str.size());
 
-template<typename T>
-std::shared_ptr<JsonValue> 
-convertToJsonValue(T& memberRef) {
-    if constexpr (is_jsonable_primitive_type_v<T>)
-        return FromPrimitive<T>::create(memberRef);
+        return Handler::String(str.data(), size);
+    }
 
-    else if constexpr (is_describable_struct_v<T>)
-        return FromStruct<T>::create(memberRef);
+    void write(const Value& v) {
+        if (v.isNull()) {
+            Null();
+        }
+        else if (v.isPrimitive()) {
+            auto p = v.asConstPrimitive();
+            write(p);
+        }
+        else if (v.isObject()) {
+            auto o = v.asConstObject();
+            write(o);
+        }
+        else if (v.isArray()) {
+            auto a = v.asConstArray();
+            write(a);
+        }
+        else 
+            assert(false);
+        
+    }
 
-    else if constexpr (is_jsonable_tuple_v<T>)
-        return FromTuple<T>::create(memberRef);
+    void write(Value::ConstPrimitiveType& p) {
+        if (p.isBool())        Bool(p.getBool());
+        else if (p.isInt())    Int(p.getInt());
+        else if (p.isUint())   Uint(p.getUint());
+        else if (p.isInt64())  Int64(p.getInt64());
+        else if (p.isUint64()) Uint64(p.getUint64());
+        else if (p.isFloat())  Float(p.getFloat());
+        else if (p.isDouble()) Double(p.getDouble());
+        else if (p.isString()) String(p.getString());
+        else assert(false);
+    }
 
-    else if constexpr (is_jsonable_sequential_container_v<T>)
-        return FromSequence<T>::create(memberRef);
+    void write(Value::ConstObjectType& object) {
+        StartObject();
 
-    else 
-        static_assert(false, "Unsupported type for JSON serialization");
-}
+        for (auto& member : object) {
+            const auto& name = member.name();
+            Key(name.c_str(), static_cast<SizeType>(name.size()));
 
+            write(member.value());
+        }
 
-template<typename Desc>
-std::string getMemberName(Desc descriptor) {
-    return std::string(descriptor.name());
-}
+        EndObject();
+    }
 
-template<typename Struct, typename Desc>
-auto& getMemberValueRef(Struct& s, Desc descriptor) {
-    return s.*(descriptor.pointer());
-}
+    void write(Value::ConstArrayType& array) {
+        StartArray();
 
-
-template<typename Struct>
-std::vector<JsonAttribute> buildJsonTreeFrom(Struct& s) {
-    static_assert(is_describable_struct_v<Struct>, "Use the RAPIDJSON_UTIL_DESCRIBE_MEMBERS macro to declare serializable struct members");
-
-    std::vector<JsonAttribute> members;
-
-    auto descriptors = Descriptor<std::remove_const_t<Struct>>::member_descriptors;
-
-    for_each(descriptors, 
-            [&s, &members](auto desc) {
-             std::string name = getMemberName(desc);
-             auto& valueRef = getMemberValueRef(s, desc);
-             
-             members.push_back(JsonAttribute{name, convertToJsonValue(valueRef)});
-    });
-
-    return members;
-}
+        for (auto& elem : array) 
+            write(elem);
+        
+        EndArray();
+    }
+};
 
 
 template<typename Struct>
 std::string marshalImpl(const Struct& s) {
-    JsonObject root(buildJsonTreeFrom(s));
+    static_assert(is_jsonable_struct_v<Struct>,
+        "Use the RAPIDJSON_UTIL_DESCRIBE_MEMBERS macro to declare serializable struct members");
 
-    JsonWriter writer;
-    return writer.writeToJson(&root);
+    Value root(&s);
+
+    rapidjson::StringBuffer buffer;
+    JsonWriter<rapidjson::Writer<rapidjson::StringBuffer>> writer(buffer);
+
+    writer.writeToJson(root);
+
+    return buffer.GetString();
 }
 
 template<typename Struct>
 void unmarshalImpl(std::string_view json, Struct& s)  {
+    static_assert(is_jsonable_struct_v<Struct>,
+        "Use the RAPIDJSON_UTIL_DESCRIBE_MEMBERS macro to declare serializable struct members");
+
     JsonReader reader(json);
 
-    JsonObject root(buildJsonTreeFrom(s));
-    reader.readFromJson(&root);
+    Value root(&s);
+    reader.readFromJson(root);
 }
 
 
 }  // namespace detail
+
 }  // namespace rapidjson_util 
            
         

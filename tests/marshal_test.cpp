@@ -2,10 +2,15 @@
 #include <regex>
 #include <sstream>
 #include <iomanip>
-#include "gmock/gmock.h"
+#include <gmock/gmock.h>
 
 #include "rapid_util/rapid_util.h"
 
+
+
+#define ASSERT_JSON_STREQ(actual, expect) \
+    ASSERT_STREQ(actual.c_str(), removeWhitespaceOutsideQuotes(expect).c_str())
+	
 
 std::string removeWhitespaceOutsideQuotes(const std::string& input) {
 	std::regex pattern(R"(\s+(?=(?:[^"]*"[^"]*")*[^"]*$))");
@@ -67,57 +72,60 @@ TEST(MARSHAL_TEST_UTIL, TruncateDecimals) {
 	ASSERT_STREQ(actual.c_str(), expect.c_str());
 }
 
-#define ASSERT_JSON_STREQ(actual, expect) \
-    ASSERT_STREQ(actual.c_str(), removeWhitespaceOutsideQuotes(expect).c_str())
 
 struct AbitraryStruct {
 	int IntNumber;
+	unsigned UintNumber;
 	int64_t Int64Number;
 	uint64_t Uint64Number;
 	bool BoolValue;
 	float FloatNumber;
 	double DoubleNumber;
-	std::string Str;
+	std::string String;
 };
 
-RAPIDJSON_UTIL_DESCRIBE_MEMBERS(AbitraryStruct, (IntNumber, Int64Number, Uint64Number, BoolValue, FloatNumber, DoubleNumber, Str))
+RAPIDJSON_UTIL_DESCRIBE_MEMBERS(AbitraryStruct, (IntNumber, UintNumber, Int64Number, Uint64Number, BoolValue, FloatNumber, DoubleNumber, String))
 
 TEST(RapidMarshalTest, SerializePrimitiveTypes) {
 	AbitraryStruct s;
 	s.IntNumber = 42;
+	s.UintNumber = 2345678901;
 	s.Int64Number = -9876543210LL;
 	s.Uint64Number = 18446744073709551615ULL;
 	s.BoolValue = true;
 	s.FloatNumber = 3.14f;
 	s.DoubleNumber = 2.76;
-	s.Str = "Hello";
+	s.String = "Hello";
 
 	auto actual = rapidjson_util::marshal(s);
 
 	auto expect = R"({
                        "IntNumber":42,
+                       "UintNumber" : 2345678901,
                        "Int64Number" : -9876543210,
                        "Uint64Number" : 18446744073709551615,
                        "BoolValue" : true,
                        "FloatNumber" : 3.14,
                        "DoubleNumber" : 2.76,
-                       "Str" : "Hello"
+                       "String" : "Hello"
                       })";
 
 	ASSERT_JSON_STREQ(truncateDecimals(actual, 2), expect);
 }
 
+
 struct NullableFieldsWithOptional {
 	std::optional<int> IntNumber;
+	std::shared_ptr<unsigned> UintNumber;
 	std::optional<int64_t> Int64Number;
-	std::optional<uint64_t> Uint64Number;
+	std::shared_ptr<uint64_t> Uint64Number;
 	std::optional<bool> Bool;
 	std::optional<float> FloatNumber;
 	std::optional<double> DoubleNumber;
-	std::optional<std::string> Str;
+	std::shared_ptr<std::string> String;
 };
 
-RAPIDJSON_UTIL_DESCRIBE_MEMBERS(NullableFieldsWithOptional, (IntNumber, Int64Number, Uint64Number, Bool, FloatNumber, DoubleNumber, Str))
+RAPIDJSON_UTIL_DESCRIBE_MEMBERS(NullableFieldsWithOptional, (IntNumber, UintNumber, Int64Number, Uint64Number, Bool, FloatNumber, DoubleNumber, String))
 
 TEST(RapidUnmarshalTest, SerializeNullablePrimitiveTypesWithOptionalWhenNull) {
 	NullableFieldsWithOptional  f;
@@ -126,12 +134,13 @@ TEST(RapidUnmarshalTest, SerializeNullablePrimitiveTypesWithOptionalWhenNull) {
 
 	auto expect = R"({
 						"IntNumber"    : null, 
+                        "UintNumber"   : null,
 						"Int64Number"  : null,
 						"Uint64Number" : null, 
 						"Bool" : null, 
 						"FloatNumber"  : null, 
 						"DoubleNumber" : null,
-						"Str" : null
+						"String" : null
                      })";
 
 	ASSERT_JSON_STREQ(actual, expect);
@@ -141,27 +150,30 @@ TEST(RapidUnmarshalTest, SerializeNullablePrimitiveTypesWithOptionalWhenPopulate
 	NullableFieldsWithOptional  f;
 
 	f.IntNumber = 66;
+	f.UintNumber = std::make_shared<unsigned>(3785674210);
 	f.Int64Number = 4137901254LL;
-	f.Uint64Number = 5843644404370511615ULL;
+	f.Uint64Number = std::make_shared<uint64_t>(5843644404370511615ULL);
 	f.Bool = false;
 	f.FloatNumber = 94.887f;
 	f.DoubleNumber = 50.241;
-	f.Str = "Str";
+	f.String = std::make_shared<std::string>("I am a string");
 
 	auto actual = rapidjson_util::marshal(f);
 
 	auto expect = R"({
 						"IntNumber"    : 66, 
+                        "UintNumber"   : 3785674210,
 						"Int64Number"  : 4137901254,
 						"Uint64Number" : 5843644404370511615, 
 						"Bool"         : false, 
 						"FloatNumber"  : 94.887, 
 						"DoubleNumber" : 50.241,
-						"Str"          : "Str"
+						"String"       : "I am a string"
                      })";
 
 	ASSERT_JSON_STREQ(truncateDecimals(actual, 3), expect);
 }
+
 
 struct Address {
 	std::string street;
@@ -284,6 +296,7 @@ TEST(RapidMarshalTest, SerializeHomogeneousArray) {
 	ASSERT_JSON_STREQ(actual, expect);
 }
 
+
 struct StudentWithOptionalCourseList {
 	int studentId;
 	std::optional<std::list<Course>> enrolledCourses;
@@ -353,7 +366,6 @@ struct StudentWithOptionalCourseElements {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(StudentWithOptionalCourseElements, (studentId, enrolledCourses))
 
-
 TEST(RapidUnmarshalTest, SerializeHomogeneousArrayWithOptionalWhenContainNulls) {
 	StudentWithOptionalCourseElements student;
 	student.studentId = 400;
@@ -376,13 +388,13 @@ TEST(RapidUnmarshalTest, SerializeHomogeneousArrayWithOptionalWhenContainNulls) 
 	ASSERT_JSON_STREQ(actual, expect);
 }
 
+
 struct User {
 	int id;
 	std::string name;
 };
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(User, (id, name))
-
 
 struct Response {
 	std::string header;
@@ -406,6 +418,7 @@ TEST(RapidMarshalTest, SerializeHeterogeneousArray) {
 
 	ASSERT_JSON_STREQ(actual, expect);
 }
+
 
 struct ResponseWithOptionalContent {
 	std::string header;

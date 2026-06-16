@@ -5,9 +5,10 @@
 //
 // http://opensource.org/licenses/Zlib
 //
-// This software is provided ¡®as-is¡¯, without any express or implied
+// This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
 // arising from the use of this software.
+
 
 #ifndef __RAPIDJSON_UTIL_PREPROCESSOR_H__
 #define __RAPIDJSON_UTIL_PREPROCESSOR_H__
@@ -18,10 +19,12 @@
 #include <array>
 #include <type_traits>
 #include <optional>
+#include <memory>
 
 namespace rapidjson_util {
 
 namespace detail {
+
 
 template<typename... Types>
 struct TypeList {
@@ -61,6 +64,17 @@ struct member_type<T C::*> {
 
 template<typename T>
 using member_type_t = typename member_type<T>::type;
+
+
+template<bool Const, typename T>
+struct MaybeAddConst {
+    using type = std::conditional_t<Const, const T, T>;
+};
+
+template<typename T>
+struct type2type {
+    using type = T;
+};
 
 
 template<template<typename> typename Wrapper, typename T>
@@ -114,25 +128,82 @@ public:
 template<typename T>
 using remove_std_optional_t = typename remove_std_optional<T>::type;
 
+
 template<typename T>
-using remove_const_and_optional_t = std::remove_const_t<remove_std_optional_t<T>>;
+struct is_std_shared_ptr {
+private:
+    template<typename T>
+    struct inner : is_wrapper<std::shared_ptr, T> {};
+
+public:
+    static constexpr bool value =
+        inner<remove_const_and_reference_t<T>>::value;
+};
+
+template<typename T>
+constexpr bool is_std_shared_ptr_v = typename is_std_shared_ptr<T>::value;
+
+
+template<typename T>
+struct remove_std_shared_ptr {
+private:
+    template<typename T>
+    struct inner : remove_wrapper<std::shared_ptr, T> {};
+
+public:
+    using type = typename inner<T>::type;
+};
+
+template<typename T>
+using remove_std_shared_ptr_t = typename remove_std_shared_ptr<T>::type;
+
+
+template<typename T>
+struct remove_shared_optional {
+private:
+    template<typename T>
+    struct inner {
+        using type = T;
+    };
+
+    template<typename T>
+    struct inner<std::shared_ptr<T>> 
+        : remove_wrapper<std::shared_ptr, T> {};
+
+    template<typename T>
+    struct inner<const std::shared_ptr<T>> 
+        : remove_wrapper<std::shared_ptr, const T> {};
+
+    template<typename T>
+    struct inner<std::optional<T>> 
+        : remove_wrapper<std::optional, T> {};
+
+    template<typename T>
+    struct inner<const std::optional<T>> 
+        : remove_wrapper<std::optional, const T> {};
+
+public:
+    using type = typename inner<T>::type;
+};
+
+template<typename T>
+using remove_shared_optional_t = typename remove_shared_optional<T>::type;
 
 template<typename T>
 constexpr bool is_js_primitive_type_v = std::disjunction_v<
-    std::is_same<T, int>, std::is_same<T, int8_t>,
-    std::is_same<T, int32_t>, std::is_same<T, int64_t>,
-    std::is_same<T, uint64_t>, std::is_same<T, bool>,
-    std::is_same<T, std::string>, std::is_same<T, float>,
-    std::is_same<T, double>
+    std::is_same<T, int>, std::is_same<T, unsigned>,
+    std::is_same<T, int64_t>, std::is_same<T, uint64_t>,
+    std::is_same<T, float>, std::is_same<T, double>, 
+    std::is_same<T, bool>, std::is_same<T, std::string>
 >;
 
 template<typename T>
 constexpr bool is_jsonable_primitive_type_v =
-    is_js_primitive_type_v<remove_const_and_optional_t<T>>;
+    is_js_primitive_type_v<std::remove_cv_t<remove_shared_optional_t<T>>>;
 
 template<typename T>
-constexpr bool is_describable_struct_v =
-    Descriptor<remove_const_and_optional_t<T>>::is_describable;
+constexpr bool is_jsonable_struct_v =
+    Descriptor<std::remove_cv_t<remove_shared_optional_t<T>>>::is_describable;
 
 
 template<typename T>
@@ -144,12 +215,15 @@ private:
     template<typename Elem, std::size_t N>
     struct inner<std::array<Elem, N>>
         : std::bool_constant<is_jsonable_primitive_type_v<Elem> || 
-                             is_describable_struct_v<Elem>> 
+                             is_jsonable_struct_v<Elem>> 
     {};
+
+    template<typename Elem, std::size_t N>
+    struct inner<const std::array<Elem, N>> : inner<std::array<Elem, N>> {};
 
 public:
     constexpr static bool value = 
-        inner<remove_const_and_optional_t<T>>::value;
+        inner<remove_shared_optional_t<T>>::value;
 };
 
 template<typename Array>
@@ -166,12 +240,16 @@ private:
     template<typename Elem, typename Alloc>
     struct inner<std::vector<Elem, Alloc>>
         : std::bool_constant<is_jsonable_primitive_type_v<Elem> || 
-                             is_describable_struct_v<Elem>> 
+                             is_jsonable_struct_v<Elem>> 
     {};
+
+    template<typename Elem, typename Alloc>
+    struct inner<const std::vector<Elem, Alloc>> 
+        : inner< std::vector<Elem, Alloc>> {};
 
 public:
     constexpr static bool value = 
-        inner<remove_const_and_optional_t<T>>::value;
+        inner<remove_shared_optional_t<T>>::value;
 };
 
 
@@ -184,12 +262,15 @@ private:
     template<typename Elem, typename Alloc>
     struct inner<std::list<Elem, Alloc>>
         : std::bool_constant<is_jsonable_primitive_type_v<Elem> || 
-                             is_describable_struct_v<Elem>> 
-    {};
+                             is_jsonable_struct_v<Elem>> {};
+
+    template<typename Elem, typename Alloc>
+    struct inner<const std::list<Elem, Alloc>> 
+        : inner<std::list<Elem, Alloc>> {};
 
 public:
     constexpr static bool value = 
-        inner<remove_const_and_optional_t<T>>::value;
+        inner<remove_shared_optional_t<T>>::value;
 };
  
 
@@ -210,26 +291,51 @@ constexpr bool is_jsonable_sequential_container_v =
 
 
 template<typename Container>
-struct contain_std_optional_elements {
+struct can_hold_null_elem {
 private:
     template<typename T, typename = void>
     struct inner : std::false_type {};
 
-    template<template<typename, typename> typename Container, typename Alloc, typename U>
+    template<
+            template<typename, typename> typename Container, 
+            typename Alloc, 
+            typename U
+            >
     struct inner<Container<std::optional<U>, Alloc>,
         std::enable_if_t<is_jsonable_dynamic_array_v<Container<std::optional<U>, Alloc>>>>
         : std::true_type {};
 
-    template<template<typename, size_t> typename Array, size_t N, typename U>
+    template<
+             template<typename, size_t> typename Array,
+             size_t N, 
+             typename U
+             >
     struct inner<Array<std::optional<U>, N>,
         std::enable_if_t<is_jsonable_fixed_array_v<Array<std::optional<U>, N>>>>
         : std::true_type 
     {};
 
+    template<
+             template<typename, typename> typename Container, 
+             typename Alloc, 
+             typename U
+            >
+    struct inner<Container<std::shared_ptr<U>, Alloc>,
+        std::enable_if_t<is_jsonable_dynamic_array_v<Container<std::shared_ptr<U>, Alloc>>>>
+        : std::true_type {};
+
+    template<
+             template<typename, size_t> typename Array, 
+             size_t N, 
+             typename U
+             >
+    struct inner<Array<std::shared_ptr<U>, N>,
+        std::enable_if_t<is_jsonable_fixed_array_v<Array<std::shared_ptr<U>, N>>>>
+        : std::true_type {};
+
 public:
     static constexpr bool value =
-        inner<std::remove_reference_t<
-        remove_const_and_optional_t<Container>>>::value;
+        inner<remove_const_and_reference_t<remove_shared_optional_t<Container>>>::value;
 };
 
 
@@ -254,23 +360,25 @@ private:
         static constexpr bool value = false;
     };
 
-    template<typename First, typename... Remaining>
-    struct inner<std::tuple<First, Remaining...>> {
+    template<typename First, typename... Rest>
+    struct inner<std::tuple<First, Rest...>> {
     private:
+        using F = std::remove_cv_t<remove_shared_optional_t<First>>;
+
         static constexpr bool check_first() {
-            if constexpr (is_std_tuple_v<First>)
-                return inner<First>::value;
+            if constexpr (is_std_tuple_v<F>)
+                return inner<F>::value;
             else
-                return is_jsonable_primitive_type_v<First> ||
-                is_jsonable_sequential_container_v<First> ||
-                is_describable_struct_v<First>;
+                return is_jsonable_primitive_type_v<F> ||
+                is_jsonable_sequential_container_v<F> ||
+                is_jsonable_struct_v<F>;
         }
 
         static constexpr bool check_remaining() {
-            if constexpr (sizeof...(Remaining) == 0)
+            if constexpr (sizeof...(Rest) == 0)
                 return true;
             else
-                return inner<std::tuple<Remaining...>>::value;
+                return inner<std::tuple<Rest...>>::value;
         }
 
     public:
@@ -279,7 +387,7 @@ private:
 
 public:
     static constexpr bool value = 
-        inner<remove_const_and_optional_t<T>>::value;
+        inner<std::remove_cv_t<remove_shared_optional_t<T>>>::value;
 };
 
 template<typename T>
@@ -289,7 +397,7 @@ constexpr bool is_jsonable_tuple_v = is_jsonable_tuple<T>::value;
 template<typename T>
 constexpr bool is_json_serializable_v =
     (is_jsonable_primitive_type_v<T> || is_jsonable_sequential_container_v<T> ||
-     is_jsonable_tuple_v<T>          || is_describable_struct_v<T>)
+     is_jsonable_tuple_v<T>          || is_jsonable_struct_v<T>)
      &&
     (!std::is_pointer_v<T> && !std::is_reference_v<T> &&
      !std::is_const_v<T>);
@@ -539,10 +647,10 @@ constexpr bool is_json_serializable_v =
         RAPIDJSON_UTIL_STRIP_COMMAS(RAPIDJSON_UTIL_FOR_EACH(RAPIDJSON_UTIL_ASSERT_IS_SERIALIZABLE, C, RAPIDJSON_UTIL_UNPACK members))
 
 #define RAPIDJSON_UTIL_ASSERT_IS_SERIALIZABLE(C, member) \
-        static_assert(rapidjson_util::detail::is_json_serializable_v<rapidjson_util::detail::member_type_t<decltype(&C::member)>>, "Member variable types must be compatible with JSON value types.");
+        static_assert(rapidjson_util::detail::is_json_serializable_v<rapidjson_util::detail::member_type_t<decltype(&C::member)>>, "Member variable types must be non-const and compatible with JSON.");
 
 
-#define RAPIDJSON_UTIL_DESCRIBE_MEMBERS_IMPL(C, members)  template<> struct rapidjson_util::detail::Descriptor<C> {  \
+#define RAPIDJSON_UTIL_DESCRIBE_MEMBERS_IMPL(C, members)  template<> struct rapidjson_util::detail::Descriptor<C> { \
      	static constexpr bool is_describable = true;                                                                \
         static constexpr auto member_descriptors = make_typelist(                                                   \
                        RAPIDJSON_UTIL_FOR_EACH(RAPIDJSON_UTIL_MEMBER_META, C, RAPIDJSON_UTIL_UNPACK members));      \

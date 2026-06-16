@@ -62,7 +62,7 @@ RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Product, (productId, name, price, quantity))
 
 struct Inventory {
     std::string warehouse;
-    std::vector<std::optional<Product>> products;  
+    std::vector<std::shared_ptr<Product>> products;  
 };
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Inventory, (warehouse, products))
@@ -71,11 +71,11 @@ void marshal_homogeneous_array() {
     Inventory inventory;
     inventory.warehouse = "Main Storage";
     inventory.products = {
-        std::nullopt,
-        Product{"P1001", "Laptop", 999.99, 50},
-        Product{"P1002", "Mouse", 29.99, 200},
-        Product{"P1003", "Keyboard", 79.99, 75},
-        std::nullopt,
+        nullptr,
+        std::make_shared<Product>(Product{"P1001", "Laptop", 999.99, 50}),
+        std::make_shared<Product>(Product{"P1002", "Mouse", 29.99, 200}),
+        std::make_shared<Product>(Product{"P1003", "Keyboard", 79.99, 75}),
+        nullptr,
     };
 
     auto json = rapidjson_util::marshal(inventory);
