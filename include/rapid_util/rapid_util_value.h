@@ -862,7 +862,7 @@ std::vector<Value> tupleToValues(Tuple& tuple) {
 
 template<typename Struct>
 std::vector<Value::Member> buildJsonTreeFrom(Struct& s) {
-	static_assert(is_jsonable_struct_v<Struct>, "Use the RAPIDJSON_UTIL_DESCRIBE_MEMBERS macro to declare serializable struct members");
+	static_assert(is_jsonable_struct_v<Struct>);
 
 	AccessPolicy<Struct> acc(&s);
 	if (acc.isNull())
