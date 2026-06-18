@@ -107,7 +107,7 @@ struct AccessPolicy<const std::shared_ptr<Type>> {
 
 	explicit AccessPolicy(MemberPointerType p) : ptr(p) {}
 
-	bool canBeNull() const { return true; }
+	bool canBeNull() const { return false; }
 	bool isNull() const { return (*ptr) == nullptr; }
 	void setNull() { }
 	void reinit() { }
@@ -145,7 +145,7 @@ struct AccessPolicy<const std::optional<Type>> {
 
 	explicit AccessPolicy(MemberPointerType p) : ptr(p) {}
 
-	bool canBeNull() const { return true; }
+	bool canBeNull() const { return false; }
 	bool isNull() const { return (*ptr) == std::nullopt; }
 	void setNull() { }
 	void reinit() { }
