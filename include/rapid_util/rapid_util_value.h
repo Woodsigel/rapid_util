@@ -69,9 +69,9 @@ struct AccessPolicy {
 
 	explicit AccessPolicy(MemberPointerType p) : ptr(p) {}
 
-	bool canBeNull() const { return false; }
-	bool isNull() const { return false; }
-	void setNull() {}
+	bool canBeNone() const { return false; }
+	bool isNone() const { return false; }
+	void setNone() {}
 	void reinit() { if constexpr (!std::is_const_v<ValueType>) { *ptr = ValueType{}; } }
 
 	ValueType& value() const { return *ptr; }
@@ -88,9 +88,9 @@ struct AccessPolicy<std::shared_ptr<Type>> {
 
 	explicit AccessPolicy(MemberPointerType p) : ptr(p) {}
 
-	bool canBeNull() const { return true; }
-	bool isNull() const { return (*ptr) == nullptr; }
-	void setNull() { (*ptr).reset(); }
+	bool canBeNone() const { return true; }
+	bool isNone() const { return (*ptr) == nullptr; }
+	void setNone() { (*ptr).reset(); }
 	void reinit() { if constexpr (!std::is_const_v<ValueType>) { (*ptr) = std::make_shared<ValueType>(); } }
 
 	ValueType& value()          const { return *(ptr->get()); }
@@ -107,9 +107,9 @@ struct AccessPolicy<const std::shared_ptr<Type>> {
 
 	explicit AccessPolicy(MemberPointerType p) : ptr(p) {}
 
-	bool canBeNull() const { return false; }
-	bool isNull() const { return (*ptr) == nullptr; }
-	void setNull() { }
+	bool canBeNone() const { return false; }
+	bool isNone() const { return (*ptr) == nullptr; }
+	void setNone() { }
 	void reinit() { }
 
 	ValueType& value()          const { return *(ptr->get()); }
@@ -126,9 +126,9 @@ struct AccessPolicy<std::optional<Type>> {
 
 	explicit AccessPolicy(MemberPointerType p) : ptr(p) {}
 
-	bool canBeNull() const { return true; }
-	bool isNull()    const { return (*ptr) == std::nullopt; }
-	void setNull() { (*ptr).reset(); }
+	bool canBeNone() const { return true; }
+	bool isNone()    const { return (*ptr) == std::nullopt; }
+	void setNone() { (*ptr).reset(); }
 	void reinit() { if constexpr (!std::is_const_v<ValueType>) { (*ptr) = ValueType{}; } }
 
 	ValueType& value()          const { return (*ptr).value(); }
@@ -145,9 +145,9 @@ struct AccessPolicy<const std::optional<Type>> {
 
 	explicit AccessPolicy(MemberPointerType p) : ptr(p) {}
 
-	bool canBeNull() const { return false; }
-	bool isNull() const { return (*ptr) == std::nullopt; }
-	void setNull() { }
+	bool canBeNone() const { return false; }
+	bool isNone() const { return (*ptr) == std::nullopt; }
+	void setNone() { }
 	void reinit() { }
 
 	ValueType& value() const { return (*ptr).value(); }
@@ -248,23 +248,23 @@ public:
    * Common operators for all variants including primitive, object, and array types
    * ============================================================================ */
 	/**
-	 * @brief   Checks if the value can be set to null
+	 * @brief   Checks if the value can be set to none (missing a value)
 	 * @return  true if the value can be null (e.g., with std::optional or std::shared_ptr wrapper),
 	 *          false otherwise
 	 */
-	bool canBeNull() const { return isModifiable() && valuePtr()->canBeNull(); }
+	bool canBeNone() const { return isModifiable() && valuePtr()->canBeNone(); }
 
 	/**
-	 * @brief   Checks if the value is currently null (missing a value)
+	 * @brief   Checks if the value is currently none (missing a value)
 	 * @note    If the struct member is not wrapped with std::optional or std::shared_ptr,
 	 *          it always returns false (cannot be null)
 	 */
-	bool isNull() const { return valuePtr()->isNull(); }
+	bool isNone() const { return valuePtr()->isNone(); }
 
 	/**
-	 * @brief Sets the underlying value to null
+	 * @brief Sets the underlying value to none (missing a value)
 	 */
-	void setNull() { assert(isModifiable() && canBeNull()); valuePtr()->setNull(); }
+	void setNone() { assert(isModifiable() && canBeNone()); valuePtr()->setNone(); }
 
 	/**
 	 * @brief Reinitializes the value to its default state
@@ -296,7 +296,7 @@ public:
        * @return  true if elements can be null (e.g., std::vector<std::optional<...>>,
        *                                              std::list<std::shared_ptr<...>>)
        */
-	bool canHoldNullElem() const { return isArray() && arrayPtr()->canHoldNullElem(); }
+	bool canHoldNoneElem() const { return isArray() && arrayPtr()->canHoldNoneElem(); }
 
 	 /**
 	  * @brief Checks if the array can be resized (dynamic size)
@@ -379,9 +379,9 @@ private:
 	class ValueHolder {
 	public:
 		virtual bool isModifiable() const = 0;
-		virtual bool canBeNull()    const = 0;
-		virtual bool isNull()       const = 0;
-		virtual void setNull() = 0;
+		virtual bool canBeNone()    const = 0;
+		virtual bool isNone()       const = 0;
+		virtual void setNone() = 0;
 		virtual void reinit() = 0;
 
 		virtual ~ValueHolder() = default;
@@ -396,9 +396,9 @@ private:
 		ValueHolderImpl(Type* memberPtr) : accPolicy(memberPtr) {}
 
 		bool isModifiable() const override { return !std::is_const_v<ValueType>; }
-		bool canBeNull()    const override { return accPolicy.canBeNull(); }
-		bool isNull()       const override { return accPolicy.isNull(); }
-		void setNull()            override { return accPolicy.setNull(); }
+		bool canBeNone()    const override { return accPolicy.canBeNone(); }
+		bool isNone()       const override { return accPolicy.isNone(); }
+		void setNone()            override { return accPolicy.setNone(); }
 		void reinit()             override { return accPolicy.reinit(); }
 
 		virtual ~ValueHolderImpl() = default;
@@ -496,11 +496,11 @@ private:
 
 		void reinit() override {
 			ValueHolderImpl<Type>::reinit();
-			members = buildJsonTreeFrom(*ValueHolderImpl<Type>::pointer());
+			members = buildStructMemPtrTree(*ValueHolderImpl<Type>::pointer());
 		}
 
-		void setNull() override { 
-			ValueHolderImpl<Type>::setNull(); 
+		void setNone() override { 
+			ValueHolderImpl<Type>::setNone(); 
 			members.clear(); 
 		}
 
@@ -519,7 +519,7 @@ private:
 		virtual void resize(std::size_t newSize) = 0;
 		virtual std::size_t size() const = 0;
 
-		virtual bool canHoldNullElem() const = 0;
+		virtual bool canHoldNoneElem() const = 0;
 
 		virtual ArrayIterator      arrayBegin() = 0;
 		virtual ArrayIterator      arrayEnd() = 0;
@@ -540,8 +540,8 @@ private:
 			elems = arrayToValues(*ValueHolderImpl<Type>::pointer());
 		}
 
-		void setNull() override {
-			ValueHolderImpl<Type>::setNull();
+		void setNone() override {
+			ValueHolderImpl<Type>::setNone();
 			elems.clear();
 		}
 
@@ -549,7 +549,7 @@ private:
 		void resize(std::size_t newSize) override { elems = resizer(newSize); }
 		std::size_t size()         const override { return elems.size(); }
 
-		bool canHoldNullElem() const override { return can_hold_null_elem<ValueType>::value; }
+		bool canHoldNoneElem() const override { return can_hold_null_elem<ValueType>::value; }
 
 		ArrayIterator      arrayBegin() override { return elems.begin(); }
 		ArrayIterator      arrayEnd()   override { return elems.end(); }
@@ -620,9 +620,9 @@ public:
 
 	operator ValueType&() const{ return value; }
 
-	bool canBeNull()    const { return value.canBeNull(); }
-	bool isNull()       const { return value.isNull(); }
-	void setNull() { value.setNull(); }
+	bool canBeNone()    const { return value.canBeNone(); }
+	bool isNone()       const { return value.isNone(); }
+	void setNone() { value.setNone(); }
 	void reinit() { value.reinit(); }
 
 	bool isBool()   const { return value.isBool(); }
@@ -686,9 +686,9 @@ public:
 
 	operator ValueType& () const { return value; }
 
-	bool canBeNull()    const { return value.canBeNull(); }
-	bool isNull()       const { return value.isNull(); }
-	void setNull() { value.setNull(); }
+	bool canBeNone()    const { return value.canBeNone(); }
+	bool isNone()       const { return value.isNone(); }
+	void setNone() { value.setNone(); }
 	void reinit() { value.reinit(); }
 
 	MemberIterator begin() { return value.memberBegin(); }
@@ -712,15 +712,15 @@ public:
 
 	operator ValueType& () const { return value; }
 
-	bool canBeNull()    const { return value.canBeNull(); }
-	bool isNull()       const { return value.isNull(); }
-	void setNull() { value.setNull(); }
+	bool canBeNone()    const { return value.canBeNone(); }
+	bool isNone()       const { return value.isNone(); }
+	void setNone() { value.setNone(); }
 	void reinit()  { value.reinit(); }
 
 	bool isResizable()     const { return value.isResizable(); }
 	std::size_t size()     const { return value.size(); }
 	void resize(std::size_t newSize) { value.resize(newSize); }
-	bool canHoldNullElem() const { return value.canHoldNullElem(); }
+	bool canHoldNoneElem() const { return value.canHoldNoneElem(); }
 
 	ArrayIterator begin() { return value.arrayBegin(); }
 	ArrayIterator end()   { return value.arrayEnd(); }
@@ -753,7 +753,7 @@ inline Value::Value(Type* structPtr, StructTag) {
 	assert(structPtr != nullptr);
 
 	held = std::make_shared<ObjectHolderImpl<Type>>(structPtr,
-			                                        buildJsonTreeFrom(*structPtr));
+			                                        buildStructMemPtrTree(*structPtr));
 }
 
 template<typename Type>
@@ -828,7 +828,7 @@ std::vector<Value> seqToValues(Container& sequence) {
 	static_assert(is_jsonable_sequential_container_v<Container>);
 
 	AccessPolicy<Container> acc(&sequence);
-	if (acc.isNull())
+	if (acc.isNone())
 		return {};
 
 
@@ -845,7 +845,7 @@ std::vector<Value> tupleToValues(Tuple& tuple) {
 	static_assert(is_jsonable_tuple_v<Tuple>);
 
 	AccessPolicy<Tuple> acc(&tuple);
-	if (acc.isNull())
+	if (acc.isNone())
 		return {};
 
 
@@ -861,11 +861,11 @@ std::vector<Value> tupleToValues(Tuple& tuple) {
 
 
 template<typename Struct>
-std::vector<Value::Member> buildJsonTreeFrom(Struct& s) {
+std::vector<Value::Member> buildStructMemPtrTree(Struct& s) {
 	static_assert(is_jsonable_struct_v<Struct>);
 
 	AccessPolicy<Struct> acc(&s);
-	if (acc.isNull())
+	if (acc.isNone())
 		return {};
 
 

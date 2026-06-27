@@ -16,7 +16,6 @@
 #include <rapidjson/writer.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/document.h>
-#include <stack>
 #include <stdexcept>
 #include <string_view>
 #include "rapid_util_preprocessor.h"
@@ -234,8 +233,8 @@ public:
 
 private:
     void read(Value& v, const rapidjson::Value& json) {
-        if (v.canBeNull() && json.IsNull()) 
-            return v.setNull();
+        if (v.canBeNone() && json.IsNull()) 
+            return v.setNone();
   
   
         if (v.isPrimitive()) {
@@ -290,7 +289,7 @@ private:
         validateAndPrepare(json, QueryType::IsArray, array);
 
         if (containNullElements(json))
-            THROW_EXCEPTION_IF(!array.canHoldNullElem(),
+            THROW_EXCEPTION_IF(!array.canHoldNoneElem(),
                                TypeMismatchError("JSON array contains null elements"));
 
         THROW_EXCEPTION_IF(json.Size() != array.size() && !array.isResizable(),
@@ -311,7 +310,7 @@ private:
     void validateAndPrepare(const rapidjson::Value& json, QueryType type, Value& v) {
         TypeValidator::validate(json, type);
 
-        if (v.isNull())
+        if (v.isNone())
             v.reinit();
     }
 
@@ -353,7 +352,7 @@ private:
     }
 
     void write(const Value& v) {
-        if (v.isNull()) {
+        if (v.isNone()) {
             Null();
         }
         else if (v.isPrimitive()) {

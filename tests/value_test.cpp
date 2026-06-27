@@ -24,74 +24,74 @@ TEST(ValueTest, NonConstPtrIsMutable) {
 	ASSERT_THAT(v.isModifiable(), Eq(true));
 }
 
-TEST(ValueTest, RawPtrCannotBeNull) {
+TEST(ValueTest, RawPtrCannotBeNone) {
 	double d = 49.12;
 	double* ptr = &d;
 	Value v(ptr);
 
-	ASSERT_THAT(v.canBeNull(), Eq(false));
+	ASSERT_THAT(v.canBeNone(), Eq(false));
 }
 
-TEST(ValueTest, WrappedPtrCanBeNull) {
+TEST(ValueTest, WrappedPtrCanBeNone) {
 	std::optional<double> opt = 665.12;
 	std::optional<double>* ptr = &opt;
 	Value v(ptr);
 
-	ASSERT_THAT(v.canBeNull(), Eq(true));
+	ASSERT_THAT(v.canBeNone(), Eq(true));
 }
 
-TEST(ValueTest, WrappedConstPtrCannotBeNull) {
+TEST(ValueTest, WrappedConstPtrCannotBeNone) {
 	std::optional<const double> opt = 665.12;
 	std::optional<const double>* ptr = &opt;
 	Value v(ptr);
 
-	ASSERT_THAT(v.canBeNull(), Eq(false));
+	ASSERT_THAT(v.canBeNone(), Eq(false));
 }
 
-TEST(ValueTest, RawPtrIsAlwaysNotNull) {
+TEST(ValueTest, RawPtrIsAlwaysNotNone) {
 	bool b = false;
 	bool* ptr = &b;
 	Value v(ptr);
 
-	ASSERT_THAT(v.isNull(), Eq(false));
+	ASSERT_THAT(v.isNone(), Eq(false));
 }
 
-TEST(ValueTest, IsNullIfWrappedPtrInitializedWithoutInitializer) {
+TEST(ValueTest, IsNoneIfWrappedPtrInitializedWithoutInitializer) {
 	std::optional<int> i = std::nullopt;
 	std::optional<int>* ptr = &i;
 	Value v(ptr);
 
-	ASSERT_THAT(v.isNull(), Eq(true));
+	ASSERT_THAT(v.isNone(), Eq(true));
 }
 
-TEST(ValueTest, IsNotNullIfWrappedPtrInitializedWithInitializer) {
+TEST(ValueTest, IsNotNoneIfWrappedPtrInitializedWithInitializer) {
 	std::optional<int> i = 72;
 	std::optional<int>* ptr = &i;
 	Value v(ptr);
 
-	ASSERT_THAT(v.isNull(), Eq(false));
+	ASSERT_THAT(v.isNone(), Eq(false));
 }
 
-TEST(ValueTest, IsNoneAfterWrappedPtrSetNull) {
+TEST(ValueTest, IsNoneAfterWrappedPtrSetNone) {
 	std::shared_ptr<bool> b = std::make_shared<bool>(true);
 	std::shared_ptr<bool>* ptr = &b;
 	Value v(ptr);
 
-	ASSERT_THAT(v.isNull(), Eq(false));
+	ASSERT_THAT(v.isNone(), Eq(false));
 
-	v.setNull();
+	v.setNone();
 
-	ASSERT_THAT(v.isNull(), Eq(true));
+	ASSERT_THAT(v.isNone(), Eq(true));
 }
 
-TEST(ValueTest, PointeeIsNullAfterWrappedPtrSetNull) {
+TEST(ValueTest, PointeeIsNoneAfterWrappedPtrSetNone) {
 	std::shared_ptr<bool> b = std::make_shared<bool>(true);
 	std::shared_ptr<bool>* ptr = &b;
 	Value v(ptr);
 
 	ASSERT_TRUE(b);
 
-	v.setNull();
+	v.setNone();
 
 	ASSERT_THAT(b, Eq(nullptr));
 }
@@ -352,13 +352,13 @@ TEST_F(ObjectTest, ObjMembersAreResetToDefaultAfterReinit) {
 	MEMBER_FLOAT_NEXT(it, "fVal", 0.0f);
 	CHECK_MEMBER_OBJECT(it, "deep");
 
-	ASSERT_THAT(it->value().canBeNull(), Eq(true));
-	ASSERT_THAT(it->value().isNull(), Eq(true));
+	ASSERT_THAT(it->value().canBeNone(), Eq(true));
+	ASSERT_THAT(it->value().isNone(), Eq(true));
 
 	ASSERT_THAT(++it, Eq(obj.end()));
 }
 
-TEST_F(ObjectTest, SetNullClearsObjectMembers) {
+TEST_F(ObjectTest, SetNoneClearsObjectMembers) {
 	auto ptr = &top.middle.deep;
 	Value v(ptr);
 	Object obj = v.asObject();
@@ -366,9 +366,9 @@ TEST_F(ObjectTest, SetNullClearsObjectMembers) {
 	auto beg = obj.begin();
 	auto end = obj.end();
 	ASSERT_FALSE(beg == end);
-	ASSERT_TRUE(v.canBeNull());
+	ASSERT_TRUE(v.canBeNone());
 
-	v.setNull();
+	v.setNone();
 
 	beg = obj.begin();
 	end = obj.end();
@@ -451,20 +451,20 @@ TEST_F(HomogeneousArrayTest, CorrectlyCountsElements) {
 }
 
 
-TEST_F(HomogeneousArrayTest, CanNotHoldNullElemWhenConstructedWithoutOptionalOrSharedWrapper) {
+TEST_F(HomogeneousArrayTest, CanNotHoldNoneElemWhenConstructedWithoutOptionalOrSharedWrapper) {
 	std::array<float, 5> arr;
 	auto ptr = &arr;
 	Value v(ptr);
 
-	ASSERT_THAT(v.canHoldNullElem(), Eq(false));
+	ASSERT_THAT(v.canHoldNoneElem(), Eq(false));
 }
 
-TEST_F(HomogeneousArrayTest, CanNotHoldNullElemWhenConstructedWithptionalOrShareWrapper) {
+TEST_F(HomogeneousArrayTest, CanNotHoldNoneElemWhenConstructedWithptionalOrShareWrapper) {
 	std::array<std::shared_ptr<float>, 5> arr;
 	auto ptr = &arr;
 	Value v(ptr);
 
-	ASSERT_THAT(v.canHoldNullElem(), Eq(true));
+	ASSERT_THAT(v.canHoldNoneElem(), Eq(true));
 }
 
 TEST_F(HomogeneousArrayTest, WalkThroughArray) {
@@ -529,7 +529,7 @@ TEST_F(HeterogeneousArrayTest, WalkThroughArray) {
 	ARRAY_STRING_NEXT(it, "world");
 
 	ASSERT_THAT(it->isArray(), Eq(true));
-	ASSERT_THAT(it->canBeNull(), Eq(true));
+	ASSERT_THAT(it->canBeNone(), Eq(true));
 
 	auto innerIt = it->arrayBegin();
 	ARRAY_BOOL_NEXT(innerIt, true);
