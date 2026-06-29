@@ -218,7 +218,7 @@ public:
 	* 
 	*  @param ptr Pointer to the source object
 	* 
-    *  @see     is_jsonable_v template
+    *  @see     is_json_serializable_v template
 	*/
 	template<typename Type>
 	Value(Type* ptr);
