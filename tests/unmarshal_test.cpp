@@ -74,7 +74,7 @@ struct OptionalPrimitiveFields {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(OptionalPrimitiveFields, (IntNumber, UintNumber, Int64Number, Uint64Number, Bool, FloatNumber, DoubleNumber, String))
 
-TEST(RapidUnmarshalTest, DeserializeNullablePrimitiveTypesWithOptionalWhenNull) {
+TEST(RapidUnmarshalTest, DeserializeNullablePrimitiveTypesWithOptionalOrSharedWhenNull) {
 	OptionalPrimitiveFields f;
 	f.IntNumber = 53;
 	f.UintNumber = 32546;
@@ -108,7 +108,7 @@ TEST(RapidUnmarshalTest, DeserializeNullablePrimitiveTypesWithOptionalWhenNull) 
 	ASSERT_EQ(f.String, nullptr);
 }
 
-TEST(RapidUnmarshalTest, DeserializeNullablePrimitiveTypesWithOptionalWhenPopulated) {
+TEST(RapidUnmarshalTest, DeserializeNullablePrimitiveTypesWithOptionalOrSharedWhenPopulated) {
 	std::string json(R"( {
 							"IntNumber"    : 315,
                             "UintNumber"   : 32546,

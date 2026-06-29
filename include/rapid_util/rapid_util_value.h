@@ -30,8 +30,8 @@ struct GetIfMatched {
 			return a;
 		}
 		else {
-			assert(false);
 			/* Should never be reached - this is the fallback for non-matching types */
+			assert(false);
 			return WantedType{};
 		}
 	}
@@ -42,8 +42,8 @@ template<typename Target, typename Source>
 struct AssignIfMatched {
 	static void assign(Target& to, const Source& from)
 	{
-		assert(false);
 		/* Should never be reached - this is the fallback for non-matching types */
+		assert(false);
 	}
 };
 

@@ -84,7 +84,7 @@ TEST(ValueTest, IsNoneAfterWrappedPtrSetNone) {
 	ASSERT_THAT(v.isNone(), Eq(true));
 }
 
-TEST(ValueTest, PointeeIsNoneAfterWrappedPtrSetNone) {
+TEST(ValueTest, PointeeIsNullAfterWrappedPtrSetNone) {
 	std::shared_ptr<bool> b = std::make_shared<bool>(true);
 	std::shared_ptr<bool>* ptr = &b;
 	Value v(ptr);
