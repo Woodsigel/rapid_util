@@ -461,13 +461,13 @@ private:
 		bool isDouble() const override { return isType<double>(); }
 		bool isString() const override { return isType<std::string>(); }
 
-		bool        getBool()   const override { return GetIfMatched<bool, ValueType>::get(value()); }
-		int         getInt()    const override { return GetIfMatched<int, ValueType>::get(value()); }
+		bool        getBool()   const override { return GetIfMatched<bool,     ValueType>::get(value()); }
+		int         getInt()    const override { return GetIfMatched<int,      ValueType>::get(value()); }
 		unsigned    getUint()   const override { return GetIfMatched<unsigned, ValueType>::get(value()); }
-		int64_t     getInt64()  const override { return GetIfMatched<int64_t, ValueType>::get(value()); }
+		int64_t     getInt64()  const override { return GetIfMatched<int64_t,  ValueType>::get(value()); }
 		uint64_t    getUint64() const override { return GetIfMatched<uint64_t, ValueType>::get(value()); }
-		float       getFloat()  const override { return GetIfMatched<float, ValueType>::get(value()); }
-		double      getDouble() const override { return GetIfMatched<double, ValueType>::get(value()); }
+		float       getFloat()  const override { return GetIfMatched<float,    ValueType>::get(value()); }
+		double      getDouble() const override { return GetIfMatched<double,   ValueType>::get(value()); }
 		std::string getString() const override { return GetIfMatched<std::string, ValueType>::get(value()); }
 
 		void setBool(bool b)       override { AssignIfMatched<ValueType, bool>::assign(value(), b); }
@@ -567,9 +567,9 @@ private:
 	using ArrayHolderPtr  = std::shared_ptr<ArrayHolder>;
 
 	ValueHolderPtr  valuePtr() const { return castTo<ValueHolderPtr>(held); }
-	PrimHolderPtr   primPtr()  const { return isPrimitive() ? castTo<PrimHolderPtr>(held) : nullptr; }
+	PrimHolderPtr   primPtr()  const { return isPrimitive() ? castTo<PrimHolderPtr>(held)   : nullptr; }
 	ObjectHolderPtr objPtr()   const { return isObject() ? castTo<ObjectHolderPtr>(held) : nullptr; }
-	ArrayHolderPtr  arrayPtr()   const { return isArray() ? castTo<ArrayHolderPtr>(held) : nullptr; }
+	ArrayHolderPtr  arrayPtr() const { return isArray() ? castTo<ArrayHolderPtr>(held)  : nullptr; }
 
 	template<typename Type>
 	using EnableIfIsValidHolderPtr = std::enable_if_t<std::disjunction_v<
@@ -849,14 +849,14 @@ std::vector<Value> tupleToValues(Tuple& tuple) {
 		return {};
 
 
-	std::vector<Value> elements;
-	std::apply([&elements](auto&&... tupleArgs)
+	std::vector<Value> values;
+	std::apply([&values](auto&&... tupleArgs)
 		{
-			(..., (elements.emplace_back(Value(&tupleArgs))));
+			(..., (values.emplace_back(Value(&tupleArgs))));
 		},
 		acc.value());
 
-	return elements;
+	return values;
 }
 
 
