@@ -8,7 +8,6 @@ struct Person {
     std::optional<std::string> email;
 };
 
-// Describe Person members for serialization
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Person, (name, age, isStudent, email))
 
 void marshal_basic_usage() {
@@ -20,6 +19,7 @@ void marshal_basic_usage() {
     std::cout << json << "\n" << std::endl;
 }
 
+
 struct Address {
     std::string street;
     std::string city;
@@ -28,11 +28,10 @@ struct Address {
 
 struct Employee {
     std::string name;
-    Address address;  // Nested struct
+    Address address;  
     double salary;
 };
 
-// Important: Nested struct Address must be registered first
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Address, (street, city, zipCode))
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Employee, (name, address, salary))
 
@@ -50,6 +49,7 @@ void marshal_nested_structure() {
     std::cout << json << "\n" << std::endl;
 }
 
+
 struct Product {
     std::string productId;
     std::string name;
@@ -57,14 +57,12 @@ struct Product {
     int quantity;
 };
 
-// Register Product for serialization
-RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Product, (productId, name, price, quantity))
-
 struct Inventory {
     std::string warehouse;
     std::vector<std::shared_ptr<Product>> products;  
 };
 
+RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Product, (productId, name, price, quantity))
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Inventory, (warehouse, products))
 
 void marshal_homogeneous_array() {
@@ -85,20 +83,18 @@ void marshal_homogeneous_array() {
     std::cout << json << "\n" << std::endl;
 }
 
+
 struct SensorReading {
     std::string sensorType;
     double value;
 };
-
-// Register SensorReading for serialization
-RAPIDJSON_UTIL_DESCRIBE_MEMBERS(SensorReading, (sensorType, value))
 
 struct SystemStatus {
     std::string timestamp;
     std::tuple<bool, int, SensorReading, std::string> statusData;  
 };
 
-
+RAPIDJSON_UTIL_DESCRIBE_MEMBERS(SensorReading, (sensorType, value))
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(SystemStatus, (timestamp, statusData))
 
 void marshal_heterogeneous_array() {
@@ -126,5 +122,5 @@ int main() {
 
     marshal_homogeneous_array();    // Array of same-type objects
 
-    marshal_heterogeneous_array();  // Tuple with mixed types
+    marshal_heterogeneous_array();  // Array with mixed types
 }

@@ -30,6 +30,7 @@ void unmarshal_basic_usage() {
     std::cout << "  Email: " << (person.email ? *person.email : "null") << "\n" << std::endl;
 }
 
+
 struct Address {
     std::string street;
     std::string city;
@@ -70,6 +71,7 @@ void unmarshal_nested_structure() {
     std::cout << "  Salary: " << employee.salary << "\n" << std::endl;
 }
 
+
 struct Product {
     std::string productId;
     std::string name;
@@ -109,6 +111,7 @@ void unmarshal_homogeneous_array() {
     }
     std::cout << std::endl;
 }
+
 
 struct SensorReading {
     std::string sensorType;
@@ -166,5 +169,5 @@ int main() {
 
     unmarshal_homogeneous_array();     // Array of same-type objects
 
-    unmarshal_heterogeneous_array();   // Tuple with mixed types
+    unmarshal_heterogeneous_array();   // Array with mixed types
 }
