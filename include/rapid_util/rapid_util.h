@@ -341,16 +341,6 @@ public:
     }
 
 private:
-    bool Float(float f) {
-        return Double(static_cast<double>(f));
-    }
-
-    bool String(std::string_view str) {
-        auto size = static_cast<SizeType>(str.size());
-
-        return Handler::String(str.data(), size);
-    }
-
     void write(const Value& v) {
         if (v.isNone()) {
             Null();
@@ -388,10 +378,11 @@ private:
         StartObject();
 
         for (auto& member : object) {
-            const auto& name = member.name();
-            Key(name.c_str(), static_cast<SizeType>(name.size()));
+            auto& name = member.name();
+            auto& value = member.value();
 
-            write(member.value());
+            Key(name.c_str(), static_cast<SizeType>(name.size()));
+            write(value);
         }
 
         EndObject();
@@ -404,6 +395,16 @@ private:
             write(elem);
         
         EndArray();
+    }
+
+    bool Float(float f) {
+        return Double(static_cast<double>(f));
+    }
+
+    bool String(std::string_view str) {
+        auto size = static_cast<SizeType>(str.size());
+
+        return Handler::String(str.data(), size);
     }
 };
 
