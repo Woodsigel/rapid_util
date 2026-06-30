@@ -247,7 +247,7 @@ protected:
 	void MEMBER_INT_NEXT(Value::MemberIterator& it, std::string_view name, int value) {
 		ASSERT_THAT(it->name(), Eq(name));
 		ASSERT_THAT(it->value().isInt(), Eq(true));
-		ASSERT_FLOAT_EQ(it->value().getInt(), value);
+		ASSERT_THAT(it->value().getInt(), Eq(value));
 		++it;
 	}
 
@@ -392,7 +392,7 @@ protected:
 
 	void ARRAY_FLOAT_NEXT(Value::ArrayIterator& it, float val) {
 		ASSERT_TRUE(it->isFloat());
-		ASSERT_THAT(it->getFloat(), Eq(val));
+		ASSERT_FLOAT_EQ(it->getFloat(), val);
 		++it;
 	}
 
