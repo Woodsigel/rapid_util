@@ -615,8 +615,8 @@ template<bool Const, typename ValueT>
 class Primitive {
 public:
 	using ValueType = typename MaybeAddConst<Const, ValueT>::type;
-	using PrimitiveType = Primitive<false, Value>;
-	using ConstPrimitiveType = Primitive<true, Value>;
+	using PrimitiveType = typename ValueT::PrimitiveType;
+	using ConstPrimitiveType = typename ValueT::ConstPrimitiveType;
 
 	operator ValueType&() const{ return value; }
 
@@ -654,7 +654,7 @@ public:
 
 private:
 	Primitive(ValueType& v) : value(v) {}
-	friend class Value;
+	friend ValueT;
 	ValueType& value;
 };
 
@@ -681,8 +681,8 @@ public:
 	using Member = typename ValueT::Member;
 	using MemberIterator = std::conditional_t<Const, typename ValueT::ConstMemberIterator, 
 		                                             typename ValueT::MemberIterator>;
-	using ObjectType = Object<false, ValueT>;
-	using ConstObjectType = Object<true, ValueT>;
+	using ObjectType = typename ValueT::ObjectType;
+	using ConstObjectType = typename ValueT::ConstObjectType;
 
 	operator ValueType& () const { return value; }
 
@@ -696,7 +696,7 @@ public:
 
 private:
 	Object(ValueType& v) : value(v) {}
-	friend class Value;
+	friend ValueT;
 	ValueType& value;
 };
 
@@ -707,8 +707,8 @@ public:
 	using ValueType = typename MaybeAddConst<Const, ValueT>::type;
 	using ArrayIterator = std::conditional_t<Const, typename ValueT::ConstArrayIterator,
 		                                            typename ValueT::ArrayIterator>;
-	using ArrayType = Array<false, ValueT>;
-	using ConstArrayType = Array<true, ValueT>;
+	using ArrayType = typename ValueT::ArrayType;
+	using ConstArrayType = typename ValueT::ConstArrayType;
 
 	operator ValueType& () const { return value; }
 
@@ -727,7 +727,7 @@ public:
 
 private:
 	Array(ValueType& v) : value(v) {}
-	friend class Value;
+	friend ValueT;
 	ValueType& value;
 };
 
