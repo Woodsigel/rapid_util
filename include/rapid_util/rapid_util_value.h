@@ -867,8 +867,8 @@ std::vector<Value::Member> buildStructMemPtrTree(Struct& s) {
 
 
 	std::vector<Value::Member> members;
+	auto descriptors = getDescriptors<Struct>();
 
-	auto descriptors = Descriptor<std::remove_cv_t<remove_shared_optional_t<Struct>>>::member_descriptors;
 	for_each(descriptors, [&acc, &members](auto desc) {
 		constexpr auto n = getMemberName(desc);
 		auto& v          = getMemberValue(acc.value(), desc);
@@ -877,6 +877,13 @@ std::vector<Value::Member> buildStructMemPtrTree(Struct& s) {
 	});
 
 	return members;
+}
+
+template<typename Struct>
+auto getDescriptors() {
+	using S = std::remove_cv_t<remove_shared_optional_t<Struct>>;
+
+	return Descriptor<S>::member_descriptors;
 }
 
 template<typename Desc>
