@@ -380,7 +380,7 @@ private:
             auto& name = member.name();
             auto& value = member.value();
 
-            Key(name.c_str(), static_cast<SizeType>(name.size()));
+            Key(name);
             write(value);
         }
 
@@ -404,6 +404,11 @@ private:
         auto size = static_cast<SizeType>(str.size());
 
         return Handler::String(str.data(), size);
+    }
+
+    bool Key(std::string_view name) {
+        return Handler::Key(name.data(), 
+            static_cast<SizeType>(name.size()));
     }
 };
 
