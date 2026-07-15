@@ -748,7 +748,7 @@ inline Value::Value(Type* primtivePtr, PrimitiveTag)
 template<typename Type>
 inline Value::Value(Type* structPtr, StructTag) {
 	static_assert(is_jsonable_struct_v<Type>,
-		"Type should be JSON-serializable class or struct");
+		"Type must be JSON-serializable class or struct");
 
 	held = std::make_shared<ObjectHolderImpl<Type>>(structPtr,
 			                                        buildStructMemPtrTree(*structPtr));
@@ -757,7 +757,7 @@ inline Value::Value(Type* structPtr, StructTag) {
 template<typename Type>
 Value::Value(Type* seqContainerPtr, SequentialContainerTag) {
 	static_assert(is_jsonable_sequential_container_v<Type>,
-		"Type should be JSON-serializable sequential container");
+		"Type must be JSON-serializable sequential container");
 
 	constexpr bool isResizable =
 		is_jsonable_dynamic_array_v<Type> && !std::is_const_v<Type>;
@@ -776,7 +776,7 @@ Value::Value(Type* seqContainerPtr, SequentialContainerTag) {
 template<typename Type>
 Value::Value(Type* tuplePtr, TupleTag) {
 	static_assert(is_jsonable_tuple_v<Type>,
-		"Type should be JSON-serializable tuple");
+		"Type must be JSON-serializable tuple");
 
 	held = std::make_shared<ArrayHolderImpl<Type>>(tuplePtr,
 		                                           tupleToValues(*tuplePtr), 
