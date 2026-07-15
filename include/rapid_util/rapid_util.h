@@ -18,7 +18,6 @@
 #include <rapidjson/document.h>
 #include <stdexcept>
 #include <string_view>
-#include "rapid_util_preprocessor.h"
 #include "rapid_util_value.h"
 
 namespace rapidjson_util {
