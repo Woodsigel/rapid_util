@@ -1,5 +1,5 @@
 #include "gmock/gmock.h"
-#include "rapid_util/rapid_util_preprocessor.h"
+#include "rapidjs_util/preprocessor.h"
 
 using namespace rapidjson_util::detail;
 

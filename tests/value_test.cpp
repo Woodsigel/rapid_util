@@ -1,6 +1,6 @@
 #include <gmock/gmock.h>
 
-#include "rapid_util/rapid_util_value.h"
+#include "rapidjs_util/value.h"
 
 using namespace rapidjson_util::detail;
 using ::testing::Eq;

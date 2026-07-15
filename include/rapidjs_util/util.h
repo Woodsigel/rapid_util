@@ -18,7 +18,7 @@
 #include <rapidjson/document.h>
 #include <stdexcept>
 #include <string_view>
-#include "rapid_util_value.h"
+#include "rapidjs_util/value.h"
 
 namespace rapidjson_util {
 

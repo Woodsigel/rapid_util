@@ -1,5 +1,5 @@
 #include "gmock/gmock.h"
-#include "rapid_util/rapid_util.h"
+#include "rapidjs_util/util.h"
 
 
 struct PrimitiveFields {
