@@ -10,8 +10,7 @@
 // arising from the use of this software.
 
 
-#ifndef __SIMPLE_RAPID_JSON_UTIL_H__
-#define __SIMPLE_RAPID_JSON_UTIL_H__
+#pragma once
 
 #include <rapidjson/writer.h>
 #include <rapidjson/stringbuffer.h>
@@ -443,6 +442,3 @@ void unmarshalImpl(std::string_view json, Struct& s)  {
 }  // namespace detail
 
 }  // namespace rapidjson_util 
-           
-        
-#endif

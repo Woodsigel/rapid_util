@@ -10,8 +10,7 @@
 // arising from the use of this software.
 
 
-#ifndef __RAPIDJSON_UTIL_PREPROCESSOR_H__
-#define __RAPIDJSON_UTIL_PREPROCESSOR_H__
+#pragma once
 
 #include <string>
 #include <list>
@@ -67,7 +66,7 @@ using member_type_t = typename member_type<T>::type;
 
 
 template<bool Const, typename T>
-struct MaybeAddConst {
+struct maybe_add_const {
     using type = std::conditional_t<Const, const T, T>;
 };
 
@@ -668,6 +667,3 @@ constexpr bool is_json_serializable_v =
         static_assert(std::is_class_v<C>, "RAPIDJSON_UTIL_DESCRIBE_MEMBERS should only be used with class or struct types");     \
         RAPIDJSON_UTIL_CHECK_MEMBERS_ARE_SERIALIZABLE(C, members)                                                                \
         RAPIDJSON_UTIL_DESCRIBE_MEMBERS_IMPL(C, members)      
-
-
-#endif

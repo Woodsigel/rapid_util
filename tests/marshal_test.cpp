@@ -59,9 +59,9 @@ std::string truncateDecimals(const std::string& input, int precision) {
 TEST(MARSHAL_TEST_UTIL, RemoveWhitespaceOutsideQuotes) {
 	std::string json = R"({  "city" : "New York" })";
 
-	std::string exepct = R"({"city":"New York"})";
+	std::string expect = R"({"city":"New York"})";
 
-	ASSERT_STREQ(removeWhitespaceOutsideQuotes(json).c_str(), exepct.c_str());
+	ASSERT_STREQ(removeWhitespaceOutsideQuotes(json).c_str(), expect.c_str());
 }
 
 TEST(MARSHAL_TEST_UTIL, TruncateDecimals) {
@@ -73,7 +73,7 @@ TEST(MARSHAL_TEST_UTIL, TruncateDecimals) {
 }
 
 
-struct AbitraryStruct {
+struct ArbitraryStruct {
 	int IntNumber;
 	unsigned UintNumber;
 	int64_t Int64Number;
@@ -84,10 +84,10 @@ struct AbitraryStruct {
 	std::string String;
 };
 
-RAPIDJSON_UTIL_DESCRIBE_MEMBERS(AbitraryStruct, (IntNumber, UintNumber, Int64Number, Uint64Number, BoolValue, FloatNumber, DoubleNumber, String))
+RAPIDJSON_UTIL_DESCRIBE_MEMBERS(ArbitraryStruct, (IntNumber, UintNumber, Int64Number, Uint64Number, BoolValue, FloatNumber, DoubleNumber, String))
 
 TEST(RapidMarshalTest, SerializePrimitiveTypes) {
-	AbitraryStruct s;
+	ArbitraryStruct s;
 	s.IntNumber = 42;
 	s.UintNumber = 2345678901;
 	s.Int64Number = -9876543210LL;
@@ -405,14 +405,14 @@ RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Response, (header, content))
 
 TEST(RapidMarshalTest, SerializeHeterogeneousArray) {
 	Response response;
-	response.header = "/101/Forbiden";
+	response.header = "/101/Forbidden";
 	response.content = std::make_tuple("success", 200, User{ 10, "John" });
 
 
 	auto actual = rapidjson_util::marshal(response);
 
 	auto expect = R"({
-                      "header" : "/101/Forbiden",
+                      "header" : "/101/Forbidden",
                       "content" : ["success", 200, {"id" : 10,"name" : "John"}]
                     })";
 

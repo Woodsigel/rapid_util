@@ -51,7 +51,7 @@ struct TypeHolder {
 
 
 TEST(JsonValueTypeTraitTest, IdentifyContainersWithNullableElementsUsingStdOptionalOrShared) {
-	using aUnSerialableType = std::stringstream;
+	using aUnserializableType = std::stringstream;
 
 	static_assert(can_hold_null_elem<std::vector<std::optional<int>>>::value);
 	static_assert(can_hold_null_elem<std::optional<std::vector<std::optional<std::string>>>>::value);
@@ -60,7 +60,7 @@ TEST(JsonValueTypeTraitTest, IdentifyContainersWithNullableElementsUsingStdOptio
 	static_assert(can_hold_null_elem<std::array<std::shared_ptr<bool>, 10>>::value);
 	static_assert(can_hold_null_elem<std::shared_ptr<std::list<std::shared_ptr<std::string>>>>::value);
 
-	static_assert(!can_hold_null_elem<std::vector<std::optional<aUnSerialableType>>>::value);
+	static_assert(!can_hold_null_elem<std::vector<std::optional<aUnserializableType>>>::value);
 	static_assert(!can_hold_null_elem<TypeHolder<std::shared_ptr<bool>>>::value,
 		          "TypeHolder is not a standard sequential container.");
 }
@@ -95,7 +95,7 @@ TEST(WrapperTraitTest, DetectStdSharedTypes) {
 	static_assert(std::is_same_v<remove_std_shared_ptr_t<const std::shared_ptr<const int>>, const int>);
 }
 
-TEST(WrapperTraitTest, RmoveSharedAndOptionalWrapper) {
+TEST(WrapperTraitTest, RemoveSharedAndOptionalWrapper) {
 	static_assert(std::is_same_v<remove_shared_optional_t<int>, int>);
 	static_assert(std::is_same_v<remove_shared_optional_t<std::shared_ptr<int>>,  int>);
 	static_assert(std::is_same_v<remove_shared_optional_t<const std::shared_ptr<int>>,const int>);

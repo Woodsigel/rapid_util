@@ -10,8 +10,7 @@
 // arising from the use of this software.
 
 
-#ifndef __RAPID_UTIL_VALUE_H__
-#define __RAPID_UTIL_VALUE_H__
+#pragma once
 
 #include <variant>
 #include <functional>
@@ -614,7 +613,7 @@ private:
 template<bool Const, typename ValueT>
 class Primitive {
 public:
-	using ValueType = typename MaybeAddConst<Const, ValueT>::type;
+	using ValueType = typename maybe_add_const<Const, ValueT>::type;
 	using PrimitiveType = typename ValueT::PrimitiveType;
 	using ConstPrimitiveType = typename ValueT::ConstPrimitiveType;
 
@@ -677,7 +676,7 @@ private:
 template<bool Const, typename ValueT>
 class Object {
 public:
-	using ValueType = typename MaybeAddConst<Const, ValueT>::type;
+	using ValueType = typename maybe_add_const<Const, ValueT>::type;
 	using Member = typename ValueT::Member;
 	using MemberIterator = std::conditional_t<Const, typename ValueT::ConstMemberIterator, 
 		                                             typename ValueT::MemberIterator>;
@@ -704,7 +703,7 @@ private:
 template<bool Const, typename ValueT>
 class Array {
 public:
-	using ValueType = typename MaybeAddConst<Const, ValueT>::type;
+	using ValueType = typename maybe_add_const<Const, ValueT>::type;
 	using ArrayIterator = std::conditional_t<Const, typename ValueT::ConstArrayIterator,
 		                                            typename ValueT::ArrayIterator>;
 	using ArrayType = typename ValueT::ArrayType;
@@ -899,5 +898,3 @@ auto& getMemberValue(Struct& s, Desc descriptor) {
 }  // namespace detail
 
 }  // namespace rapidjson_util 
-
-#endif

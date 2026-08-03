@@ -14,7 +14,7 @@ A simple C++17 JSON utility built on [RapidJSON](https://rapidjson.org/) that au
 
 ### Basic Serialization
 ```
-#include "rapid_util.h"
+#include "rapidjs_util.h"
 
 struct Person {
     std::string name;
@@ -53,7 +53,7 @@ std::cout << "  Email: " << (person.email.has_value() ? person.email.value() : "
 ```
 ### Nested Structures Serialization
 ```
-#include "rapid_util.h"
+#include "rapidjs_util.h"
 
 // Serialize to JSON
 
@@ -84,7 +84,7 @@ std::string json = rapidjson_util::marshal(employee);
 ```
 ### Nested Structures Deserialization
 ```
-#include "rapid_util.h"
+#include "rapidjs_util.h"
 #include <cassert>
 
 // Deserialize from JSON  
@@ -139,7 +139,7 @@ assert(config.credential == std::nullopt);
 ```
 
 ## Installation
-`rapid_util` is header-only. Just copy `rapid_util/include` to your project's include path. It requires the RapidJSON library for its parsing functionality, please ensure RapidJSON is available in your include path
+`rapidjs_util` is header-only. Just copy `rapidjs_util/include` to your project's include path. It requires the RapidJSON library for its parsing functionality, please ensure RapidJSON is available in your include path
 
 ## Requirements
 -   C++17 or later
@@ -147,7 +147,7 @@ assert(config.credential == std::nullopt);
 
 # 中文简介
 
-rapid_util 是一个基于RapidJSON的简易C++17工具，用于实现C++结构体与JSON之间的序列化与反序列化。其反射预处理器借鉴了Boost Describe库的设计，但进行了简化以降低使用难度并减少依赖项。可以满足大多数 JSON 序列化应用场景的需求。
+rapidjs_util 是一个基于RapidJSON的简易C++17工具，用于实现C++结构体与JSON之间的序列化与反序列化。其反射预处理器借鉴了Boost Describe库的设计，但进行了简化以降低使用难度并减少依赖项。可以满足大多数中小型项目 JSON 序列化应用场景的需求。
 
 Author: Liu Wu
 Mail: woodsliu856@gmail.com

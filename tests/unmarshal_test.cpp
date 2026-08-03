@@ -193,7 +193,7 @@ struct DatabaseConfig {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(DatabaseConfig, (host, port, credential))
 
-TEST(RapidUnmarshalTest, DerializeNestedStructWithOptionalWhenNull) {
+TEST(RapidUnmarshalTest, DesrializeNestedStructWithOptionalWhenNull) {
 	auto json = R"( {
 					"host": "localhost",
 					"port": 4212,
@@ -397,7 +397,7 @@ struct JobPostingWithOptionalJobInfo {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(JobPostingWithOptionalJobInfo, (jobs))
 
-TEST(RapidUnmarshalTest, DeserializeHomogeneousArrayHavinghOptionalElemsWhenContainNulls) {
+TEST(RapidUnmarshalTest, DeserializeHomogeneousArrayHavingOptionalElemsWhenContainNulls) {
 	std::string json(R"({
         "jobs": [
 					 {
