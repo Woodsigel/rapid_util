@@ -231,7 +231,7 @@ public:
 
 private:
     void read(Value& v, const rapidjson::Value& json) {
-        if (v.canBeNone() && json.IsNull()) 
+        if (json.IsNull() && v.canBeNone())
             return v.setNone();
   
   
