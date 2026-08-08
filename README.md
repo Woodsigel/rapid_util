@@ -9,6 +9,7 @@ A simple C++17 JSON utility built on [RapidJSON](https://rapidjson.org/) that au
 - **Homogeneous Arrays**: Support for JSON homogeneous array serialization using `std::vector`, `std::list`, and `std::array`
 - **Heterogeneous Arrays**: Support for JSON heterogeneous array serialization using `std::tuple`
 - **JSON Null Values**: Support for JSON null values using `std::optional` or `std::shared_ptr`
+- **Member Aliases**: Support mapping class member names to different JSON keys 
 
 ## Usage
 
@@ -74,13 +75,13 @@ RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Employee, (name, address, salary))
 
 Employee employee{
     "John Doe", 
-    {"123 Main St", "New York", 10001}, 
+    {"Times Square", "New York", 10001}, 
     75000.0
 };
 
 
 std::string json = rapidjson_util::marshal(employee);
-// Result: {"name":"John Doe","address":{"street":"123 Main St","city":"New York","zipCode":10001},"salary":75000.0}
+// Result: {"name":"John Doe","address":{"street":"Times Square","city":"New York","zipCode":10001},"salary":75000.0}
 ```
 ### Nested Structures Deserialization
 ```
@@ -92,7 +93,7 @@ std::string json = rapidjson_util::marshal(employee);
 json = R"({
     "name": "Jane Smith",
     "address": {
-        "street": "456 Oak Ave",
+        "street": "Nanjing Street",
         "city": "Shanghai",
         "zipCode": 200000
     },

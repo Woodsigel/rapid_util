@@ -70,11 +70,6 @@ struct maybe_add_const {
     using type = std::conditional_t<Const, const T, T>;
 };
 
-template<typename T>
-struct type2type {
-    using type = T;
-};
-
 
 template<template<typename> typename Wrapper, typename T>
 struct is_wrapper : std::false_type {};
@@ -187,6 +182,17 @@ public:
 
 template<typename T>
 using remove_shared_optional_t = typename remove_shared_optional<T>::type;
+
+
+template<typename T>
+struct is_string_literal : std::false_type {};
+
+template<size_t N>
+struct is_string_literal<const char(&)[N]> : std::true_type {};
+
+template<typename T>
+constexpr bool is_string_literal_v = is_string_literal<T>::value;
+
 
 template<typename T>
 constexpr bool is_js_primitive_type_v = std::disjunction_v<
@@ -368,9 +374,9 @@ private:
             if constexpr (is_std_tuple_v<F>)
                 return inner<F>::value;
             else
-                return is_jsonable_primitive_type_v<F> ||
-                is_jsonable_sequential_container_v<F> ||
-                is_jsonable_struct_v<F>;
+                return is_jsonable_primitive_type_v<F>       ||
+                       is_jsonable_sequential_container_v<F> ||
+                       is_jsonable_struct_v<F>;
         }
 
         static constexpr bool check_remaining() {
@@ -642,18 +648,12 @@ constexpr bool is_json_serializable_v =
                                                                  RAPIDJSON_UTIL_STRIP_COMMAS_0))(__VA_ARGS__))   
 
 
-#define RAPIDJSON_UTIL_CHECK_MEMBERS_ARE_SERIALIZABLE(C, members) \
-        RAPIDJSON_UTIL_STRIP_COMMAS(RAPIDJSON_UTIL_FOR_EACH(RAPIDJSON_UTIL_ASSERT_IS_SERIALIZABLE, C, RAPIDJSON_UTIL_UNPACK members))
 
 #define RAPIDJSON_UTIL_ASSERT_IS_SERIALIZABLE(C, member) \
         static_assert(rapidjson_util::detail::is_json_serializable_v<rapidjson_util::detail::member_type_t<decltype(&C::member)>>, "Member variable types must be non-const and compatible with JSON.");
 
-
-#define RAPIDJSON_UTIL_DESCRIBE_MEMBERS_IMPL(C, members)  template<> struct rapidjson_util::detail::Descriptor<C> { \
-     	static constexpr bool is_describable = true;                                                                \
-        static constexpr auto member_descriptors = make_typelist(                                                   \
-                       RAPIDJSON_UTIL_FOR_EACH(RAPIDJSON_UTIL_MEMBER_META, C, RAPIDJSON_UTIL_UNPACK members));      \
-        };
+#define RAPIDJSON_UTIL_ASSERT_MEMBERS_ARE_SERIALIZABLE(C, members) \
+        RAPIDJSON_UTIL_STRIP_COMMAS(RAPIDJSON_UTIL_FOR_EACH(RAPIDJSON_UTIL_ASSERT_IS_SERIALIZABLE, C, RAPIDJSON_UTIL_UNPACK members))
 
 
 #define RAPIDJSON_UTIL_MEMBER_META(C, member)                                                    \
@@ -662,8 +662,53 @@ constexpr bool is_json_serializable_v =
              static constexpr auto name() noexcept { return RAPIDJSON_UTIL_STRINGIFY(member); }  \
     }; return rapidjsonUtilDesc{}; }  () 
 
+#define RAPIDJSON_UTIL_DESCRIBE_MEMBERS_IMPL(C, members)  template<> struct rapidjson_util::detail::Descriptor<C> { \
+     	static constexpr bool is_describable = true;                                                                \
+        static constexpr auto member_descriptors = make_typelist(                                                   \
+                       RAPIDJSON_UTIL_FOR_EACH(RAPIDJSON_UTIL_MEMBER_META, C, RAPIDJSON_UTIL_UNPACK members));      \
+        };
 
-#define RAPIDJSON_UTIL_DESCRIBE_MEMBERS(C, members)                                                                              \
-        static_assert(std::is_class_v<C>, "RAPIDJSON_UTIL_DESCRIBE_MEMBERS should only be used with class or struct types");     \
-        RAPIDJSON_UTIL_CHECK_MEMBERS_ARE_SERIALIZABLE(C, members)                                                                \
+
+#define RAPIDJSON_UTIL_DESCRIBE_MEMBERS(C, members)                                                                           \
+        static_assert(std::is_class_v<C>, "RAPIDJSON_UTIL_DESCRIBE_MEMBERS should only be used with class or struct types");  \
+        RAPIDJSON_UTIL_ASSERT_MEMBERS_ARE_SERIALIZABLE(C, members)                                                            \
         RAPIDJSON_UTIL_DESCRIBE_MEMBERS_IMPL(C, members)      
+
+
+
+// Verify whether given aliases are string literals; C is unused (to satisfy RAPIDJSON_UTIL_FOR_EACH's interface).
+#define RAPIDJSON_UTIL_ASSERT_ALIAS_IS_STRING_LITERAL(C, memAliasPair) RAPIDJSON_UTIL_ASSERT_ALIAS_IS_STRING_LITERAL_I(RAPIDJSON_UTIL_UNPACK memAliasPair)
+#define RAPIDJSON_UTIL_ASSERT_ALIAS_IS_STRING_LITERAL_I(...)           RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_ASSERT_ALIAS_IS_STRING_LITERAL_II(__VA_ARGS__))
+#define RAPIDJSON_UTIL_ASSERT_ALIAS_IS_STRING_LITERAL_II(member, alias) static_assert(rapidjson_util::detail::is_string_literal_v<decltype(alias)>, "Alias must be a string literal");
+
+#define RAPIDJSON_UTIL_CHECK_ALIASES_ARE_STRING_LITERALS(C, memAliasPairs)  \
+        RAPIDJSON_UTIL_STRIP_COMMAS(RAPIDJSON_UTIL_FOR_EACH(RAPIDJSON_UTIL_ASSERT_ALIAS_IS_STRING_LITERAL, C, RAPIDJSON_UTIL_UNPACK memAliasPairs))
+
+
+#define RAPIDJSON_UTIL_ASSERT_MEMBER_WITH_ALIAS_IS_SERIALIZABLE(C, memAliasPair) RAPIDJSON_UTIL_ASSERT_MEMBER_WITH_ALIAS_IS_SERIALIZABLE_I(C, RAPIDJSON_UTIL_UNPACK memAliasPair)
+#define RAPIDJSON_UTIL_ASSERT_MEMBER_WITH_ALIAS_IS_SERIALIZABLE_I(C, ...)           RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_ASSERT_MEMBER_WITH_ALIAS_IS_SERIALIZABLE_II(C, __VA_ARGS__))
+#define RAPIDJSON_UTIL_ASSERT_MEMBER_WITH_ALIAS_IS_SERIALIZABLE_II(C, member, alias) RAPIDJSON_UTIL_ASSERT_IS_SERIALIZABLE(C, member)
+
+#define RAPIDJSON_UTIL_ASSERT_MEMBERS_WITH_ALIAS_ARE_SERIALIZABLE(C, memAliasPairs)  \
+        RAPIDJSON_UTIL_STRIP_COMMAS(RAPIDJSON_UTIL_FOR_EACH(RAPIDJSON_UTIL_ASSERT_MEMBER_WITH_ALIAS_IS_SERIALIZABLE, C, RAPIDJSON_UTIL_UNPACK memAliasPairs))
+
+
+#define RAPIDJSON_UTIL_MEMBER_ALIAS_META(C, memAliasPairs) RAPIDJSON_UTIL_MEMBER_ALIAS_META_I(C, RAPIDJSON_UTIL_UNPACK memAliasPairs)
+#define RAPIDJSON_UTIL_MEMBER_ALIAS_META_I(C, ...)        RAPIDJSON_UTIL_EXPAND(RAPIDJSON_UTIL_MEMBER_ALIAS_META_II(C, __VA_ARGS__))
+#define RAPIDJSON_UTIL_MEMBER_ALIAS_META_II(C, member, alias)                 \
+	[]{ struct rapidjsonUtilDesc {                                            \
+             static constexpr auto pointer() noexcept { return &C::member; }  \
+             static constexpr auto name() noexcept { return alias; }          \
+    }; return rapidjsonUtilDesc{}; }  () 
+
+#define RAPIDJSON_UTIL_DESCRIBE_MEMBERS_WITH_ALIAS_IMPL(C, memAliasPairs)  template<> struct rapidjson_util::detail::Descriptor<C> {  \
+        static constexpr bool is_describable = true;                                                                                  \
+        static constexpr auto member_descriptors = make_typelist(                                                                     \
+                       RAPIDJSON_UTIL_FOR_EACH(RAPIDJSON_UTIL_MEMBER_ALIAS_META, C, RAPIDJSON_UTIL_UNPACK memAliasPairs));            \
+        };
+
+#define RAPIDJSON_UTIL_DESCRIBE_MEMBERS_WITH_ALIAS(C, memAliasPairs)                                                                     \
+        static_assert(std::is_class_v<C>, "RAPIDJSON_UTIL_DESCRIBE_MEMBERS_WITH_ALIAS should only be used with class or struct types");  \
+        RAPIDJSON_UTIL_CHECK_ALIASES_ARE_STRING_LITERALS(C, memAliasPairs)                                                               \
+        RAPIDJSON_UTIL_ASSERT_MEMBERS_WITH_ALIAS_ARE_SERIALIZABLE(C, memAliasPairs)                                                      \
+        RAPIDJSON_UTIL_DESCRIBE_MEMBERS_WITH_ALIAS_IMPL(C, memAliasPairs)      

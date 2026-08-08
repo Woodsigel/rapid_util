@@ -1,20 +1,21 @@
 ﻿cmake_minimum_required(VERSION 3.16)
 
-project(rapid_util)
+project(rapidjs_util)
 
-option(RAPIDUTIL_BUILD_TESTS "Build tests" ON)
+option(rapidjsUtil_BUILD_TESTS "Build tests" ON)
 
 
 set(CMAKE_CXX_STANDARD 17)            # Require C++17
 set(CMAKE_CXX_STANDARD_REQUIRED ON)   
 set(CMAKE_CXX_EXTENSIONS OFF)        
 
-add_executable(rapidUtilMarshal marshal_example.cpp)
-add_executable(rapidUtilUnmarshal unmarshal_example.cpp)
+add_executable(rapidjsUtilMarshal marshal_example.cpp)
+add_executable(rapidjsUtilUnmarshal unmarshal_example.cpp)
+add_executable(rapidjsUtilAlias alias_example.cpp)
  
-# Download and build RapidJSON if not found
-find_package(RapidJSON QUIET)
-if(NOT RapidJSON_FOUND)
+# Download and build rapidjsON if not found
+find_package(rapidjsON QUIET)
+if(NOT rapidjsON_FOUND)
 	include(ExternalProject)
 	ExternalProject_Add(
 		rapidjson
@@ -27,19 +28,20 @@ if(NOT RapidJSON_FOUND)
 	)
 	
 	ExternalProject_Get_property(rapidjson SOURCE_DIR)
-	set(RapidJSON_INCLUDE_DIRS "${SOURCE_DIR}/include")
+	set(rapidjsON_INCLUDE_DIRS "${SOURCE_DIR}/include")
 	
-	add_dependencies(rapidUtilMarshal rapidjson)
-	add_dependencies(rapidUtilUnmarshal rapidjson)
+	add_dependencies(rapidjsUtilMarshal rapidjson)
+	add_dependencies(rapidjsUtilUnmarshal rapidjson)
 endif()
 
 
-set(RAPIDUTIL_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include" ${RapidJSON_INCLUDE_DIRS})
+set(rapidjsUtil_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include" ${rapidjsON_INCLUDE_DIRS})
 
-target_include_directories(rapidUtilMarshal PRIVATE ${RAPIDUTIL_INCLUDE_DIR})
-target_include_directories(rapidUtilUnmarshal PRIVATE ${RAPIDUTIL_INCLUDE_DIR})
+target_include_directories(rapidjsUtilMarshal PRIVATE ${rapidjsUtil_INCLUDE_DIR})
+target_include_directories(rapidjsUtilUnmarshal PRIVATE ${rapidjsUtil_INCLUDE_DIR})
+target_include_directories(rapidjsUtilAlias PRIVATE ${rapidjsUtil_INCLUDE_DIR})
 
-if(RAPIDUTIL_BUILD_TESTS)
+if(rapidjsUtil_BUILD_TESTS)
 	message(STATUS "Building with tests")
 	enable_testing()
 	add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/tests")

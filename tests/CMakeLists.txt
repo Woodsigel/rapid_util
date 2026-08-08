@@ -19,12 +19,12 @@ set(TESTS_SRCS ${TESTS_SOURCE_DIR}/rapid_util_test.cpp
 			   ${TESTS_SOURCE_DIR}/unmarshal_test.cpp
                ${TESTS_SOURCE_DIR}/value_test.cpp)
 			  
-add_executable(rapidutil_test ${TESTS_SRCS})
-target_include_directories(rapidutil_test PRIVATE ${RAPIDUTIL_INCLUDE_DIR})
-target_link_libraries(rapidutil_test GTest::gmock)
+add_executable(rapidjsUtilTest ${TESTS_SRCS})
+target_include_directories(rapidjsUtilTest PRIVATE ${rapidjsUtil_INCLUDE_DIR})
+target_link_libraries(rapidjsUtilTest GTest::gmock)
 
-add_dependencies(rapidutil_test rapidjson)
+add_dependencies(rapidjsUtilTest rapidjson)
      
 if(MSVC)
-	target_compile_options(rapidutil_test PRIVATE $<$<CONFIG:Debug>:/MD>)
+	target_compile_options(rapidjsUtilTest PRIVATE $<$<CONFIG:Debug>:/MD>)
 endif()
