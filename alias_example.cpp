@@ -29,9 +29,9 @@ struct Customer {
  
 /**
  * Address member mappings:
- *   street   ¡ú "St"     (remapped)
- *   city     ¡ú "city"   (preserved via __as_is__)
- *   zipCode  ¡ú "ZIP"    (remapped)
+ *   street   -> "St"     (remapped)
+ *   city     -> "city"   (preserved via __as_is__)
+ *   zipCode  -> "ZIP"    (remapped)
  */
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS_WITH_ALIAS(Address, ((street, "St"),            // create alias of street for St
                                                      (city,   __as_is__),       // Preserves "city" as JSON key
@@ -39,9 +39,9 @@ RAPIDJSON_UTIL_DESCRIBE_MEMBERS_WITH_ALIAS(Address, ((street, "St"),            
 
 /**
  * OrderItem member mappings:
- *   productId ¡ú "id"     (remapped)
- *   quantity  ¡ú "qty"    (remapped)
- *   unitPrice ¡ú "price"  (remapped)
+ *   productId -> "id"     (remapped)
+ *   quantity  -> "qty"    (remapped)
+ *   unitPrice -> "price"  (remapped)
  */
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS_WITH_ALIAS(OrderItem, ((productId, "id"), 
                                                        (quantity, "qty"), 
@@ -49,11 +49,11 @@ RAPIDJSON_UTIL_DESCRIBE_MEMBERS_WITH_ALIAS(OrderItem, ((productId, "id"),
 
 /**
  * Customer member mappings:
- *   firstName ¡ú "name"      (remapped)
- *   lastName  ¡ú "surname"   (remapped)
- *   address   ¡ú "addr"      (remapped)
- *   items     ¡ú "items"     (preserved via __as_is__)
- *   isActive  ¡ú "isActive"  (preserved via __as_is__)
+ *   firstName -> "name"      (remapped)
+ *   lastName  -> "surname"   (remapped)
+ *   address   -> "addr"      (remapped)
+ *   items     -> "items"     (preserved via __as_is__)
+ *   isActive  -> "isActive"  (preserved via __as_is__)
  */
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS_WITH_ALIAS(Customer, ((firstName, "name"), 
                                                       (lastName, "surname"), 
