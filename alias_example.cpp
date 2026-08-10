@@ -1,3 +1,8 @@
+/*This example shows how RAPIDJSON_UTIL_DESCRIBE_MEMBERS_WITH_ALIAS enables
+ * custom JSON field name mapping.The __as_is__ placeholder preserves the
+ * original member name when no alias is needed.
+ */
+
 #include "rapidjs_util/util.h"
 #include <iostream>
 #include <optional>
@@ -21,20 +26,40 @@ struct Customer {
     std::vector<OrderItem> items;   
     bool isActive;
 };
-
-RAPIDJSON_UTIL_DESCRIBE_MEMBERS_WITH_ALIAS(Address, ((street, "St"),
-                                                     (city, "city"),
+ 
+/**
+ * Address member mappings:
+ *   street   ¡ú "St"     (remapped)
+ *   city     ¡ú "city"   (preserved via __as_is__)
+ *   zipCode  ¡ú "ZIP"    (remapped)
+ */
+RAPIDJSON_UTIL_DESCRIBE_MEMBERS_WITH_ALIAS(Address, ((street, "St"),            // create alias of street for St
+                                                     (city,   __as_is__),       // Preserves "city" as JSON key
                                                      (zipCode, "ZIP")))
 
+/**
+ * OrderItem member mappings:
+ *   productId ¡ú "id"     (remapped)
+ *   quantity  ¡ú "qty"    (remapped)
+ *   unitPrice ¡ú "price"  (remapped)
+ */
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS_WITH_ALIAS(OrderItem, ((productId, "id"), 
                                                        (quantity, "qty"), 
                                                        (unitPrice, "price")))
 
+/**
+ * Customer member mappings:
+ *   firstName ¡ú "name"      (remapped)
+ *   lastName  ¡ú "surname"   (remapped)
+ *   address   ¡ú "addr"      (remapped)
+ *   items     ¡ú "items"     (preserved via __as_is__)
+ *   isActive  ¡ú "isActive"  (preserved via __as_is__)
+ */
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS_WITH_ALIAS(Customer, ((firstName, "name"), 
                                                       (lastName, "surname"), 
                                                       (address,  "addr"),
-                                                      (items, "items"),
-                                                      (isActive, "isActive")));
+                                                      (items,    __as_is__),   
+                                                      (isActive, __as_is__)));
 
 
 void marshal() {
@@ -93,8 +118,9 @@ void unmarshal() {
     std::cout << "  Is Active: " << (customer.isActive ? "Yes" : "No") << "\n" << std::endl;
 }
 
-int main() {
-    marshal();
 
-    unmarshal();
+int main() {
+    marshal(); 
+
+    unmarshal(); 
 }
