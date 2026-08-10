@@ -733,11 +733,7 @@ constexpr bool is_json_serializable_v =
              static constexpr auto name() noexcept { return alias; }          \
     }; return rapidjsonUtilDesc{}; }  () 
 
-#define RAPIDJSON_UTIL_MEMBER_ALIAS_META_III_0(C, member, alias)                                 \
-	[]{ struct rapidjsonUtilDesc {                                                               \
-             static constexpr auto pointer() noexcept { return &C::member; }                     \
-             static constexpr auto name() noexcept { return RAPIDJSON_UTIL_STRINGIFY(member); }  \
-    }; return rapidjsonUtilDesc{}; }  () 
+#define RAPIDJSON_UTIL_MEMBER_ALIAS_META_III_0(C, member, alias)  RAPIDJSON_UTIL_MEMBER_META(C, member)
 
 
 
