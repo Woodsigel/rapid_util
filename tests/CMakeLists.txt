@@ -20,7 +20,7 @@ set(TESTS_SRCS ${TESTS_SOURCE_DIR}/rapid_util_test.cpp
                ${TESTS_SOURCE_DIR}/value_test.cpp)
 			  
 add_executable(rapidjsUtilTest ${TESTS_SRCS})
-target_include_directories(rapidjsUtilTest PRIVATE ${rapidjsUtil_INCLUDE_DIR})
+target_include_directories(rapidjsUtilTest PRIVATE ${RapidJSON_INCLUDE_DIR} ${RapidJSON_UTIL_INCLUDE})
 target_link_libraries(rapidjsUtilTest GTest::gmock)
 
 add_dependencies(rapidjsUtilTest rapidjson)

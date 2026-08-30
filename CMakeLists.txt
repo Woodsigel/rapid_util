@@ -14,13 +14,12 @@ add_executable(rapidjsUtilUnmarshal unmarshal_example.cpp)
 add_executable(rapidjsUtilAlias alias_example.cpp)
  
 # Download and build rapidjsON if not found
-find_package(rapidjsON QUIET)
-if(NOT rapidjsON_FOUND)
+find_package(RapidJSON CONFIG QUIET)
+if(NOT RapidJSON_FOUND)
 	include(ExternalProject)
 	ExternalProject_Add(
 		rapidjson
 		GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
-		GIT_TAG v1.1.0  
 		CONFIGURE_COMMAND ""  # No configure needed for header-only
 		BUILD_COMMAND ""      # No build needed for header-only  
 		INSTALL_COMMAND ""    # No install needed for header-only
@@ -28,18 +27,18 @@ if(NOT rapidjsON_FOUND)
 	)
 	
 	ExternalProject_Get_property(rapidjson SOURCE_DIR)
-	set(rapidjsON_INCLUDE_DIRS "${SOURCE_DIR}/include")
+	set(RapidJSON_INCLUDE_DIR "${SOURCE_DIR}/include")
 	
 	add_dependencies(rapidjsUtilMarshal rapidjson)
 	add_dependencies(rapidjsUtilUnmarshal rapidjson)
+	add_dependencies(rapidjsUtilAlias rapidjson)
 endif()
 
+set(RapidJSON_UTIL_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-set(rapidjsUtil_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include" ${rapidjsON_INCLUDE_DIRS})
-
-target_include_directories(rapidjsUtilMarshal PRIVATE ${rapidjsUtil_INCLUDE_DIR})
-target_include_directories(rapidjsUtilUnmarshal PRIVATE ${rapidjsUtil_INCLUDE_DIR})
-target_include_directories(rapidjsUtilAlias PRIVATE ${rapidjsUtil_INCLUDE_DIR})
+target_include_directories(rapidjsUtilMarshal PRIVATE ${RapidJSON_INCLUDE_DIR} ${RapidJSON_UTIL_INCLUDE})
+target_include_directories(rapidjsUtilUnmarshal PRIVATE ${RapidJSON_INCLUDE_DIR} ${RapidJSON_UTIL_INCLUDE})
+target_include_directories(rapidjsUtilAlias PRIVATE ${RapidJSON_INCLUDE_DIR} ${RapidJSON_UTIL_INCLUDE})
 
 if(rapidjsUtil_BUILD_TESTS)
 	message(STATUS "Building with tests")
