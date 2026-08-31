@@ -15,7 +15,7 @@ struct PrimitiveFields {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(PrimitiveFields, (IntNumber, UintNumber, Int64Number, Uint64Number, BoolValue, FloatNumber, DoubleNumber, Str))
 
-TEST(UnmarshalTest, DeserializePrimitiveTypes) {
+TEST(UnmarshalTest, DeserializePrimitive) {
 	std::string json(R"( {
 							"IntNumber"    : 32,
 	                        "UintNumber"   : 2791883642,
@@ -47,7 +47,7 @@ struct SomeIntStruct {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(SomeIntStruct, (IntNumber))
 
-TEST(UnmarshalTest, ThrowsForNonNullableNestedPrimitiveTypesWhenNull) {
+TEST(UnmarshalTest, ThrowsForNonNullableWhenNull) {
 	std::string json(R"( { "IntNumber" : null } )");
 	SomeIntStruct s;
 
@@ -74,7 +74,7 @@ struct OptionalPrimitiveFields {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(OptionalPrimitiveFields, (IntNumber, UintNumber, Int64Number, Uint64Number, Bool, FloatNumber, DoubleNumber, String))
 
-TEST(UnmarshalTest, DeserializeNullablePrimitiveTypesWhenNull) {
+TEST(UnmarshalTest, DeserializeNullablePrimitiveWhenNull) {
 	OptionalPrimitiveFields f;
 	f.IntNumber = 53;
 	f.UintNumber = 32546;
@@ -108,7 +108,7 @@ TEST(UnmarshalTest, DeserializeNullablePrimitiveTypesWhenNull) {
 	ASSERT_EQ(f.String, nullptr);
 }
 
-TEST(UnmarshalTest, DeserializeNullablePrimitiveTypesWhenPopulated) {
+TEST(UnmarshalTest, DeserializeNullablePrimitiveWhenPopulated) {
 	std::string json(R"( {
 							"IntNumber"    : 315,
                             "UintNumber"   : 32546,
@@ -167,7 +167,7 @@ TEST(UnmarshalTest, DeserializeNestedStruct) {
 	ASSERT_EQ(app.credential.passwd, "secret123");
 }
 
-TEST(UnmarshalTest, ThrowForNonNullableNestedStructWhenRequiredObjectMemberIsNull) {
+TEST(UnmarshalTest, ThrowForNonNullableNestedStructWhenNull) {
 	auto json = R"({
 				     "version": "1.1.2",
 				     "credential": null
