@@ -193,7 +193,7 @@ struct DatabaseConfig {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(DatabaseConfig, (host, port, credential))
 
-TEST(UnmarshalTest, DesrializeNullableNestedStructWhenNull) {
+TEST(UnmarshalTest, DeserializeNullableNestedStructWhenNull) {
 	auto json = R"( {
 					"host": "localhost",
 					"port": 4212,
@@ -208,7 +208,7 @@ TEST(UnmarshalTest, DesrializeNullableNestedStructWhenNull) {
 	ASSERT_EQ(config.credential, std::nullopt);
 }
 
-TEST(UnmarshalTest, DesrializeNullableNestedStructWhenPopulated) {
+TEST(UnmarshalTest, DeserializeNullableNestedStructWhenPopulated) {
 	auto json = R"( {
 					"host": "127.0.0.1",
 					"port": 65432,
