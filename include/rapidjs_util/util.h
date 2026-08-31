@@ -120,20 +120,20 @@ public:
 /**
  * @brief Exception thrown when the JSON input has invalid syntax
  */
-class InvalidJsonError : public std::logic_error {
+class InvalidJsonError : public std::runtime_error {
 public:
     InvalidJsonError(std::string_view what) 
-        : std::logic_error(std::string(what)) { }
+        : std::runtime_error(std::string(what)) { }
 };
 
 
 /**
  * @brief Exception thrown when attempting to parse an empty JSON string
  */
-class EmptyJsonStringError : public std::logic_error {
+class EmptyJsonStringError : public std::runtime_error {
 public:
     EmptyJsonStringError() 
-        : std::logic_error("The JSON string to be parsed is empty") { }
+        : std::runtime_error("The JSON string to be parsed is empty") { }
 };
 
 

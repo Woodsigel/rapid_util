@@ -13,7 +13,7 @@ endif()
 
 set(TESTS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
-set(TESTS_SRCS ${TESTS_SOURCE_DIR}/rapid_util_test.cpp
+set(TESTS_SRCS ${TESTS_SOURCE_DIR}/rapidjs_util_test.cpp
                ${TESTS_SOURCE_DIR}/type_traits_test.cpp
 			   ${TESTS_SOURCE_DIR}/marshal_test.cpp
 			   ${TESTS_SOURCE_DIR}/unmarshal_test.cpp

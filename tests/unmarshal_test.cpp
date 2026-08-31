@@ -15,7 +15,7 @@ struct PrimitiveFields {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(PrimitiveFields, (IntNumber, UintNumber, Int64Number, Uint64Number, BoolValue, FloatNumber, DoubleNumber, Str))
 
-TEST(RapidUnmarshalTest, DeserializePrimitiveTypes) {
+TEST(UnmarshalTest, DeserializePrimitiveTypes) {
 	std::string json(R"( {
 							"IntNumber"    : 32,
 	                        "UintNumber"   : 2791883642,
@@ -47,7 +47,7 @@ struct SomeIntStruct {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(SomeIntStruct, (IntNumber))
 
-TEST(RAPID_UNMARSHAL_TEST, ThrowsForPrimitiveTypesWithoutOptionalWhenNull) {
+TEST(UnmarshalTest, ThrowsForNonNullableNestedPrimitiveTypesWhenNull) {
 	std::string json(R"( { "IntNumber" : null } )");
 	SomeIntStruct s;
 
@@ -74,7 +74,7 @@ struct OptionalPrimitiveFields {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(OptionalPrimitiveFields, (IntNumber, UintNumber, Int64Number, Uint64Number, Bool, FloatNumber, DoubleNumber, String))
 
-TEST(RapidUnmarshalTest, DeserializeNullablePrimitiveTypesWithOptionalOrSharedWhenNull) {
+TEST(UnmarshalTest, DeserializeNullablePrimitiveTypesWhenNull) {
 	OptionalPrimitiveFields f;
 	f.IntNumber = 53;
 	f.UintNumber = 32546;
@@ -108,7 +108,7 @@ TEST(RapidUnmarshalTest, DeserializeNullablePrimitiveTypesWithOptionalOrSharedWh
 	ASSERT_EQ(f.String, nullptr);
 }
 
-TEST(RapidUnmarshalTest, DeserializeNullablePrimitiveTypesWithOptionalOrSharedWhenPopulated) {
+TEST(UnmarshalTest, DeserializeNullablePrimitiveTypesWhenPopulated) {
 	std::string json(R"( {
 							"IntNumber"    : 315,
                             "UintNumber"   : 32546,
@@ -149,7 +149,7 @@ struct Application {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Application, (version, credential))
 
-TEST(RapidUnmarshalTest, DeserializeNestedStruct) {
+TEST(UnmarshalTest, DeserializeNestedStruct) {
 	Application app;
 
 	auto json = R"({
@@ -167,7 +167,7 @@ TEST(RapidUnmarshalTest, DeserializeNestedStruct) {
 	ASSERT_EQ(app.credential.passwd, "secret123");
 }
 
-TEST(RapidUnmarshalTest, ThrowForNestedStructWithoutOptionalWhenRequiredObjectMemberIsNull) {
+TEST(UnmarshalTest, ThrowForNonNullableNestedStructWhenRequiredObjectMemberIsNull) {
 	auto json = R"({
 				     "version": "1.1.2",
 				     "credential": null
@@ -193,7 +193,7 @@ struct DatabaseConfig {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(DatabaseConfig, (host, port, credential))
 
-TEST(RapidUnmarshalTest, DesrializeNestedStructWithOptionalWhenNull) {
+TEST(UnmarshalTest, DesrializeNullableNestedStructWhenNull) {
 	auto json = R"( {
 					"host": "localhost",
 					"port": 4212,
@@ -208,7 +208,7 @@ TEST(RapidUnmarshalTest, DesrializeNestedStructWithOptionalWhenNull) {
 	ASSERT_EQ(config.credential, std::nullopt);
 }
 
-TEST(RapidUnmarshalTest, DerializeNestedStructWithOptionalWhenPopulated) {
+TEST(UnmarshalTest, DesrializeNullableNestedStructWhenPopulated) {
 	auto json = R"( {
 					"host": "127.0.0.1",
 					"port": 65432,
@@ -234,15 +234,15 @@ struct JobInfo {
 	double salary;
 };
 
-RAPIDJSON_UTIL_DESCRIBE_MEMBERS(JobInfo, (title, salary))
 
 struct JobPosting {
 	std::vector<JobInfo> jobs;
 };
 
+RAPIDJSON_UTIL_DESCRIBE_MEMBERS(JobInfo, (title, salary))
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(JobPosting, (jobs))
 
-TEST(RapidUnmarshalTest, DeserializeHomogeneousArray) {
+TEST(UnmarshalHomogeneousArrayTest, DeserializeArray) {
 	std::string json(R"({
 							"jobs" : 
 							    [{
@@ -274,7 +274,7 @@ TEST(RapidUnmarshalTest, DeserializeHomogeneousArray) {
 	ASSERT_DOUBLE_EQ(jobPosting.jobs[2].salary, 92000.0);
 }
 
-TEST(RapidUnmarshalTest, DeserializeHomogeneousArrayWhenEmpty) {
+TEST(UnmarshalHomogeneousArrayTest, DeserializeArrayWhenEmpty) {
 	JobPosting jobPosting;
 	jobPosting.jobs.emplace_back(JobInfo{ "Accountant", 90000 });
 	jobPosting.jobs.emplace_back(JobInfo{ "HR", 50000 });
@@ -294,7 +294,7 @@ struct JobPostingWithOptionalDetails {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(JobPostingWithOptionalDetails, (jobs))
 
-TEST(RapidUnmarshalTest, DeserializeNullableHomogeneousArrayWithOptionalWhenNull) {
+TEST(UnmarshalHomogeneousArrayTest, DeserializeNullableArrayWhenNull) {
 	JobPostingWithOptionalDetails jobPosting;
 	jobPosting.jobs = std::vector<JobInfo>{};
 	jobPosting.jobs->emplace_back(JobInfo{"Business Manager", 20000});
@@ -306,7 +306,7 @@ TEST(RapidUnmarshalTest, DeserializeNullableHomogeneousArrayWithOptionalWhenNull
 	ASSERT_EQ(jobPosting.jobs, std::nullopt);
 }
 
-TEST(RapidUnmarshalTest, ThrowForHomogeneousArrayWithoutOptionalWhenRequiredArrayIsNull) {
+TEST(UnmarshalHomogeneousArrayTest, ThrowForNonNullableArrayWhenNull) {
 	std::string json(R"({ "jobs" : null })");
 
 	try {
@@ -319,7 +319,7 @@ TEST(RapidUnmarshalTest, ThrowForHomogeneousArrayWithoutOptionalWhenRequiredArra
 	}
 }
 
-TEST(RapidUnmarshalTest, DeserializeNullableHomogeneousArrayWithOptionalWhenEmpty) {
+TEST(UnmarshalHomogeneousArrayTest, DeserializeNullableArrayWhenEmpty) {
 	JobPostingWithOptionalDetails jobPosting;
 	jobPosting.jobs = std::nullopt;
 
@@ -331,7 +331,7 @@ TEST(RapidUnmarshalTest, DeserializeNullableHomogeneousArrayWithOptionalWhenEmpt
 	ASSERT_TRUE(jobPosting.jobs->empty());
 }
 
-TEST(RapidUnmarshalTest, DeserializeNullableHomogeneousArrayWithOptionalWhenPopulated) {
+TEST(UnmarshalHomogeneousArrayTest, DeserializeNullableArrayWhenPopulated) {
 	std::string json(R"({
         "jobs": [
             {
@@ -364,7 +364,7 @@ TEST(RapidUnmarshalTest, DeserializeNullableHomogeneousArrayWithOptionalWhenPopu
 	ASSERT_DOUBLE_EQ((*jobPosting.jobs)[2].salary, 95000.0);
 }
 
-TEST(RapidUnmarshalTest, ThrowForHomogeneousArrayWithoutOptionalElemsWhenRequiredArrayContainsNullElements) {
+TEST(UnmarshalHomogeneousArrayTest, ThrowIfJsonElemIsNullWhileArrayElemIsNotNullable) {
 	std::string json(R"({
 					    "jobs": [
 					        {
@@ -397,7 +397,7 @@ struct JobPostingWithOptionalJobInfo {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(JobPostingWithOptionalJobInfo, (jobs))
 
-TEST(RapidUnmarshalTest, DeserializeHomogeneousArrayHavingOptionalElemsWhenContainNulls) {
+TEST(UnmarshalHomogeneousArrayTest, NullableElementsWhenJsonElemIsNull) {
 	std::string json(R"({
         "jobs": [
 					 {
@@ -436,7 +436,7 @@ struct OptionalJobPostingWithOptionalJobInfo {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(OptionalJobPostingWithOptionalJobInfo, (jobs))
 
-TEST(RapidUnmarshalTest, DeserializeNullableHomogeneousArrayHavingOptionalElemsWhenContainNulls) {
+TEST(UnmarshalHomogeneousArrayTest, NullableArrayWithNullableElemWhenJsonElemIsNull) {
 	std::string json(R"({
         "jobs": [
             {
@@ -472,7 +472,7 @@ struct JobPostingOptFixed {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(JobPostingOptFixed, (jobs))
 
-TEST(RapidMarshalTest, DeserializeNullableHomogeneousFixedArray) {
+TEST(UnmarshalHomogeneousArrayTest, DeserializeNullableFixedArray) {
 	std::string json(R"({
 		"jobs": [
 		    {
@@ -507,15 +507,15 @@ struct EventInfo {
 	std::optional<float> duration;
 };
 
-RAPIDJSON_UTIL_DESCRIBE_MEMBERS(EventInfo, (event, page, duration))
-
 struct ApiResponse {
 	std::tuple<EventInfo, uint64_t, std::string> response;
 };
 
+RAPIDJSON_UTIL_DESCRIBE_MEMBERS(EventInfo, (event, page, duration))
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(ApiResponse, (response))
 
-TEST(RapidUnmarshalTest, DeserializeHeterogeneousArray) {
+
+TEST(UnmarshalHeterogeneousArrayTest, DeserializeArray) {
 	std::string json(R"({
 						"response": [
 						    {
@@ -538,7 +538,7 @@ TEST(RapidUnmarshalTest, DeserializeHeterogeneousArray) {
 	ASSERT_EQ(sessionId, "session_12345");
 }
 
-TEST(RapidUnmarshalTest, ThrowForHeterogeneousArrayWithoutOptionalWhenRequiredTupleIsNull) {
+TEST(UnmarshalHeterogeneousArrayTest, ThrowForNonNullableArrayWhenNull) {
 	std::string json(R"({ "response": null })");
 
 	try {
@@ -558,7 +558,7 @@ struct OptionalApiResponse {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(OptionalApiResponse, (response))
 
-TEST(RapidUnmarshalTest, DeserializeNullableHeterogeneousArrayWithOptionalWhenNull) {
+TEST(UnmarshalHeterogeneousArrayTest, DeserializeNullableArrayWhenNull) {
 	std::string json(R"({
 						"response": null
 						})");
@@ -574,7 +574,7 @@ TEST(RapidUnmarshalTest, DeserializeNullableHeterogeneousArrayWithOptionalWhenNu
 	ASSERT_EQ(apiRes.response, std::nullopt);
 }
 
-TEST(RapidUnmarshalTest, DeserializeNullableHeterogeneousArrayWithOptionalWhenPopulated) {
+TEST(UnmarshalHeterogeneousArrayTest, DeserializeNullableArrayWhenPopulated) {
 	std::string json(R"({
 						    "response": [
 						        {
@@ -605,13 +605,13 @@ struct SomeStruct {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(SomeStruct, (someAttr))
 
-TEST(RAPID_UNMARSHAL_TEST, ThrowsOnEmptyJsonString) {
+TEST(UnmarshalErrorTest, ThrowOnEmptyJsonString) {
 	std::string emptyString("");
 	SomeStruct s;
 	ASSERT_THROW(rapidjson_util::unmarshal(emptyString, s), rapidjson_util::EmptyJsonStringError);
 }
 
-TEST(RAPID_UNMARSHAL_TEST, ThrowsOnInvalidJsonString) {
+TEST(UnmarshalErrorTest, ThrowsOnInvalidJsonString) {
 	std::string invalidJSON(R"( { name : "Zhao", } )");
 	SomeStruct s;
 	ASSERT_THROW(rapidjson_util::unmarshal(invalidJSON, s), rapidjson_util::InvalidJsonError);
@@ -626,7 +626,7 @@ struct Employee {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Employee, (age, name, jobInfo))
 
-TEST(RAPID_UNMARSHAL_TEST, ThrowsWhenRequiredMemberMissing){
+TEST(UnmarshalErrorTest, ThrowWhenRequiredMemberMissing){
 	std::string json(R"( { "name" : "Wu" } )");
 	Employee p;
 
@@ -639,7 +639,7 @@ TEST(RAPID_UNMARSHAL_TEST, ThrowsWhenRequiredMemberMissing){
 	}
 }
 
-TEST(RAPID_UNMARSHAL_TEST, ThrowsMemberDeserializationExceptionWhenTypeMismatched) {
+TEST(UnmarshalErrorTest, ThrowWhenTypeMismatched) {
 	std::string json(R"( { "name" : "Li", "age" : "42" } )");
 	Employee p;
 
@@ -659,7 +659,7 @@ struct SomeFixedArray {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(SomeFixedArray, (arr))
 
-TEST(RAPID_UNMARSHAL_TEST, ThrowWhenJsonArraySizeMismatchesStdFixedArray) {
+TEST(UnmarshalErrorTest, ThrowWhenJsonArraySizeMismatchesFixedArray) {
 	std::string json(R"( { "arr" : [false, true, true, false] } )");
 	SomeFixedArray fixedArray;
 
@@ -680,7 +680,7 @@ struct SomeHeterogeneousArray {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(SomeHeterogeneousArray, (heteroArray))
 
-TEST(RAPID_UNMARSHAL_TEST, ThrowWhenJsonArraySizeMismatchesTupleSize) {
+TEST(UnmarshalErrorTest, ThrowWhenJsonArraySizeMismatchesTupleSize) {
 	std::string json(R"( { 
 							"heteroArray" : [false, {"name" : "Li", "age" : 24}, 1.82] 
                          } )");

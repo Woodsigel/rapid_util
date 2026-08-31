@@ -56,7 +56,7 @@ std::string truncateDecimals(const std::string& input, int precision) {
 }
 
 
-TEST(MARSHAL_TEST_UTIL, RemoveWhitespaceOutsideQuotes) {
+TEST(MarshalHelperFunctionTest, RemoveWhitespaceOutsideQuotes) {
 	std::string json = R"({  "city" : "New York" })";
 
 	std::string expect = R"({"city":"New York"})";
@@ -64,7 +64,7 @@ TEST(MARSHAL_TEST_UTIL, RemoveWhitespaceOutsideQuotes) {
 	ASSERT_STREQ(removeWhitespaceOutsideQuotes(json).c_str(), expect.c_str());
 }
 
-TEST(MARSHAL_TEST_UTIL, TruncateDecimals) {
+TEST(MarshalHelperFunctionTest, TruncateDecimals) {
 	int precision = 1;
 	auto actual = truncateDecimals(" 9.424987, 84, .213, 123.312f, 74.f ", precision);
 	std::string expect{ " 9.4, 84, .213, 123.3f, 74.f " };
@@ -86,7 +86,7 @@ struct ArbitraryStruct {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(ArbitraryStruct, (IntNumber, UintNumber, Int64Number, Uint64Number, BoolValue, FloatNumber, DoubleNumber, String))
 
-TEST(RapidMarshalTest, SerializePrimitiveTypes) {
+TEST(MarshalTest, SerializePrimitiveTypes) {
 	ArbitraryStruct s;
 	s.IntNumber = 42;
 	s.UintNumber = 2345678901;
@@ -127,7 +127,7 @@ struct NullableFieldsWithOptional {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(NullableFieldsWithOptional, (IntNumber, UintNumber, Int64Number, Uint64Number, Bool, FloatNumber, DoubleNumber, String))
 
-TEST(RapidUnmarshalTest, SerializeNullablePrimitiveTypesWithOptionalWhenNull) {
+TEST(MarshalTest, SerializeNullablePrimitiveTypesWhenNull) {
 	NullableFieldsWithOptional  f;
 
 	auto actual = rapidjson_util::marshal(f);
@@ -146,7 +146,7 @@ TEST(RapidUnmarshalTest, SerializeNullablePrimitiveTypesWithOptionalWhenNull) {
 	ASSERT_JSON_STREQ(actual, expect);
 }
 
-TEST(RapidUnmarshalTest, SerializeNullablePrimitiveTypesWithOptionalWhenPopulated) {
+TEST(MarshalTest, SerializeNullablePrimitiveTypesWhenPopulated) {
 	NullableFieldsWithOptional  f;
 
 	f.IntNumber = 66;
@@ -191,7 +191,7 @@ struct Person {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Person, (age, isMarried, addr))
 
-TEST(RapidMarshalTest, SerializeNestedStruct) {
+TEST(MarshalTest, SerializeNestedStruct) {
 	Person person;
 	person.age = 23;
 	person.isMarried = false;
@@ -229,7 +229,7 @@ struct Book {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Book, (title, author))
 
-TEST(RapidUnmarshalTest, SerializeNestedStructWithOptionalWhenNull) {
+TEST(MarshalTest, SerializeNullableNestedStructWhenNull) {
 	Book book{ "Classic of Poetry", std::nullopt };
 
 	auto actual = rapidjson_util::marshal(book);
@@ -243,7 +243,7 @@ TEST(RapidUnmarshalTest, SerializeNestedStructWithOptionalWhenNull) {
 }
 
 
-TEST(RapidUnmarshalTest, SerializeNestedStructWithOptionalWhenPopulated) {
+TEST(MarshalTest, SerializeNullableNestedStructWhenPopulated) {
 	Book book{ "The Nine Chapters on the Mathematical Art", Author{"Liu Hui", "China"} };
 
 	auto actual = rapidjson_util::marshal(book);
@@ -276,7 +276,7 @@ struct Student {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Student, (studentId, enrolledCourses))
 
-TEST(RapidMarshalTest, SerializeHomogeneousArray) {
+TEST(MarshalTest, SerializeHomogeneousArray) {
 	Student student;
 	student.studentId = 1;
 	student.enrolledCourses.emplace_back(Course{ "MATH101", "Calculus", "A+", 3});
@@ -304,7 +304,7 @@ struct StudentWithOptionalCourseList {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(StudentWithOptionalCourseList, (studentId, enrolledCourses))
 
-TEST(RapidUnmarshalTest, SerializeHomogeneousArrayWithOptionalWhenNull) {
+TEST(MarshalTest, SerializeNullableHomogeneousArrayWhenNull) {
 	StudentWithOptionalCourseList student;
 
 	student.studentId = 100;
@@ -320,7 +320,7 @@ TEST(RapidUnmarshalTest, SerializeHomogeneousArrayWithOptionalWhenNull) {
 	ASSERT_JSON_STREQ(actual, expect);
 }
 
-TEST(RapidUnmarshalTest, SerializeHomogeneousArrayWithOptionalWhenEmpty) {
+TEST(MarshalTest, SerializeNullableHomogeneousArrayWhenEmpty) {
 	StudentWithOptionalCourseList student;
 
 	student.studentId = 200;
@@ -336,7 +336,7 @@ TEST(RapidUnmarshalTest, SerializeHomogeneousArrayWithOptionalWhenEmpty) {
 	ASSERT_JSON_STREQ(actual, expect);
 }
 
-TEST(RapidUnmarshalTest, SerializeHomogeneousArrayWithOptionalWhenPopulated) {
+TEST(MarshalTest, SerializeNullableHomogeneousArrayWhenPopulated) {
 	StudentWithOptionalCourseList student;
 	student.studentId = 300;
 	student.enrolledCourses = std::list<Course>{};
@@ -366,7 +366,7 @@ struct StudentWithOptionalCourseElements {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(StudentWithOptionalCourseElements, (studentId, enrolledCourses))
 
-TEST(RapidUnmarshalTest, SerializeHomogeneousArrayWithOptionalWhenContainNulls) {
+TEST(MarshalTest, SerializeHomogeneousArrayWhenContainNulls) {
 	StudentWithOptionalCourseElements student;
 	student.studentId = 400;
 	student.enrolledCourses.emplace_back(std::nullopt);
@@ -403,7 +403,7 @@ struct Response {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Response, (header, content))
 
-TEST(RapidMarshalTest, SerializeHeterogeneousArray) {
+TEST(MarshalTest, SerializeHeterogeneousArray) {
 	Response response;
 	response.header = "/101/Forbidden";
 	response.content = std::make_tuple("success", 200, User{ 10, "John" });
@@ -427,7 +427,7 @@ struct ResponseWithOptionalContent {
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(ResponseWithOptionalContent, (header, content))
 
-TEST(RapidMarshalTest, SerializeHeterogeneousArrayWithOptionalWhenNull) {
+TEST(MarshalTest, SerializeNullableHeterogeneousArrayWhenNull) {
 	ResponseWithOptionalContent response;
 	response.header = "500/Internal Server Error";
 	response.content = std::nullopt;
@@ -443,7 +443,7 @@ TEST(RapidMarshalTest, SerializeHeterogeneousArrayWithOptionalWhenNull) {
 	ASSERT_JSON_STREQ(actual, expect);
 }
 
-TEST(RapidMarshalTest, SerializeHeterogeneousArrayWithOptionalWhenPopulated) {
+TEST(MarshalTest, SerializeNullableHeterogeneousArrayWhenPopulated) {
 	ResponseWithOptionalContent response;
 	response.header = "/404/Not Found";
 	response.content = std::make_tuple("failure", 500, User{ 85, "Wu" });
