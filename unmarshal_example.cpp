@@ -9,7 +9,7 @@ struct Person {
 };
 
 RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Person, (name, age, isStudent, email))
-
+ 
 void unmarshal_basic_usage() {
     std::cout << "=== Unmarshal Basic Usage Example ===" << std::endl;
 

@@ -43,7 +43,7 @@ namespace rapidjson_util {
  * @endcode
  */
 template<typename Struct> 
-std::string marshal(const Struct& s) noexcept {
+std::string marshal(const Struct& s) {
     return detail::marshalImpl(s);
 }
 
@@ -136,6 +136,16 @@ public:
         : std::runtime_error("The JSON string to be parsed is empty") { }
 };
 
+
+/**
+ * @brief Exception thrown when deserialization fails, which is highly unlikely under 
+ *        normal use. May occur on out-of-memory.
+ */
+class DeserializationError : public std::runtime_error {
+public:
+    DeserializationError()
+        : std::runtime_error("Deserialize struct to JSON string failed") {}
+};
 
 namespace detail {
 
@@ -335,64 +345,80 @@ public:
         assert(root.isObject());
 
         auto obj = root.asConstObject();
-        write(obj);
+
+        bool ok = write(obj);
+        if (!ok)
+            throw DeserializationError();
     }
 
 private:
-    void write(const Value& v) {
+    bool write(const Value& v) {
         if (v.isNone()) {
-            Null();
+            return Null();
         }
         else if (v.isPrimitive()) {
             auto p = v.asConstPrimitive();
-            write(p);
+            return write(p);
         }
         else if (v.isObject()) {
             auto o = v.asConstObject();
-            write(o);
+            return write(o);
         }
         else if (v.isArray()) {
             auto a = v.asConstArray();
-            write(a);
+            return write(a);
         }
-        else 
+        else {
             assert(false);
+            return false;
+        }
+            
         
     }
 
-    void write(Value::ConstPrimitiveType& p) {
-        if (p.isBool())        Bool(p.getBool());
-        else if (p.isInt())    Int(p.getInt());
-        else if (p.isUint())   Uint(p.getUint());
-        else if (p.isInt64())  Int64(p.getInt64());
-        else if (p.isUint64()) Uint64(p.getUint64());
-        else if (p.isFloat())  Float(p.getFloat());
-        else if (p.isDouble()) Double(p.getDouble());
-        else if (p.isString()) String(p.getString());
-        else assert(false);
+    bool write(Value::ConstPrimitiveType& p) {
+        if (p.isBool())        return Bool(p.getBool());
+        else if (p.isInt())    return Int(p.getInt());
+        else if (p.isUint())   return Uint(p.getUint());
+        else if (p.isInt64())  return Int64(p.getInt64());
+        else if (p.isUint64()) return Uint64(p.getUint64());
+        else if (p.isFloat())  return Float(p.getFloat());
+        else if (p.isDouble()) return Double(p.getDouble());
+        else if (p.isString()) return String(p.getString());
+        else { assert(false);  return false; }
     }
 
-    void write(Value::ConstObjectType& object) {
-        StartObject();
+    bool write(Value::ConstObjectType& object) {
+        if(UNLIKELY(!StartObject()))
+            return false;
+
 
         for (auto& member : object) {
             auto& name = member.name();
             auto& value = member.value();
 
-            Key(name);
-            write(value);
+            if (UNLIKELY(!Key(name)))
+                return false;
+
+
+            if (UNLIKELY(!write(value)))
+                return false;
         }
 
-        EndObject();
+        return EndObject();
     }
 
-    void write(Value::ConstArrayType& array) {
-        StartArray();
+    bool write(Value::ConstArrayType& array) {
+        if (UNLIKELY(!StartArray()))
+            return false;
+      
 
-        for (auto& elem : array) 
-            write(elem);
-        
-        EndArray();
+        for (auto& elem : array) {
+            if (UNLIKELY(!write(elem)))
+                return false;
+        }
+            
+        return EndArray();
     }
 
     bool Float(float f) {
@@ -408,6 +434,10 @@ private:
     bool Key(std::string_view name) {
         return Handler::Key(name.data(), 
             static_cast<SizeType>(name.size()));
+    }
+
+    bool UNLIKELY(bool x) {
+        return x;
     }
 };
 

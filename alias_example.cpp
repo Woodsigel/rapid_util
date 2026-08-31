@@ -1,4 +1,4 @@
-/*This example shows how RAPIDJSON_UTIL_DESCRIBE_MEMBERS_WITH_ALIAS enables
+/* This example shows how RAPIDJSON_UTIL_DESCRIBE_MEMBERS_WITH_ALIAS enables
  * custom JSON field name mapping.The __as_is__ placeholder preserves the
  * original member name when no alias is needed.
  */
