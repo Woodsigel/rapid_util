@@ -459,7 +459,7 @@ TEST_F(HomogeneousArrayTest, CanNotHoldNoneElemWhenConstructedWithoutOptionalOrS
 	ASSERT_THAT(v.canHoldNoneElem(), Eq(false));
 }
 
-TEST_F(HomogeneousArrayTest, CanHoldNoneElemWhenConstructedWithptionalOrShareWrapper) {
+TEST_F(HomogeneousArrayTest, CanHoldNoneElemWhenConstructedWithOptionalOrSharedWrapper) {
 	std::array<std::shared_ptr<float>, 5> arr;
 	auto ptr = &arr;
 	Value v(ptr);
