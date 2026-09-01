@@ -73,7 +73,7 @@ TEST(MarshalHelperFunctionTest, TruncateDecimals) {
 }
 
 
-struct ArbitraryStruct {
+struct PrimBlob {
 	int IntNumber;
 	unsigned UintNumber;
 	int64_t Int64Number;
@@ -84,20 +84,20 @@ struct ArbitraryStruct {
 	std::string String;
 };
 
-RAPIDJSON_UTIL_DESCRIBE_MEMBERS(ArbitraryStruct, (IntNumber, UintNumber, Int64Number, Uint64Number, BoolValue, FloatNumber, DoubleNumber, String))
+RAPIDJSON_UTIL_DESCRIBE_MEMBERS(PrimBlob, (IntNumber, UintNumber, Int64Number, Uint64Number, BoolValue, FloatNumber, DoubleNumber, String))
 
-TEST(MarshalTest, SerializePrimitiveTypes) {
-	ArbitraryStruct s;
-	s.IntNumber = 42;
-	s.UintNumber = 2345678901;
-	s.Int64Number = -9876543210LL;
-	s.Uint64Number = 18446744073709551615ULL;
-	s.BoolValue = true;
-	s.FloatNumber = 3.14f;
-	s.DoubleNumber = 2.76;
-	s.String = "Hello";
+TEST(MarshalTest, SerializePrimitives) {
+	PrimBlob p;
+	p.IntNumber = 42;
+	p.UintNumber = 2345678901;
+	p.Int64Number = -9876543210LL;
+	p.Uint64Number = 18446744073709551615ULL;
+	p.BoolValue = true;
+	p.FloatNumber = 3.14f;
+	p.DoubleNumber = 2.76;
+	p.String = "Hello";
 
-	auto actual = rapidjson_util::marshal(s);
+	auto actual = rapidjson_util::marshal(p);
 
 	auto expect = R"({
                        "IntNumber":42,
@@ -114,7 +114,7 @@ TEST(MarshalTest, SerializePrimitiveTypes) {
 }
 
 
-struct NullableFieldsWithOptional {
+struct NullablePrimBlob {
 	std::optional<int> IntNumber;
 	std::shared_ptr<unsigned> UintNumber;
 	std::optional<int64_t> Int64Number;
@@ -125,12 +125,12 @@ struct NullableFieldsWithOptional {
 	std::shared_ptr<std::string> String;
 };
 
-RAPIDJSON_UTIL_DESCRIBE_MEMBERS(NullableFieldsWithOptional, (IntNumber, UintNumber, Int64Number, Uint64Number, Bool, FloatNumber, DoubleNumber, String))
+RAPIDJSON_UTIL_DESCRIBE_MEMBERS(NullablePrimBlob, (IntNumber, UintNumber, Int64Number, Uint64Number, Bool, FloatNumber, DoubleNumber, String))
 
-TEST(MarshalTest, SerializeNullablePrimitiveTypesWhenNull) {
-	NullableFieldsWithOptional  f;
+TEST(MarshalTest, SerializeNullablePrimitivesWhenNull) {
+	NullablePrimBlob p;
 
-	auto actual = rapidjson_util::marshal(f);
+	auto actual = rapidjson_util::marshal(p);
 
 	auto expect = R"({
 						"IntNumber"    : null, 
@@ -146,19 +146,19 @@ TEST(MarshalTest, SerializeNullablePrimitiveTypesWhenNull) {
 	ASSERT_JSON_STREQ(actual, expect);
 }
 
-TEST(MarshalTest, SerializeNullablePrimitiveTypesWhenPopulated) {
-	NullableFieldsWithOptional  f;
+TEST(MarshalTest, SerializeNullablePrimitivesWhenPopulated) {
+	NullablePrimBlob p;
 
-	f.IntNumber = 66;
-	f.UintNumber = std::make_shared<unsigned>(3785674210);
-	f.Int64Number = 4137901254LL;
-	f.Uint64Number = std::make_shared<uint64_t>(5843644404370511615ULL);
-	f.Bool = false;
-	f.FloatNumber = 94.887f;
-	f.DoubleNumber = 50.241;
-	f.String = std::make_shared<std::string>("I am a string");
+	p.IntNumber = 66;
+	p.UintNumber = std::make_shared<unsigned>(3785674210);
+	p.Int64Number = 4137901254LL;
+	p.Uint64Number = std::make_shared<uint64_t>(5843644404370511615ULL);
+	p.Bool = false;
+	p.FloatNumber = 94.887f;
+	p.DoubleNumber = 50.241;
+	p.String = std::make_shared<std::string>("I am a string");
 
-	auto actual = rapidjson_util::marshal(f);
+	auto actual = rapidjson_util::marshal(p);
 
 	auto expect = R"({
 						"IntNumber"    : 66, 

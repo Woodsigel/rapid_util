@@ -2,7 +2,7 @@
 #include "rapidjs_util/util.h"
 
 
-struct PrimitiveFields {
+struct Primitives {
 	int IntNumber;
 	unsigned UintNumber;
 	int64_t Int64Number;
@@ -13,9 +13,9 @@ struct PrimitiveFields {
 	std::string Str;
 };
 
-RAPIDJSON_UTIL_DESCRIBE_MEMBERS(PrimitiveFields, (IntNumber, UintNumber, Int64Number, Uint64Number, BoolValue, FloatNumber, DoubleNumber, Str))
+RAPIDJSON_UTIL_DESCRIBE_MEMBERS(Primitives, (IntNumber, UintNumber, Int64Number, Uint64Number, BoolValue, FloatNumber, DoubleNumber, Str))
 
-TEST(UnmarshalTest, DeserializePrimitive) {
+TEST(UnmarshalTest, DeserializePrimitives) {
 	std::string json(R"( {
 							"IntNumber"    : 32,
 	                        "UintNumber"   : 2791883642,
@@ -26,18 +26,18 @@ TEST(UnmarshalTest, DeserializePrimitive) {
 							"DoubleNumber" : 2.7182818,
 							"Str"          : "World"
 						   } )");
-	PrimitiveFields blob;
+	Primitives p;
 
-	rapidjson_util::unmarshal(json, blob);
+	rapidjson_util::unmarshal(json, p);
 
-	ASSERT_EQ(blob.IntNumber, 32);
-	ASSERT_EQ(blob.UintNumber, 2791883642);
-	ASSERT_EQ(blob.Int64Number, -9223372036854775808LL);
-	ASSERT_EQ(blob.Uint64Number, 18446744073709551615ULL); 
-	ASSERT_EQ(blob.BoolValue, true);
-	ASSERT_FLOAT_EQ(blob.FloatNumber, 3.1415926f);
-	ASSERT_DOUBLE_EQ(blob.DoubleNumber, 2.7182818);
-	ASSERT_EQ(blob.Str, "World");
+	ASSERT_EQ(p.IntNumber, 32);
+	ASSERT_EQ(p.UintNumber, 2791883642);
+	ASSERT_EQ(p.Int64Number, -9223372036854775808LL);
+	ASSERT_EQ(p.Uint64Number, 18446744073709551615ULL); 
+	ASSERT_EQ(p.BoolValue, true);
+	ASSERT_FLOAT_EQ(p.FloatNumber, 3.1415926f);
+	ASSERT_DOUBLE_EQ(p.DoubleNumber, 2.7182818);
+	ASSERT_EQ(p.Str, "World");
 }
 
 
@@ -61,7 +61,7 @@ TEST(UnmarshalTest, ThrowsForNonNullableWhenNull) {
 }
 
 
-struct OptionalPrimitiveFields {
+struct NullablePrimitives {
 	std::optional<int> IntNumber;
 	std::optional<unsigned> UintNumber;
 	std::optional<int64_t> Int64Number;
@@ -72,18 +72,18 @@ struct OptionalPrimitiveFields {
 	std::shared_ptr<std::string> String;
 };
 
-RAPIDJSON_UTIL_DESCRIBE_MEMBERS(OptionalPrimitiveFields, (IntNumber, UintNumber, Int64Number, Uint64Number, Bool, FloatNumber, DoubleNumber, String))
+RAPIDJSON_UTIL_DESCRIBE_MEMBERS(NullablePrimitives, (IntNumber, UintNumber, Int64Number, Uint64Number, Bool, FloatNumber, DoubleNumber, String))
 
-TEST(UnmarshalTest, DeserializeNullablePrimitiveWhenNull) {
-	OptionalPrimitiveFields f;
-	f.IntNumber = 53;
-	f.UintNumber = 32546;
-	f.Int64Number = 9132101254LL;
-	f.Uint64Number = 1243744404370511615ULL;
-	f.Bool = true;
-	f.FloatNumber = 22.485f;
-	f.DoubleNumber = 00.231;
-	f.String = std::make_shared<std::string>("I am a string");
+TEST(UnmarshalTest, DeserializeNullablePrimitivesWhenNull) {
+	NullablePrimitives p;
+	p.IntNumber = 53;
+	p.UintNumber = 32546;
+	p.Int64Number = 9132101254LL;
+	p.Uint64Number = 1243744404370511615ULL;
+	p.Bool = true;
+	p.FloatNumber = 22.485f;
+	p.DoubleNumber = 00.231;
+	p.String = std::make_shared<std::string>("I am a string");
 
 	std::string json(R"( {
 							"IntNumber"    : null,
@@ -96,19 +96,19 @@ TEST(UnmarshalTest, DeserializeNullablePrimitiveWhenNull) {
 							"String"       : null
 						   } )");
 
-	rapidjson_util::unmarshal(json, f);
+	rapidjson_util::unmarshal(json, p);
 
-	ASSERT_EQ(f.IntNumber, std::nullopt);
-	ASSERT_EQ(f.UintNumber, std::nullopt);
-	ASSERT_EQ(f.Int64Number, std::nullopt);
-	ASSERT_EQ(f.Uint64Number, std::nullopt);
-	ASSERT_EQ(f.Bool, std::nullopt);
-	ASSERT_EQ(f.FloatNumber, std::nullopt);
-	ASSERT_EQ(f.DoubleNumber, std::nullopt);
-	ASSERT_EQ(f.String, nullptr);
+	ASSERT_EQ(p.IntNumber, std::nullopt);
+	ASSERT_EQ(p.UintNumber, std::nullopt);
+	ASSERT_EQ(p.Int64Number, std::nullopt);
+	ASSERT_EQ(p.Uint64Number, std::nullopt);
+	ASSERT_EQ(p.Bool, std::nullopt);
+	ASSERT_EQ(p.FloatNumber, std::nullopt);
+	ASSERT_EQ(p.DoubleNumber, std::nullopt);
+	ASSERT_EQ(p.String, nullptr);
 }
 
-TEST(UnmarshalTest, DeserializeNullablePrimitiveWhenPopulated) {
+TEST(UnmarshalTest, DeserializeNullablePrimitivesWhenPopulated) {
 	std::string json(R"( {
 							"IntNumber"    : 315,
                             "UintNumber"   : 32546,
@@ -120,18 +120,18 @@ TEST(UnmarshalTest, DeserializeNullablePrimitiveWhenPopulated) {
 							"String"       : "World"
 						   } )");
 
-	OptionalPrimitiveFields f;
-	rapidjson_util::unmarshal(json, f);
+	NullablePrimitives p;
+	rapidjson_util::unmarshal(json, p);
 
 
-	ASSERT_EQ(f.IntNumber.value(), 315);
-	ASSERT_EQ(f.UintNumber.value(), 32546);
-	ASSERT_EQ(f.Int64Number.value(), 5132101254LL);
-	ASSERT_EQ(f.Uint64Number.value(), 6143744404370511615ULL);
-	ASSERT_EQ(f.Bool.value(), true);
-	ASSERT_FLOAT_EQ(f.FloatNumber.value(), 78.4859);
-	ASSERT_DOUBLE_EQ(f.DoubleNumber.value(), 31.231);
-	ASSERT_EQ(*f.String, "World");
+	ASSERT_EQ(p.IntNumber.value(), 315);
+	ASSERT_EQ(p.UintNumber.value(), 32546);
+	ASSERT_EQ(p.Int64Number.value(), 5132101254LL);
+	ASSERT_EQ(p.Uint64Number.value(), 6143744404370511615ULL);
+	ASSERT_EQ(p.Bool.value(), true);
+	ASSERT_FLOAT_EQ(p.FloatNumber.value(), 78.4859);
+	ASSERT_DOUBLE_EQ(p.DoubleNumber.value(), 31.231);
+	ASSERT_EQ(*p.String, "World");
 }
 
 
@@ -611,7 +611,7 @@ TEST(UnmarshalErrorTest, ThrowOnEmptyJsonString) {
 	ASSERT_THROW(rapidjson_util::unmarshal(emptyString, s), rapidjson_util::EmptyJsonStringError);
 }
 
-TEST(UnmarshalErrorTest, ThrowsOnInvalidJsonString) {
+TEST(UnmarshalErrorTest, ThrowOnInvalidJsonString) {
 	std::string invalidJSON(R"( { name : "Zhao", } )");
 	SomeStruct s;
 	ASSERT_THROW(rapidjson_util::unmarshal(invalidJSON, s), rapidjson_util::InvalidJsonError);
