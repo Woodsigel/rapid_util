@@ -138,14 +138,14 @@ public:
 
 
 /**
- * @brief Exception thrown when deserialization fails, which is highly unlikely under 
- *        normal use. May occur on out-of-memory.
+ * @brief Exception thrown when deserialization fails due to out-of-memory.
  */
 class DeserializationError : public std::runtime_error {
 public:
     DeserializationError()
         : std::runtime_error("Deserialize struct to JSON string failed") {}
 };
+
 
 namespace detail {
 
