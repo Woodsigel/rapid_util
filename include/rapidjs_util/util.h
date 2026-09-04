@@ -372,8 +372,6 @@ private:
             assert(false);
             return false;
         }
-            
-        
     }
 
     bool write(Value::ConstPrimitiveType& p) {
